@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// Testi toimiiko git
+
 public class Ability : ScriptableObject
 {
     public new string name;
