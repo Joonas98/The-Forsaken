@@ -36,6 +36,7 @@ public class ObjectPool : MonoBehaviour
                 return pooledObjects[i];
             }
         }
+        Debug.Log("No free objects in pool");
         return null;
     }
 

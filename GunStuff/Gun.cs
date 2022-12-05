@@ -75,6 +75,8 @@ public class Gun : MonoBehaviour
     public AudioClip shootSound;
     public AudioClip reloadSound;
     public AudioClip dryFireSound;
+    public AudioClip zoomScopeInSound;
+    public AudioClip zoomScopeOutSound;
 
     public AudioClip equipSound;
     public AudioClip unequipSound;
@@ -447,23 +449,41 @@ public class Gun : MonoBehaviour
             {
                 scopeCam.fieldOfView += 1;
                 scopeCam.fieldOfView = scopeCam.fieldOfView * 1.1f;
+
+                if (scopeCam.fieldOfView > minZoom)
+                {
+                    scopeCam.fieldOfView = minZoom;
+                }
+                else
+                {
+                    audioSource.PlayOneShot(zoomScopeInSound);
+                }
             }
 
             if (isAiming && Input.GetAxis("Mouse ScrollWheel") > 0f && Time.timeScale > 0)
             {
                 scopeCam.fieldOfView -= 1;
                 scopeCam.fieldOfView = scopeCam.fieldOfView * 0.9f;
+
+                if (scopeCam.fieldOfView < maxZoom)
+                {
+                    scopeCam.fieldOfView = maxZoom;
+                }
+                else
+                {
+                    audioSource.PlayOneShot(zoomScopeOutSound);
+                }
             }
 
-            if (scopeCam.fieldOfView < maxZoom)
-            {
-                scopeCam.fieldOfView = maxZoom;
-            }
-
-            if (scopeCam.fieldOfView > minZoom)
-            {
-                scopeCam.fieldOfView = minZoom;
-            }
+            // if (scopeCam.fieldOfView < maxZoom)
+            // {
+            //     scopeCam.fieldOfView = maxZoom;
+            // }
+            //
+            // if (scopeCam.fieldOfView > minZoom)
+            // {
+            //     scopeCam.fieldOfView = minZoom;
+            // }
         }
     } // Tähtäimiä voi scrollata rullalla
 

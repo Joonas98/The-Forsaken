@@ -196,6 +196,7 @@ public class CanvasManager : MonoBehaviour
 
     public void Hitmarker(Vector3 hitPosition, bool isHeadshot)
     {
+        #region old system
         // if (isHeadshot)
         // {
         //     StopAllCoroutines();
@@ -232,6 +233,7 @@ public class CanvasManager : MonoBehaviour
         //      oneHitmarkImage.color = new Color(1, 1, 1, 1);
         //      StartCoroutine(FadeImage(oneHitmarkImage, false));
         //  }
+        #endregion
 
         // Object poolatut hitmarkerit
         GameObject hitmark = ObjectPool.SharedInstance.GetPooledObject();
@@ -242,11 +244,9 @@ public class CanvasManager : MonoBehaviour
             hitImage.rectTransform.position = screenPos;
             hitImage.color = new Color(1, 1, 1, 1);
             hitmark.SetActive(true);
-            FadeImage(hitImage, isHeadshot);
+            StartCoroutine(FadeImage(hitImage, isHeadshot));
             StartCoroutine(DisableDelay(hitmark));
         }
-
-
 
     }
 

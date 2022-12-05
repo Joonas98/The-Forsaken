@@ -19,7 +19,6 @@ public class WeaponSway : MonoBehaviour
     {
         ogSmoothAmount = smoothAmount;
         currentGun = GetComponent<Gun>();
-        //  initialPosition = transform.localPosition;
         initialRotation = transform.localRotation;
     }
 
@@ -36,14 +35,14 @@ public class WeaponSway : MonoBehaviour
             Quaternion finalRotation = new Quaternion(rotationY * -0.5f, rotationX * -0.5f, 0, 0);
             // transform.localRotation = Quaternion.Lerp(transform.localRotation.eulerAngles, finalRotation + initialRotation, Time.deltaTime * smoothAmount);
 
-            if (rotationX == 0 && rotationY == 0) // Palauttaa aseen nopeammin paikalleen jos ei liikuta hiirt‰
-            {
-                smoothAmount = ogSmoothAmount * 2;
-            }
-            else
-            {
-                smoothAmount = ogSmoothAmount;
-            }
+            // if (rotationX == 0 && rotationY == 0) // Palauttaa aseen nopeammin paikalleen jos ei liikuta hiirt‰
+            // {
+            //     smoothAmount = ogSmoothAmount * 2;
+            // }
+            // else
+            // {
+            //     smoothAmount = ogSmoothAmount;
+            // }
 
             // Aseen k‰‰nt‰minen kun ei t‰hd‰t‰
             transform.localRotation = Quaternion.Slerp(transform.localRotation, new Quaternion(finalRotation.x + initialRotation.x, finalRotation.y + initialRotation.y, finalRotation.z + initialRotation.z, finalRotation.w + initialRotation.w), Time.deltaTime * smoothAmount * 3);
@@ -53,14 +52,14 @@ public class WeaponSway : MonoBehaviour
         {
             Quaternion finalRotation = new Quaternion(rotationY * -0.25f, rotationX * -0.25f, 0, 0);
 
-            if (rotationX == 0 && rotationY == 0) // Palauttaa aseen nopeammin paikalleen jos ei liikuta hiirt‰
-            {
-                smoothAmount = ogSmoothAmount * 3;
-            }
-            else
-            {
-                smoothAmount = ogSmoothAmount;
-            }
+            // if (rotationX == 0 && rotationY == 0) // Palauttaa aseen nopeammin paikalleen jos ei liikuta hiirt‰
+            // {
+            //     smoothAmount = ogSmoothAmount * 3;
+            // }
+            // else
+            // {
+            //     smoothAmount = ogSmoothAmount;
+            // }
 
             // Aseen k‰‰nt‰minen kun t‰hd‰t‰‰n
             transform.localRotation = Quaternion.Slerp(transform.localRotation, new Quaternion(finalRotation.x + initialRotation.x, finalRotation.y + initialRotation.y, finalRotation.z + initialRotation.z, finalRotation.w + initialRotation.w), Time.deltaTime * smoothAmount * 3);
