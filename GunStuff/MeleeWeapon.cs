@@ -127,7 +127,7 @@ public class MeleeWeapon : MonoBehaviour
             }
             else
             {
-                audioSource.PlayOneShot(hitFloorSound);
+                // audioSource.PlayOneShot(hitFloorSound);
             }
         }
     }

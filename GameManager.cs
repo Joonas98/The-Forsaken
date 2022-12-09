@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class GameManager : MonoBehaviour
@@ -13,6 +14,8 @@ public class GameManager : MonoBehaviour
     public static TextMeshProUGUI roundsText;
 
     public static int currentWave = 0;
+
+    public GameObject aimingSymbol;
 
     private void Awake()
     {
@@ -37,14 +40,23 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKey(KeyCode.N))
-        {
-            Time.timeScale = 0.25f;
-        }
+        // if (Input.GetKey(KeyCode.N))
+        // {
+        //     Time.timeScale = 0.25f;
+        // }
+        //
+        // if (Input.GetKey(KeyCode.M))
+        // {
+        //     Time.timeScale = 1f;
+        // }
 
-        if (Input.GetKey(KeyCode.M))
+        if (GetCurrentGun() != null && GetCurrentGun().isAiming)
         {
-            Time.timeScale = 1f;
+            aimingSymbol.SetActive(true);
+        }
+        else
+        {
+            aimingSymbol.SetActive(false);
         }
 
     }

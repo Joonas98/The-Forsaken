@@ -151,7 +151,7 @@ public class CanvasManager : MonoBehaviour
             go.SetActive(false);
         }
         AudioListener.pause = true;
-        if (playerScript != null) playerScript.canRotate = false;
+        // if (playerScript != null) playerScript.canRotate = false;
         if (lookScript != null) lookScript.canRotate = false;
         WeaponSwitcher.canSwitch(false);
         Cursor.lockState = CursorLockMode.None;
@@ -165,7 +165,7 @@ public class CanvasManager : MonoBehaviour
             go.SetActive(true);
         }
         AudioListener.pause = false;
-        if (playerScript != null) playerScript.canRotate = true;
+        // if (playerScript != null) playerScript.canRotate = true;
         if (lookScript != null) lookScript.canRotate = true;
         WeaponSwitcher.canSwitch(true);
         Cursor.lockState = CursorLockMode.Locked;

@@ -19,7 +19,7 @@ public class WaveSpawner : MonoBehaviour
 
     public float spawnRate;
     public float waveLenght;
-    public float spawnRadius;
+    public float spawnRadius, spawnProtection;
 
     public Transform[] spawnPoints;
     public ParticleSystem[] spawnParticleSystems;
@@ -97,6 +97,7 @@ public class WaveSpawner : MonoBehaviour
     {
         for (int i = 0; i < x; i++)
         {
+            // Real spawn radius = spawnradius + spawnprotection
             float spawnPointX = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.x;
             float spawnPointZ = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.z;
 

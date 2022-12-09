@@ -9,7 +9,7 @@ public class EnemySpawner : MonoBehaviour
 
     [SerializeField] private int spawnAmount;
     [SerializeField] private float spawnInterval;
-    [SerializeField] private float spawnRadius;
+    public float spawnRadius, spawnProtection;
 
     [SerializeField] private float floatingHeight = 500;
     [SerializeField] private GameObject[] SpawnLocations;
@@ -34,6 +34,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void LateUpdate()
     {
+        // Follow player on certain height
         transform.position = new Vector3(playerGO.transform.position.x, floatingHeight, playerGO.transform.position.z);
     }
 
@@ -41,8 +42,10 @@ public class EnemySpawner : MonoBehaviour
     {
         for (int i = 0; i < x; i++)
         {
-            float spawnPointX = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.x;
-            float spawnPointZ = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.z;
+            // Spawnradius = spawnradius + spawnprotection
+            // Not in use and does not work 9.12.2022
+            float spawnPointX = Random.Range(spawnRadius * -1 - spawnProtection, spawnRadius + spawnProtection) + transform.position.x;
+            float spawnPointZ = Random.Range(spawnRadius * -1 - spawnProtection, spawnRadius + spawnProtection) + transform.position.z;
 
             Vector3 spawnPosition = new Vector3(spawnPointX, transform.position.y, spawnPointZ);
             Ray ray = new Ray(spawnPosition, -transform.up);

@@ -17,6 +17,7 @@ public class PlayerMovement : MonoBehaviour
     public Transform groundCheck;
     public float groundDistance;
     public GameObject mainCamera;
+    public GameObject fallingSymbol;
 
     [HideInInspector] public bool isStationary;
     [HideInInspector] public float ogSpeed;
@@ -77,8 +78,8 @@ public class PlayerMovement : MonoBehaviour
         HandleRunning();
         HandleJump();
         HandleMovement();
-        // HandleAnimation();
         HandleHeadbob();
+        FallingSymbol();
 
         if (lastPosition != transform.position)
         {
@@ -89,14 +90,7 @@ public class PlayerMovement : MonoBehaviour
             isStationary = true;
         }
         lastPosition = transform.position;
-
-        // print(controller.velocity.magnitude);
     }
-
-    //private void HandleAnimation()
-    //{
-    //    camAnimator.SetFloat("Movement Magnitude", controller.velocity.magnitude);
-    //}
 
     private void HandleMovement()
     {
@@ -176,6 +170,18 @@ public class PlayerMovement : MonoBehaviour
                 mainCamera.transform.localPosition.x,
                 defaultYPos + Mathf.Sin(bobTimer) * (isRunning ? sprintBobAmount : walkBobAmount),
                 mainCamera.transform.localPosition.z);
+        }
+    }
+
+    private void FallingSymbol()
+    {
+        if (!isGrounded)
+        {
+            fallingSymbol.SetActive(true);
+        }
+        else
+        {
+            fallingSymbol.SetActive(false);
         }
     }
 

@@ -10,7 +10,7 @@ public class FootstepScript : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip stepSound1, stepSound2;
 
-    public Player playerScript;
+    public PlayerMovement movementScript;
 
     private float distanceTravelled = 0;
     private Vector3 lastPosition;
@@ -23,7 +23,7 @@ public class FootstepScript : MonoBehaviour
 
     private void Update()
     {
-        if (playerScript.isGrounded)
+        if (movementScript.isGrounded)
             distanceTravelled += Vector3.Distance(transform.position, lastPosition);
         lastPosition = transform.position;
 
