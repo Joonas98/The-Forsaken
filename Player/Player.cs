@@ -30,6 +30,7 @@ public class Player : MonoBehaviour
     public GameObject runningSymbol, fallingSymbol, regenSymbol;
     // public GameObject feetCollider;
     public TextMeshProUGUI healthText, healthTextRaw;
+    public Gradient healthGradient;
     public Image healthSlider;
     private string healthString, healthStringRaw;
 
@@ -124,6 +125,7 @@ public class Player : MonoBehaviour
         healthTextRaw.text = healthStringRaw;
 
         healthSlider.fillAmount = currentHPPercentage / 100;
+        healthSlider.color = healthGradient.Evaluate(1f - currentHPPercentage / 100);
     }
 
     public void calculateRegen()

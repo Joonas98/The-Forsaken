@@ -5,7 +5,7 @@ using UnityEngine;
 public class FootstepScript : MonoBehaviour
 {
 
-    public float stepThreshold;
+    public float stepThreshold, stepVolume;
 
     public AudioSource audioSource;
     public AudioClip stepSound1, stepSound2;
@@ -32,13 +32,13 @@ public class FootstepScript : MonoBehaviour
             if (stepTurn)
             {
                 stepTurn = false;
-                audioSource.PlayOneShot(stepSound1);
+                audioSource.PlayOneShot(stepSound1, stepVolume);
                 distanceTravelled = 0;
             }
             else
             {
                 stepTurn = true;
-                audioSource.PlayOneShot(stepSound2);
+                audioSource.PlayOneShot(stepSound2, stepVolume);
                 distanceTravelled = 0;
             }
         }

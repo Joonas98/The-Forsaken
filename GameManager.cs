@@ -50,6 +50,15 @@ public class GameManager : MonoBehaviour
         //     Time.timeScale = 1f;
         // }
 
+        if (Input.GetKey(KeyCode.P))
+        {
+            GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
+            foreach (GameObject enemy in enemiesToDestroy)
+            {
+                enemy.GetComponent<Enemy>().Die();
+            }
+        }
+
         if (GetCurrentGun() != null && GetCurrentGun().isAiming)
         {
             aimingSymbol.SetActive(true);

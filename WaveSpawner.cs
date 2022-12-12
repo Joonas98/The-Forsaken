@@ -97,11 +97,15 @@ public class WaveSpawner : MonoBehaviour
     {
         for (int i = 0; i < x; i++)
         {
-            // Real spawn radius = spawnradius + spawnprotection
-            float spawnPointX = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.x;
-            float spawnPointZ = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.z;
+            // float spawnPointX = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.x;
+            // float spawnPointZ = Random.Range(spawnRadius * -1, spawnRadius) + transform.position.z;
+            //  Vector3 spawnPosition = new Vector3(spawnPointX, transform.position.y, spawnPointZ);
 
-            Vector3 spawnPosition = new Vector3(spawnPointX, transform.position.y, spawnPointZ);
+            // Annulus shaped enemy spawning. Enemies don't spawn within spawnProtection and do spawn inside spawnRadius
+            // Example: spawnProtection = 30, spawnRadius = 35 -> enemies spawn between 30 and 35 units from player
+            Vector2 randomPoint = new Vector2(transform.position.x, transform.position.z) + Random.insideUnitCircle.normalized * Random.Range(spawnProtection, spawnRadius);
+            Vector3 spawnPosition = new Vector3(randomPoint.x, transform.position.y, randomPoint.y);
+
             Ray ray = new Ray(spawnPosition, -transform.up);
             RaycastHit hitInfo;
 
@@ -122,5 +126,7 @@ public class WaveSpawner : MonoBehaviour
             yield return new WaitForSeconds(spawnRate);
         }
     }
+
+
 
 }
