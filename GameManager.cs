@@ -50,12 +50,32 @@ public class GameManager : MonoBehaviour
         //     Time.timeScale = 1f;
         // }
 
-        if (Input.GetKey(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.P))
         {
             GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
             foreach (GameObject enemy in enemiesToDestroy)
             {
                 enemy.GetComponent<Enemy>().Die();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
+            foreach (GameObject enemy in enemiesToDestroy)
+            {
+                Debug.Log("Now do the harlem shake");
+                enemy.GetComponent<Enemy>().TurnOnRagdoll();
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
+            foreach (GameObject enemy in enemiesToDestroy)
+            {
+                Debug.Log("Harlem shake cancelled");
+                enemy.GetComponent<Enemy>().TurnOffRagdoll();
             }
         }
 

@@ -19,7 +19,7 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] private TextMeshPro healthText;
     //  [SerializeField] private GameObject Torso;
-    [SerializeField] NavMeshAgent navMeshAgent;
+    // [SerializeField] NavMeshAgent navMeshAgent;
 
     private int currentHealth;
     private int healthPercentage;
@@ -105,15 +105,7 @@ public class Enemy : MonoBehaviour
 
         enemyCollider.enabled = false;
 
-        foreach (Rigidbody rb in RigidBodies)
-        {
-            rb.isKinematic = false;
-        }
-
-        navMeshAgent.isStopped = true;
         TurnOnRagdoll();
-        navScript.enabled = false;
-        navAgent.enabled = false;
 
         isDead = true;
 
@@ -196,11 +188,39 @@ public class Enemy : MonoBehaviour
 
     public void TurnOnRagdoll()
     {
+        foreach (Rigidbody rb in RigidBodies)
+        {
+            rb.isKinematic = false;
+        }
+
         animator.enabled = false;
+        // navMeshAgent.isStopped = true;
+        navScript.enabled = false;
+        navAgent.enabled = false;
 
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = false;
+        }
+    }
+
+    public void TurnOffRagdoll()
+    {
+        if (isDead) return;
+
+        foreach (Rigidbody rb in RigidBodies)
+        {
+            rb.isKinematic = true;
+        }
+
+        animator.enabled = true;
+        // navMeshAgent.isStopped = false;
+        navScript.enabled = true;
+        navAgent.enabled = true;
+
+        foreach (Collider c in RagdollParts)
+        {
+            c.isTrigger = true;
         }
     }
 

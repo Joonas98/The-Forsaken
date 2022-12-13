@@ -12,6 +12,7 @@ public class CanvasManager : MonoBehaviour
     public GameObject upgradesPanel;
     public GameObject shopPanel;
     public GameObject abilitiesCanvas;
+    public GameObject pauseCanvas;
 
     public Image[] hitmarkImages;
     public Image oneHitmarkImage;
@@ -47,6 +48,18 @@ public class CanvasManager : MonoBehaviour
 
     public void HandleInputs()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (!pauseCanvas.activeInHierarchy)
+            {
+                PauseMenu(true);
+            }
+            else
+            {
+                PauseMenu(false);
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             if (!shopPanel.activeInHierarchy)
@@ -83,6 +96,20 @@ public class CanvasManager : MonoBehaviour
             }
         }
 
+    }
+
+    public void PauseMenu(bool boolean)
+    {
+        CloseAll();
+        if (boolean)
+        {
+            InventoryPause();
+        }
+        else
+        {
+            InventoryUnpause();
+        }
+        pauseCanvas.SetActive(boolean);
     }
 
     public void OpenWeaponShop()
@@ -151,7 +178,6 @@ public class CanvasManager : MonoBehaviour
             go.SetActive(false);
         }
         AudioListener.pause = true;
-        // if (playerScript != null) playerScript.canRotate = false;
         if (lookScript != null) lookScript.canRotate = false;
         WeaponSwitcher.canSwitch(false);
         Cursor.lockState = CursorLockMode.None;
