@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
             GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
             foreach (GameObject enemy in enemiesToDestroy)
             {
-                Debug.Log("Now do the harlem shake");
+                // Debug.Log("Now do the harlem shake");
                 enemy.GetComponent<Enemy>().TurnOnRagdoll();
             }
         }
@@ -74,7 +74,7 @@ public class GameManager : MonoBehaviour
             GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
             foreach (GameObject enemy in enemiesToDestroy)
             {
-                Debug.Log("Harlem shake cancelled");
+                // Debug.Log("Harlem shake cancelled");
                 enemy.GetComponent<Enemy>().TurnOffRagdoll();
             }
         }

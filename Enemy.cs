@@ -56,6 +56,7 @@ public class Enemy : MonoBehaviour
 
     public GameObject damagePopupText;
     public Transform popupTransform;
+    private Vector3 newPosition; // Position where to warp navmeshagent when disabling ragdoll mode
 
     [Header("Audio")]
     public AudioSource audioSource;
@@ -106,6 +107,9 @@ public class Enemy : MonoBehaviour
         enemyCollider.enabled = false;
 
         TurnOnRagdoll();
+
+        navScript.enabled = false;
+        navAgent.enabled = false;
 
         isDead = true;
 
@@ -194,9 +198,11 @@ public class Enemy : MonoBehaviour
         }
 
         animator.enabled = false;
-        // navMeshAgent.isStopped = true;
         navScript.enabled = false;
+
         navAgent.enabled = false;
+        // navAgent.isStopped = true;
+        // navAgent.updatePosition = false;
 
         foreach (Collider c in RagdollParts)
         {
@@ -213,11 +219,12 @@ public class Enemy : MonoBehaviour
             rb.isKinematic = true;
         }
 
-        animator.enabled = true;
-        // navMeshAgent.isStopped = false;
         navScript.enabled = true;
+        navScript.MoveToNavMesh();
+
         navAgent.enabled = true;
 
+        // animator.enabled = true;
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = true;

@@ -33,10 +33,12 @@ public class EnemyNav : MonoBehaviour
 
     private void Update()
     {
+        if (!navMeshAgent.isActiveAndEnabled) return; // Avoid errors when agent is disabled
+
         navMeshAgent.destination = targetLocation.position;
 
-        if (navMeshAgent.remainingDistance < navMeshAgent.stoppingDistance) // Tämä systeemi kääntää NavMeshAgentin kohdetta päin, mikäli
-        {                                                                   // ollaan saavutettu stoppingDistance
+        if (navMeshAgent.remainingDistance < navMeshAgent.stoppingDistance) // Rotate towards player when stoppingDistance is reached
+        {
             navMeshAgent.updateRotation = false;
             Vector3 lookPos = targetLocation.position - transform.position;
             lookPos.y = 0;
