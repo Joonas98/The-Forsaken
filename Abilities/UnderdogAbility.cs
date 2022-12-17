@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu]
-public class ViperVenomAbility : Ability
+public class UnderdogAbility : Ability
 {
-    // Each bullet deals 5% of enemy's max HP as dmg
+    // 1% Attack / shooting speed for each enemy alive
 
 
 }

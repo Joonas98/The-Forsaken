@@ -31,7 +31,7 @@ public class MouseLook : MonoBehaviour
     {
         if (!canRotate) return;
 
-        if (GameManager.GetCurrentGun() != null && GameManager.GetCurrentGun().isAiming)
+        if (GameManager.GM.GetCurrentGun() != null && GameManager.GM.GetCurrentGun().isAiming)
         {
             mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * aimSensMultiplier;
             mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * aimSensMultiplier;

@@ -54,7 +54,7 @@ public class WaveSpawner : MonoBehaviour
     {
         for (int i = 0; i < waveCount; i++)
         {
-            GameManager.UpdateWaveNumber(waveNumber + 1);
+            GameManager.GM.UpdateWaveNumber(waveNumber + 1);
             audioSource.PlayOneShot(waveStartSound);
             // Debug.Log("Starting wave: " + (waveNumber + 1));
             int _enemiesToSpawn = baseEnemyCount + (enemyCountIncrease * waveNumber);
@@ -86,8 +86,8 @@ public class WaveSpawner : MonoBehaviour
             GameObject enemyToSpawn = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
 
             GameObject newGO = Instantiate(enemyToSpawn, positionToSpawn, Quaternion.identity);
-            GameManager.enemyCount++;
-            GameManager.UpdateEnemyCount();
+            GameManager.GM.enemyCount++;
+            GameManager.GM.UpdateEnemyCount();
 
             yield return new WaitForSeconds(spawnRate);
         }
@@ -116,8 +116,8 @@ public class WaveSpawner : MonoBehaviour
 
                 GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
                 GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
-                GameManager.enemyCount++;
-                GameManager.UpdateEnemyCount();
+                GameManager.GM.enemyCount++;
+                GameManager.GM.UpdateEnemyCount();
             }
             else
             {

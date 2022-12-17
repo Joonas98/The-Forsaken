@@ -7,15 +7,17 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
     public static GameManager GM;
-    public static GameObject WeaponHolster;
-    public static int enemyCount = 0;
+    public GameObject WeaponHolster;
+    public int enemyCount = 0;
 
-    public static TextMeshProUGUI enemiesText;
-    public static TextMeshProUGUI roundsText;
+    public TextMeshProUGUI enemiesText;
+    public TextMeshProUGUI roundsText;
 
-    public static int currentWave = 0;
+    public int currentWave = 0;
 
     public GameObject aimingSymbol;
+
+    public int money;
 
     private void Awake()
     {
@@ -88,22 +90,36 @@ public class GameManager : MonoBehaviour
             aimingSymbol.SetActive(false);
         }
 
+        // Functionality for underdog ability
+        if (AbilityMaster.abilities.Contains(3))
+        {
+            if (GetCurrentGun() == null) return;
+            GetCurrentGun().RPM = GetCurrentGun().RPMOG * (1f + (enemyCount / 100f));
+            GetCurrentGun().UpdateFirerate();
+            Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
+        }
+
     }
 
-    public static Gun GetCurrentGun()
+    public Gun GetCurrentGun()
     {
         return WeaponHolster.GetComponentInChildren<Gun>();
     }
 
-    public static void UpdateEnemyCount()
+    public void UpdateEnemyCount()
     {
         enemiesText.text = enemyCount.ToString();
     }
 
-    public static void UpdateWaveNumber(int wave)
+    public void UpdateWaveNumber(int wave)
     {
         currentWave = wave;
         roundsText.text = wave.ToString();
+    }
+
+    public void AdjustMoney(int amount)
+    {
+        money += amount;
     }
 
 }

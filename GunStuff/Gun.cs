@@ -146,6 +146,7 @@ public class Gun : MonoBehaviour
     private ParticleSystem muzzleFlashOG;
     private float originalSpread;
     private float aimSpeedOG;
+    [HideInInspector] public float RPMOG;
 
     private float recoilXOG;
     private float recoilYOG;
@@ -184,6 +185,8 @@ public class Gun : MonoBehaviour
         recoilXOG = recoilX;
         recoilYOG = recoilY;
         recoilZOG = recoilZ;
+        originalSpread = spread;
+        RPMOG = RPM;
 
         equipTrans = GameObject.Find("EquipTrans").transform;
     }
@@ -199,10 +202,8 @@ public class Gun : MonoBehaviour
         animator = GetComponent<Animator>();
 
         shotsLeft = pelletCount;
-        FireRate = (RPM / 60);
-        FireRate = 1 / FireRate;
 
-        originalSpread = spread;
+        UpdateFirerate();
 
         CurrentMagazine = MagazineSize;
 
@@ -1091,6 +1092,12 @@ public class Gun : MonoBehaviour
         WeaponSwitcher.canSwitch(false);
         audioSource.PlayOneShot(unequipSound);
     } // Ase pois
+
+    public void UpdateFirerate()
+    {
+        FireRate = (RPM / 60);
+        FireRate = 1 / FireRate;
+    }
 
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {

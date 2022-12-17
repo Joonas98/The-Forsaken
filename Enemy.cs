@@ -14,6 +14,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float despawnDistance;
     [SerializeField] private float runDistance;
     [SerializeField] private float attackDistance;
+    [SerializeField] private int moneyReward;
 
     [SerializeField] private float crawlingSpeedMultiplier;
 
@@ -101,8 +102,12 @@ public class Enemy : MonoBehaviour
 
     public void Die()
     {
-        GameManager.enemyCount--;
-        GameManager.UpdateEnemyCount();
+        GameManager.GM.enemyCount--;
+        GameManager.GM.UpdateEnemyCount();
+        // GameManager.GM.AdjustMoney(moneyReward);
+        GameManager.GM.money += moneyReward;
+
+        Debug.Log(GameManager.GM.money);
 
         enemyCollider.enabled = false;
 
@@ -120,10 +125,10 @@ public class Enemy : MonoBehaviour
         // StartCoroutine(DespawnSequence());
     }
 
-    public void Despawn() // Ei kait käytössä ja ajan tasalla?
+    public void Despawn() // Not in use
     {
-        GameManager.enemyCount--;
-        GameManager.UpdateEnemyCount();
+        GameManager.GM.enemyCount--;
+        GameManager.GM.UpdateEnemyCount();
 
         if (healthText != null)
             Destroy(healthText.gameObject);
@@ -224,7 +229,7 @@ public class Enemy : MonoBehaviour
 
         navAgent.enabled = true;
 
-        // animator.enabled = true;
+        animator.enabled = true;
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = true;

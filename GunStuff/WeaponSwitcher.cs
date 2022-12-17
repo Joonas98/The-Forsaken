@@ -123,7 +123,7 @@ public class WeaponSwitcher : MonoBehaviour
             i++;
         }
 
-        CurrentGun = GameManager.GetCurrentGun();
+        CurrentGun = GameManager.GM.GetCurrentGun();
 
         if (CurrentGun != null)
         {

@@ -14,7 +14,7 @@ public class UpgradesMenu : MonoBehaviour
 
     private void OnEnable()
     {
-        chosenGun = GameManager.GetCurrentGun();
+        chosenGun = GameManager.GM.GetCurrentGun();
         if (chosenGun != null) attchiesScript = chosenGun.GetComponent<AttachmentsScript>();
 
         if (chosenGun != null)

@@ -57,8 +57,8 @@ public class EnemySpawner : MonoBehaviour
                 spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y + 1f, hitInfo.point.z);
 
                 GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
-                GameManager.enemyCount++;
-                GameManager.UpdateEnemyCount();
+                GameManager.GM.enemyCount++;
+                GameManager.GM.UpdateEnemyCount();
             }
             else
             {

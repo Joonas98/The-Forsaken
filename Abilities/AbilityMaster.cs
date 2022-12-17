@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Globaali abilitydatan pitäjä
+// Global holder for ability data
 public class AbilityMaster : MonoBehaviour
 {
-    // Staattiset
+    // Statics
     public static AbilityMaster instance = null;
     public static List<int> abilities = new List<int>();
 
-    // Monot
+    // Monos
     public GameObject player;
     public List<Ability> abilitiesList = new List<Ability>();
 
@@ -21,7 +21,6 @@ public class AbilityMaster : MonoBehaviour
 
     private void Awake()
     {
-        // Singleton logiikka
         if (instance == null)
         {
             DontDestroyOnLoad(gameObject);
