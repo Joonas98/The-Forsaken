@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Recoil : MonoBehaviour
 {
+    public static Recoil Instance;
 
     public Rigidbody RB;
     public Transform playerTrans;
@@ -26,9 +27,20 @@ public class Recoil : MonoBehaviour
     public PlayerMovement movementScript;
     public float rec1, rec2, rec3, rec4, rec5, rec6;
 
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else if (Instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
+
     void Update()
     {
-        // Alla palautetaan kulma. Kaikki 0 palauttaa rekyylin takaisin. Tavoite myöhemmin saada Y arvo -> targetRotation.y
         targetRotation = Vector3.Lerp(targetRotation, new Vector3(targetRotation.x, 0, 0), returnSpeed * Time.deltaTime);
         currentRotation = Vector3.Slerp(currentRotation, targetRotation, snappiness * Time.fixedDeltaTime);
         transform.localRotation = Quaternion.Euler(currentRotation);
@@ -75,9 +87,16 @@ public class Recoil : MonoBehaviour
         targetRotation += new Vector3(recoilX, Random.Range(-recoilY * 0.1f, recoilY * 0.1f), Random.Range(-recoilZ, recoilZ)) * recoilMultiplier;
     }
 
+    // Recoil from taking damage
+    // Some variables like return speed is still determined by the held weapon
+    public void DamageFlinch(float flinchY, float flinchX, float flinchMultiplier)
+    {
+        targetRotation += new Vector3(recoilX, Random.Range(-flinchY, flinchY), Random.Range(-flinchX, flinchX)) * flinchMultiplier;
+    }
+
     #region Setters
 
-    // Pari setteriä
+    // Set functions
     public void SetRecoilX(float value)
     {
         recoilX = value;

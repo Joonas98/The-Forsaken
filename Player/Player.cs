@@ -25,6 +25,8 @@ public class Player : MonoBehaviour
     public float maxChromaticAberration;
     public float maxGrain;
 
+    public float flinchY, flinchX, flinchMultiplier;
+
     [Header("Other Stuff")]
 
     public GameObject runningSymbol, fallingSymbol, regenSymbol;
@@ -93,6 +95,7 @@ public class Player : MonoBehaviour
             playerAS.PlayOneShot(damageGrunts[rindex]);
         }
         regenSymbol.SetActive(false);
+        Recoil.Instance.DamageFlinch(flinchY, flinchX, flinchMultiplier);
     }
 
     public void Heal(int amount)

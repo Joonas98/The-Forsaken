@@ -7,16 +7,12 @@ using TMPro;
 public class GameManager : MonoBehaviour
 {
     public static GameManager GM;
-    public GameObject WeaponHolster;
+
+    public GameObject WeaponHolster, aimingSymbol;
+    public TextMeshProUGUI enemiesText, roundsText, moneyText;
+
     public int enemyCount = 0;
-
-    public TextMeshProUGUI enemiesText;
-    public TextMeshProUGUI roundsText;
-
     public int currentWave = 0;
-
-    public GameObject aimingSymbol;
-
     public int money;
 
     private void Awake()
@@ -120,6 +116,8 @@ public class GameManager : MonoBehaviour
     public void AdjustMoney(int amount)
     {
         money += amount;
+        moneyText.text = money.ToString() + " €";
+
     }
 
 }

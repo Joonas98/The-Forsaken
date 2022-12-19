@@ -12,34 +12,17 @@ public class Gun : MonoBehaviour
     public Sprite gunSprite;
     public string gunName;
     public bool semiAutomatic;
-    // public bool shotgun;
-    public int pelletCount;
-    // public float shotgunDeviation;
-    public float hipSpread;
-    public float spread;
-    public int penetration;
-    public int damage;
-    public float headshotMultiplier;
-    public float RPM;
-    public int MagazineSize;
-    public float ReloadTime;
-    public float knockbackPower;
-    public float range;
+    public int pelletCount, penetration, damage, MagazineSize;
+    public float hipSpread, spread, headshotMultiplier, RPM, ReloadTime, knockbackPower, range, equipTime, unequipTime;
     [Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
     [Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
-    public float equipTime;
-    public float unequipTime;
     public int ammoType; //0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
-
 
     [Header("Recoil Settings")]
     [Tooltip("Up and down")] [SerializeField] public float recoilX;
     [Tooltip("Left and right")] [SerializeField] public float recoilY;
     [Tooltip("Tilt")] [SerializeField] public float recoilZ;
-    // public float aimRecoilMultiplier;
-    [SerializeField] public float snappiness;
-    [SerializeField] public float returnSpeed;
-    // [Tooltip("Should be 0-1")] [SerializeField] public float stationaryAccuracy;
+    [SerializeField] public float snappiness, returnSpeed;
     [Tooltip("Rekyylin kerroin ilmassa")] public float rec1;
     [Tooltip("Rekyylin kerroin maassa liikutaan ei t‰hd‰t‰")] public float rec2;
     [Tooltip("Rekyylin kerroin maassa liikutaan t‰hd‰t‰‰n")] public float rec3;
@@ -73,15 +56,11 @@ public class Gun : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip shootSound;
-    public AudioClip reloadSound;
-    public AudioClip dryFireSound;
-    public AudioClip zoomScopeInSound;
-    public AudioClip zoomScopeOutSound;
+    public AudioClip reloadSound, dryFireSound;
+    public AudioClip zoomScopeInSound, zoomScopeOutSound;
 
-    public AudioClip equipSound;
-    public AudioClip unequipSound;
-    public AudioClip aimSound;
-    public AudioClip unaimSound;
+    public AudioClip equipSound, unequipSound;
+    public AudioClip aimSound, unaimSound;
 
     public AudioSource audioSource;
     public AudioMixer audioMixer;
@@ -113,30 +92,25 @@ public class Gun : MonoBehaviour
     [HideInInspector] public ParticleSystemRenderer rend;
     [HideInInspector] public Vector3 equipVector;
     [HideInInspector] public Transform equipTrans;
-    [HideInInspector] public Camera mainCamera;
-    [HideInInspector] public Camera weaponCam;
+    [HideInInspector] public Camera mainCamera, weaponCam;
     [HideInInspector] public string magString, totalAmmoString;
-    [HideInInspector] public bool isReloading = false;
-    [HideInInspector] public bool isAiming = false;
-    [HideInInspector] public bool canAim; // P‰ivitet‰‰n updatessa trueksi ellei olla ilmassa tms.
-    [HideInInspector] public bool canAim2; // Aseen vaihtamisessa
+    [HideInInspector] public bool isReloading = false, isAiming = false, unequipping = false;
+    [HideInInspector] public bool canAim; // True in update unless mid air etc.
+    [HideInInspector] public bool canAim2; // Switching guns
     [HideInInspector] public float maxZoom, minZoom;
-    [HideInInspector] public bool unequipping = false;
     [HideInInspector] public int shotsLeft;
 
     [HideInInspector] public BulletHoles bulletHoleScript;
     // public GameObject damagePopupText;
 
     private IdleSway idleSwayScript;
-    private GameObject CrosshairContents;
+    private GameObject CrosshairContents, weaponSpot;
     private Crosshair crosshairScript;
     private PlayerMovement playerMovementScript;
-    private GameObject weaponSpot;
     private PlayerInventory inventoryScript;
 
     [HideInInspector] public Camera scopeCam = null;
-    private float equipLerp;
-    private float unequipLerp;
+    private float equipLerp, unequipLerp;
     private float equipRotX, equipRotY, equipRotZ;
 
     //OG THINGS
@@ -148,9 +122,7 @@ public class Gun : MonoBehaviour
     private float aimSpeedOG;
     [HideInInspector] public float RPMOG;
 
-    private float recoilXOG;
-    private float recoilYOG;
-    private float recoilZOG;
+    private float recoilXOG, recoilYOG, recoilZOG;
 
     private VisualRecoil vire;
     private void Awake()
@@ -486,7 +458,7 @@ public class Gun : MonoBehaviour
             //     scopeCam.fieldOfView = minZoom;
             // }
         }
-    } // T‰ht‰imi‰ voi scrollata rullalla
+    } // Mouse wheel changes scope zoom
 
     public void HandleSwitchingLerps()
     {
@@ -505,7 +477,7 @@ public class Gun : MonoBehaviour
             transform.position = Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime);
             transform.rotation = Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime);
         }
-    } // Aseen esille ottamiseen liittyv‰‰ lerppailua
+    } // Handle lerps for switching weapons
 
     public void HandleImpact(RaycastHit hit)
     {
@@ -718,7 +690,7 @@ public class Gun : MonoBehaviour
             GroundImpactFX(hit);
             bulletHoleScript.AddBulletHole(hit);
         }
-    } // K‰sitell‰‰n osuma, esim vihollisiin
+    } // Handle impact, eg. hit enemies
 
     public void Shoot(int pelletCount)
     {
@@ -967,7 +939,7 @@ public class Gun : MonoBehaviour
                 }
             }
         }
-    } // Itse ampumisen funktio
+    } // Main shooting function
 
     public void EnemyImpactFX(RaycastHit hit)
     {
@@ -982,16 +954,18 @@ public class Gun : MonoBehaviour
             ParticleSystem hitFXGO = Instantiate(HitFX, hit.point, Quaternion.identity);
             Destroy(hitFXGO, 2f);
         }
-    } // Veri efekti osumasta
+    } // Blood effect at enemies
 
     public void GroundImpactFX(RaycastHit hit)
     {
         ParticleSystem groundFXGO = Instantiate(GroundFX, hit.point, Quaternion.identity);
         Destroy(groundFXGO, 2f);
-    } // Osutaan maahan
+    } // Ground impacts
 
     public void DrawLaser(Vector3 v0, Vector3 v1)
     {
+        // TODO: object pooling to optimize
+        if (LR == null) return;
         var InstantiatedLaser = Instantiate(LR);
 
         LineRenderer lr = InstantiatedLaser.GetComponent<LineRenderer>();
@@ -1006,7 +980,7 @@ public class Gun : MonoBehaviour
         lr.SetPosition(0, v0);
         lr.SetPosition(1, v1);
         Destroy(InstantiatedLaser.gameObject, laserTime);
-    } // Linerenderer piipun ja osutun pisteen v‰lille
+    } // Linerenderer between muzzle and hit point
 
     private void SetFOV(float fov)
     {
@@ -1034,7 +1008,7 @@ public class Gun : MonoBehaviour
         vire.SetVireKickback(vireKick);
         vire.SetVireSnappiness(vireSnap);
         vire.SetVireReturn(vireReturn);
-    } // P‰ivitt‰‰ recoil skriptiin rekyyli- ja vire arvot
+    } // Update recoil script, ViRe and recoil
 
     private void Penetrate(RaycastHit hit, int penetrationLeft)
     {
@@ -1063,7 +1037,7 @@ public class Gun : MonoBehaviour
                 }
             }
         }
-    }  // Ei ole en‰‰ k‰ytˆss‰
+    }  // Not in use
 
     public void EquipWeapon()
     {
@@ -1079,7 +1053,7 @@ public class Gun : MonoBehaviour
             weaponSpot = GameObject.Find("WeaponSpot");
 
         StartCoroutine(WaitEquipTime());
-    } // Ase esiin
+    }
 
     public void UnequipWeapon()
     {
@@ -1091,7 +1065,7 @@ public class Gun : MonoBehaviour
         shotCounter = unequipTime + 0.01f;
         WeaponSwitcher.canSwitch(false);
         audioSource.PlayOneShot(unequipSound);
-    } // Ase pois
+    }
 
     public void UpdateFirerate()
     {
@@ -1111,7 +1085,7 @@ public class Gun : MonoBehaviour
         isReloading = false;
         reloadSymbol.SetActive(false);
         swayScript.enabled = true;
-    } // Ienumi lataamiselle
+    } // Reloading delay etc.
 
     IEnumerator WaitEquipTime()
     {
@@ -1120,9 +1094,9 @@ public class Gun : MonoBehaviour
         swayScript.enabled = true;
         canAim2 = true;
         WeaponSwitcher.canSwitch(true);
-    } // Delay aseen esiin ottamiselle
+    } // Delay for equipping weapon
 
-    // Vaihdetaan arvoja muista skripteist‰
+    // Adjust values from other scripts
     #region Adjust Values 
 
     public void AdjustDamage(int amount)
@@ -1158,7 +1132,7 @@ public class Gun : MonoBehaviour
 
     #endregion
 
-    // Palautetaan og arvot
+    // Return original values
     #region Reset Values
     public void ResetAimingSpot()
     {

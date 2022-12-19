@@ -22,14 +22,12 @@ public class Enemy : MonoBehaviour
     //  [SerializeField] private GameObject Torso;
     // [SerializeField] NavMeshAgent navMeshAgent;
 
-    private int currentHealth;
-    private int healthPercentage;
+    private int currentHealth, healthPercentage;
     private string healthString;
     public bool isDead = false;
     private GameObject[] BodyParts;
     private GameObject player;
-    private float distanceToPlayer;
-    private float velocity;
+    private float distanceToPlayer, velocity;
 
     private EnemyNav navScript;
     // private Rigidbody RB;
@@ -42,15 +40,12 @@ public class Enemy : MonoBehaviour
     public Collider[] Damagers;
     public Collider enemyCollider;
 
-    private bool canAttack = true;
-    private bool canSwing = true;
+    private bool canAttack = true, canSwing = true;
     // private bool stoppedRunning = false;
     public bool isCrawling = false;
 
-    public GameObject eyeRight;
-    public GameObject eyeLeft;
-    private Material eyeMaterialR;
-    private Material eyeMaterialL;
+    public GameObject eyeRight, eyeLeft;
+    private Material eyeMaterialR, eyeMaterialL;
 
     public Color newEyeColor;
     public Gradient eyeGradient;
@@ -64,7 +59,6 @@ public class Enemy : MonoBehaviour
     public AudioClip[] takeDamageSounds;
     public AudioClip[] attackSounds;
     public AudioClip[] randomSounds;
-
 
     private void Awake()
     {
@@ -102,12 +96,12 @@ public class Enemy : MonoBehaviour
 
     public void Die()
     {
+        if (isDead) return;
+        isDead = true;
+
         GameManager.GM.enemyCount--;
         GameManager.GM.UpdateEnemyCount();
-        // GameManager.GM.AdjustMoney(moneyReward);
-        GameManager.GM.money += moneyReward;
-
-        Debug.Log(GameManager.GM.money);
+        GameManager.GM.AdjustMoney(moneyReward);
 
         enemyCollider.enabled = false;
 
@@ -115,8 +109,6 @@ public class Enemy : MonoBehaviour
 
         navScript.enabled = false;
         navAgent.enabled = false;
-
-        isDead = true;
 
         if (healthText != null)
             Destroy(healthText.gameObject);
@@ -138,7 +130,7 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        currentHealth = currentHealth - damage;
+        currentHealth -= damage;
         healthString = currentHealth + " / " + maxHealth;
         healthText.text = healthString;
 
@@ -148,7 +140,6 @@ public class Enemy : MonoBehaviour
 
         if (!isDead) DamagePopup(damage);
 
-        // Vahingon ottamis‰‰ni random mahdollisuudella (huom. Random.Range() j‰lkimm‰inen luku on todellisuudessa 1 pienempi)
         if (!isDead && Random.Range(0, 3) == 1)
         {
             int rindex = Random.Range(0, takeDamageSounds.Length);
@@ -159,8 +150,6 @@ public class Enemy : MonoBehaviour
         {
             if (isDead == false)
             {
-                // Debug.Log("Enemy Died");
-                isDead = true;
                 Die();
             }
         }
@@ -238,6 +227,7 @@ public class Enemy : MonoBehaviour
 
     public void Attack(Player playerScript)
     {
+        if (isDead) return;
         if (canAttack)
         {
             playerScript.TakeDamage(damage);
@@ -248,6 +238,7 @@ public class Enemy : MonoBehaviour
 
     public void HandleSwinging()
     {
+        if (isDead) return;
         if (distanceToPlayer < attackDistance && canSwing) // Try to attack
         {
             if (!isCrawling)
@@ -329,28 +320,10 @@ public class Enemy : MonoBehaviour
         // attackDistance = attackDistance * 0.5f;
     }
 
-    public void UpdateEyeColor()
+    public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
     {
-        // // 100 HP = valkoiset silm‰t, 50 HP = keltaiset ja 0 = punaiset
-        // if (currentHealth >= 50 && currentHealth < 100)
-        // {
-        //     float variFloat = 2f * healthPercentage / 100f;
-        //     Color vari = new Color(255, 255, variFloat * 255 - 255);
-        //     Debug.Log(healthPercentage + "  v‰ri int: " + variFloat + " lopullinen: " + variFloat * 255);
-        //     eyeMaterialR.SetColor("_EmissionColor", vari * Mathf.Pow(2, 2));
-        //     eyeMaterialL.SetColor("_EmissionColor", vari * Mathf.Pow(2, 2));
-        // }
-        //
-        // if (currentHealth < 50)
-        // {
-        //     Color vari = new Color(255, 255, 0);
-        //     eyeMaterialR.SetColor("_EmissionColor", Color.red * Mathf.Pow(2, 2));
-        //     eyeMaterialL.SetColor("_EmissionColor", Color.red * Mathf.Pow(2, 2));
-        // }
-
         eyeMaterialR.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
         eyeMaterialL.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
-
     }
 
     public void SlowDown(float slowMultiplier)
