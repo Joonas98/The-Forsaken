@@ -6,6 +6,8 @@ using UnityEngine.UI;
 // Global holder for ability data
 public class AbilityMaster : MonoBehaviour
 {
+    // TODO: improve system for passive abilities?
+
     // Statics
     public static AbilityMaster instance = null;
     public static List<int> abilities = new List<int>();

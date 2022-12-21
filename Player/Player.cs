@@ -25,7 +25,7 @@ public class Player : MonoBehaviour
     public float maxChromaticAberration;
     public float maxGrain;
 
-    public float flinchY, flinchX, flinchMultiplier;
+    public float flinchY, flinchX;
 
     [Header("Other Stuff")]
 
@@ -73,7 +73,7 @@ public class Player : MonoBehaviour
         calculateRegen();
     }
 
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, float flinchMultiplier = 1f)
     {
         regenerating = false;
         StopAllCoroutines();
@@ -109,13 +109,13 @@ public class Player : MonoBehaviour
             currentHealth += amount;
             currentHPPercentage = currentHealth * 1.0f / maxHealth * 1.0f * 100f; // 80 / 100 = 0.8
 
+            if (currentHealth >= maxHealth)
+                currentHealth = maxHealth;
+
             float currentHPPercentagePP = 1f - (currentHPPercentage / 100f); // 1 - 0.8 = 0.2
             damagePPScript.UpdateDamagePP(maxBloom * currentHPPercentagePP, maxVignette * currentHPPercentagePP, maxChromaticAberration * currentHPPercentagePP, maxGrain * currentHPPercentagePP);
 
             UpdateHealthUI();
-
-            if (currentHealth >= maxHealth)
-                currentHealth = maxHealth;
         }
     }
 

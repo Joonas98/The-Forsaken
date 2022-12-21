@@ -15,11 +15,6 @@ public class WeaponSwitcher : MonoBehaviour
 
     private float unequipTime;
 
-    void Start()
-    {
-        // SelectWeapon(); Tehd‰‰n nyky‰‰n CanvasManagerista
-    }
-
     void Update()
     {
         int previousSelectedWeapon = selectedWeapon;
@@ -133,9 +128,9 @@ public class WeaponSwitcher : MonoBehaviour
 
         if (highlight != null) highlight.SetActive(false);
 
-        highlight = weaponsPanel.transform.GetChild(selectedWeapon).GetChild(2).gameObject; // Kovakoodaattu lapsen indexi
-        highlight.SetActive(true);                                                          // Muista muuttaa jos muutetaan weaponpanelin rakennetta
-
+        // Highlight selected weapon
+        highlight = weaponsPanel.transform.GetChild(selectedWeapon).GetChild(3).gameObject;
+        highlight.SetActive(true);
     }
 
     public static void canSwitch(bool boolean)

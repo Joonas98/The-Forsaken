@@ -15,7 +15,7 @@ public class PlayerMovement : MonoBehaviour
     public LayerMask groundmask;
 
     public Transform groundCheck;
-    public float groundDistance;
+    public float groundDistance; // Radius of sphere that checks if player is grounded
     public GameObject mainCamera;
     public GameObject fallingSymbol;
 
@@ -47,7 +47,7 @@ public class PlayerMovement : MonoBehaviour
     {
         get
         {
-            if (controller.isGrounded && Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 3f))
+            if (/*controller.isGrounded && */ Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 2f))
             {
                 hitPointNormal = slopeHit.normal;
                 return Vector3.Angle(hitPointNormal, Vector3.up) > controller.slopeLimit;

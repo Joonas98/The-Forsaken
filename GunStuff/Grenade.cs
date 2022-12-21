@@ -136,7 +136,7 @@ public class Grenade : MonoBehaviour
                     }
                 }
 
-                // Kranaatit r‰j‰ytt‰‰ toisia kranaatteja
+                // Grenades blow up other grenades
                 Grenade grenade = nearbyObject.GetComponentInParent<Grenade>();
                 if (grenade != null)
                 {

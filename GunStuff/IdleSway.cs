@@ -14,9 +14,6 @@ public class IdleSway : MonoBehaviour
 
     private float idleSwayTime;
 
-    public bool walking = false;
-    public bool running = false;
-
     private Vector3 swayPosition;
 
     public GameObject Player;
@@ -44,19 +41,19 @@ public class IdleSway : MonoBehaviour
 
     void Update()
     {
-        if (playerMovementScript.isRunning) // Juostaan
+        if (playerMovementScript.isRunning) // Running
         {
             idleSwayAmountA = ogAmountA * runningSwayMultiplier;
             idleSwayAmountB = ogAmountB * runningSwayMultiplier;
             idleSwayScale = ogScale * 0.5f;
         }
-        else if (!playerMovementScript.isRunning && cc.velocity.magnitude >= 1.5f) // Ei juosta, mutta liikutaan
+        else if (!playerMovementScript.isRunning && cc.velocity.magnitude >= 1.5f) // Moving but not running
         {
             idleSwayAmountA = ogAmountA * movementSwayMultiplier;
             idleSwayAmountB = ogAmountB * movementSwayMultiplier;
             idleSwayScale = ogScale * 0.5f;
         }
-        else // Ei liikuta
+        else // Not moving
         {
             idleSwayAmountA = ogAmountA;
             idleSwayAmountB = ogAmountB;
@@ -82,7 +79,7 @@ public class IdleSway : MonoBehaviour
         transform.localPosition = swayPosition;
     }
 
-    private Vector3 LissajousCurve(float Time, float A, float B) // Kaava liikuttamiseen
+    private Vector3 LissajousCurve(float Time, float A, float B) // Formula for the movement
     {
         return new Vector3(Mathf.Sin(Time), A * Mathf.Sin(B * Time + Mathf.PI));
     }

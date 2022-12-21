@@ -23,11 +23,8 @@ public class EnemyNav : MonoBehaviour
 
         if (!IsAgentOnNavMesh(gameObject))
         {
-            // enemyScript.Despawn();
-            // Debug.Log("Agent not on navmesh");
-
             MoveToNavMesh();
-            Debug.Log("Enemy moved to navmesh");
+            // Debug.Log("Enemy moved to navmesh");
         }
     }
 

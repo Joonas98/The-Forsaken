@@ -92,7 +92,7 @@ public class GameManager : MonoBehaviour
             if (GetCurrentGun() == null) return;
             GetCurrentGun().RPM = GetCurrentGun().RPMOG * (1f + (enemyCount / 100f));
             GetCurrentGun().UpdateFirerate();
-            Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
+            // Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
         }
 
     }

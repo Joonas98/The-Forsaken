@@ -4,16 +4,10 @@ using UnityEngine;
 
 public class Fire : MonoBehaviour
 {
-
+    public bool healingFire = false;
     public float damageInterval;
     public int damage;
     [HideInInspector] public float radius; // radius = localScale.x / 2
-
-    public ParticleSystem firePS;
-
-    private Enemy enemyScript;
-    private Enemy enemyScriptExit;
-    private List<Enemy> collidedEnemies = new List<Enemy>();
 
     private float damageCounter;
 
@@ -22,21 +16,6 @@ public class Fire : MonoBehaviour
         damageCounter = damageInterval;
 
         radius = transform.localScale.x / 2;
-
-        // Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
-        // foreach (Collider collider in colliders)
-        // {
-        //     if (collider.CompareTag("Torso") && collider.gameObject.layer == 2)
-        //     {
-        //         Enemy enemyScriptStart = collider.gameObject.GetComponentInParent<Enemy>();
-        //         if (!collidedEnemies.Contains(enemyScriptStart) && enemyScriptStart != null)
-        //         {
-        //             if (!collidedEnemies.Contains(enemyScriptStart))
-        //                 collidedEnemies.Add(enemyScriptStart);
-        //             print(enemyScriptStart);
-        //         }
-        //     }
-        // }
     }
 
     private void Update()
@@ -44,15 +23,11 @@ public class Fire : MonoBehaviour
         CalculateDamageIntervals();
     }
 
-    private void CalculateDamageIntervals() // Ajastin joka vahingoittaa kaikkia vihollisia listassa
+    private void CalculateDamageIntervals()
     {
         if (damageCounter <= 0)
         {
             damageCounter = damageInterval;
-            // foreach (Enemy enemyscript in collidedEnemies)
-            // {
-            //     if (enemyScript != null) enemyScript.TakeDamage(damage);
-            // }
 
             Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
             foreach (Collider collider in colliders)
@@ -60,8 +35,32 @@ public class Fire : MonoBehaviour
                 if (collider.CompareTag("Torso") && collider.gameObject.layer == 2)
                 {
                     Enemy enemyScriptStart = collider.gameObject.GetComponentInParent<Enemy>();
-                    enemyScriptStart.TakeDamage(damage);
+
+                    if (!healingFire)
+                    {
+                        enemyScriptStart.TakeDamage(damage);
+                    }
+                    else
+                    {
+                        enemyScriptStart.TakeDamage(damage * -1);
+                    }
                 }
+
+                if (collider.CompareTag("Player"))
+                {
+                    Player playerScript = collider.gameObject.GetComponentInParent<Player>();
+                    if (playerScript == null) return;
+
+                    if (!healingFire)
+                    {
+                        playerScript.TakeDamage(damage, 0.1f);
+                    }
+                    else
+                    {
+                        playerScript.Heal(damage);
+                    }
+                }
+
             }
 
         }
