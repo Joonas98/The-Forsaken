@@ -17,3 +17,6 @@ MonoBehaviour:
   passive: 1
   cooldownTime: 0
   activeTime: 0
+  activateSFX: {fileID: 0}
+  endSFX: {fileID: 0}
+  audioSource: {fileID: 0}

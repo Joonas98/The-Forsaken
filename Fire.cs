@@ -9,13 +9,16 @@ public class Fire : MonoBehaviour
     public int damage;
     [HideInInspector] public float radius; // radius = localScale.x / 2
 
+    public AudioSource audioSource;
+    public AudioClip startSFX;
+
     private float damageCounter;
 
     private void Awake()
     {
         damageCounter = damageInterval;
-
         radius = transform.localScale.x / 2;
+        if (audioSource != null && startSFX != null) audioSource.PlayOneShot(startSFX);
     }
 
     private void Update()

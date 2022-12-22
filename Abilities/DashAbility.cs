@@ -9,19 +9,21 @@ public class DashAbility : Ability
 
     public override void Activate(GameObject parent)
     {
-        Debug.Log("Dash activated");
+        // Debug.Log("Dash activated");
         PlayerMovement movementScript = parent.GetComponent<PlayerMovement>();
         movementScript.Run(false);
         movementScript.speed = movementScript.speed * dashSpeed;
         movementScript.canRun = false;
+        audioSource.PlayOneShot(activateSFX);
     }
 
     public override void BeginCooldown(GameObject parent)
     {
-        Debug.Log("Dash ended");
+        // Debug.Log("Dash ended");
         PlayerMovement movementScript = parent.GetComponent<PlayerMovement>();
         movementScript.speed = movementScript.ogSpeed;
         movementScript.canRun = true;
+        audioSource.PlayOneShot(endSFX);
     }
 
 

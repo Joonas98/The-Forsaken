@@ -11,8 +11,14 @@ public class Ability : ScriptableObject
     public Sprite picture;
     public bool passive;
 
-    public float cooldownTime;
-    public float activeTime;
+    public float cooldownTime, activeTime;
+    public AudioClip activateSFX, endSFX;
+    public AudioSource audioSource;
+
+    protected virtual void OnEnable() // Inherited in all abilities to find the AudioSource
+    {
+        audioSource = GameObject.Find("Player").GetComponent<AudioSource>();
+    }
 
     public virtual void Activate(GameObject parent)
     {
