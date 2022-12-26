@@ -40,11 +40,12 @@ public class Enemy : MonoBehaviour
     public Collider[] Damagers;
     public Collider enemyCollider;
 
-    private bool canAttack = true, canSwing = true;
+    private bool canAttack = true, canSwing = true, ragdolling = false;
     // private bool stoppedRunning = false;
     public bool isCrawling = false;
 
     public GameObject eyeRight, eyeLeft;
+    public GameObject modelRoot;
     private Material eyeMaterialR, eyeMaterialL;
 
     public Color newEyeColor;
@@ -52,7 +53,6 @@ public class Enemy : MonoBehaviour
 
     public GameObject damagePopupText;
     public Transform popupTransform;
-    private Vector3 newPosition; // Position where to warp navmeshagent when disabling ragdoll mode
 
     [Header("Audio")]
     public AudioSource audioSource;
@@ -186,17 +186,19 @@ public class Enemy : MonoBehaviour
 
     public void TurnOnRagdoll()
     {
+        if (ragdolling) return;
+
         foreach (Rigidbody rb in RigidBodies)
         {
             rb.isKinematic = false;
         }
+        ragdolling = true;
 
         animator.enabled = false;
         navScript.enabled = false;
 
+        navAgent.isStopped = true;
         navAgent.enabled = false;
-        // navAgent.isStopped = true;
-        // navAgent.updatePosition = false;
 
         foreach (Collider c in RagdollParts)
         {
@@ -212,13 +214,28 @@ public class Enemy : MonoBehaviour
         {
             rb.isKinematic = true;
         }
+        ragdolling = false;
+
+        transform.position = modelRoot.transform.position; //Enemy GO does not move with ragdoll, so do that when stop ragdoll
 
         navScript.enabled = true;
-        navScript.MoveToNavMesh();
+        if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
 
         navAgent.enabled = true;
+        navAgent.isStopped = true; // Stop navAgent to wait standup animation to play
 
+        // Animator stuff
         animator.enabled = true;
+        if (!isCrawling)
+        {
+            StartCoroutine(StandupDelay());
+            animator.Play("Stand up");
+        }
+        else
+        {
+            navAgent.isStopped = false;
+        }
+
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = true;
@@ -309,6 +326,13 @@ public class Enemy : MonoBehaviour
     {
         yield return new WaitForSeconds(attackCooldown);
         canAttack = true;
+    }
+
+    IEnumerator StandupDelay()
+    {
+        yield return new WaitForSeconds(2f);
+        if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
+        if (!isDead) navAgent.isStopped = false;
     }
 
     public void StartCrawling()

@@ -14,7 +14,7 @@ public class DashAbility : Ability
         movementScript.Run(false);
         movementScript.speed = movementScript.speed * dashSpeed;
         movementScript.canRun = false;
-        audioSource.PlayOneShot(activateSFX);
+        if (audioSource != null && activateSFX != null) audioSource.PlayOneShot(activateSFX);
     }
 
     public override void BeginCooldown(GameObject parent)
@@ -23,7 +23,7 @@ public class DashAbility : Ability
         PlayerMovement movementScript = parent.GetComponent<PlayerMovement>();
         movementScript.speed = movementScript.ogSpeed;
         movementScript.canRun = true;
-        audioSource.PlayOneShot(endSFX);
+        if (audioSource != null && activateSFX != null) audioSource.PlayOneShot(endSFX);
     }
 
 

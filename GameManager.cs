@@ -38,6 +38,11 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        HandleKeybinds();
+    }
+
+    public void HandleKeybinds()
+    {
         // if (Input.GetKey(KeyCode.N))
         // {
         //     Time.timeScale = 0.25f;
@@ -94,7 +99,6 @@ public class GameManager : MonoBehaviour
             GetCurrentGun().UpdateFirerate();
             // Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
         }
-
     }
 
     public Gun GetCurrentGun()

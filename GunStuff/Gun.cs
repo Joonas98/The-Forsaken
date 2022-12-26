@@ -58,7 +58,6 @@ public class Gun : MonoBehaviour
     public AudioClip shootSound;
     public AudioClip reloadSound, dryFireSound;
     public AudioClip zoomScopeInSound, zoomScopeOutSound;
-
     public AudioClip equipSound, unequipSound;
     public AudioClip aimSound, unaimSound;
 
@@ -1132,7 +1131,7 @@ public class Gun : MonoBehaviour
 
     #endregion
 
-    // Return original values
+    // Reset to original values
     #region Reset Values
     public void ResetAimingSpot()
     {
