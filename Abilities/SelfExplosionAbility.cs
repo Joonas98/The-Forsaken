@@ -14,7 +14,7 @@ public class SelfExplosionAbility : Ability
 
     public override void Activate(GameObject parent)
     {
-        Debug.Log("Explosion activated");
+        // Debug.Log("Explosion activated");
 
         parent.GetComponent<AudioSource>().PlayOneShot(explosionSound);
         ParticleSystem xplosion = Instantiate(explosionEffect, new Vector3(parent.transform.position.x, parent.transform.position.y - 1, parent.transform.position.z), Quaternion.LookRotation(Vector3.down));
@@ -90,7 +90,7 @@ public class SelfExplosionAbility : Ability
 
     public override void BeginCooldown(GameObject parent)
     {
-        Debug.Log("Explosion ended");
+        // Debug.Log("Explosion ended");
         damagedEnemies.Clear();
     }
 }

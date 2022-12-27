@@ -9,7 +9,7 @@ public class WaveSpawner : MonoBehaviour
 {
 
     public StyleManager styleManager;
-    public TextMeshProUGUI roundPopup;
+    public TextMeshProUGUI roundPopup1, roundPopup2;
 
     public bool useFloatingSpawn;
 
@@ -69,7 +69,8 @@ public class WaveSpawner : MonoBehaviour
             }
             waveNumber++;
 
-            roundPopup.text = "ROUND " + waveNumber.ToString();
+            roundPopup1.text = "ROUND " + waveNumber.ToString();
+            roundPopup2.text = "ROUND " + waveNumber.ToString();
             styleManager.Play();
 
             yield return new WaitForSeconds(waveLenght);

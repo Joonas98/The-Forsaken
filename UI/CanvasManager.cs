@@ -6,17 +6,7 @@ using UnityEngine.UI;
 public class CanvasManager : MonoBehaviour
 {
     public GameObject[] hudPieces; // Elemetit jotka laitetaan pois p‰‰lt‰ menut avatessa
-    public GameObject crosshairCanvas;
-    public GameObject inventoryCanvas;
-    public GameObject shopCanvas;
-    public GameObject upgradesPanel;
-    public GameObject shopPanel;
-    public GameObject abilitiesCanvas;
-    public GameObject pauseCanvas;
-
-    public Image[] hitmarkImages;
-    public Image oneHitmarkImage;
-    public GameObject hitmarkPrefab;
+    public GameObject crosshairCanvas, inventoryCanvas, shopCanvas, upgradesPanel, shopPanel, abilitiesCanvas, pauseCanvas, roundPopup;
 
     public GameObject weaponsPanel;
     public WeaponPanel[] weaponPanelScripts;
@@ -177,6 +167,7 @@ public class CanvasManager : MonoBehaviour
         {
             go.SetActive(false);
         }
+        roundPopup.SetActive(false);
         AudioListener.pause = true;
         if (lookScript != null) lookScript.canRotate = false;
         WeaponSwitcher.canSwitch(false);

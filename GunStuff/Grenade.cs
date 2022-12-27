@@ -6,9 +6,7 @@ using UnityEngine;
 public class Grenade : MonoBehaviour
 {
 
-    [SerializeField] private bool isIncendiary;
-    [SerializeField] private bool isImpact;
-    [SerializeField] private bool isMine;
+    [SerializeField] private bool isIncendiary, isImpact, isMine, activateRagdoll;
 
     public GameObject firePrefab;
     [SerializeField] private float fireDuration, fireInterval;
@@ -90,48 +88,50 @@ public class Grenade : MonoBehaviour
                     if (!damagedEnemies.Contains(enemy))
                     {
                         float distance = Vector3.Distance(enemy.GetComponentInParent<Transform>().position, transform.position);
-                        float locationalPercentage = 1f - (distance / explosionRadius); // esim. distance 2 ja radius 8 eli tee 75% damagesta: 1 - (2 / 8) = 0,75
+                        float locationalPercentage = 1f - (distance / explosionRadius); // eg. distance 2 and radius 8 = deal 75% damage: 1 - (2 / 8) = 0,75
                         float calculatedDamage = explosionDamage * locationalPercentage;
                         int roundedDamage = (int)calculatedDamage;
                         enemy.TakeDamage(roundedDamage);
                         damagedEnemies.Add(enemy);
 
+                        if (activateRagdoll) enemy.TurnOnRagdoll();
+
                         if (enemy.GetHealth() > 50)
                         {
                             LimbManager limbScript = enemy.GetComponent<LimbManager>();
 
-                            if (UnityEngine.Random.Range(0, 2) == 1)
+                            if (UnityEngine.Random.Range(0, 4) == 1)
                             {
                                 limbScript.RemoveLimb(1); // LeftLowerLeg
                                 if (!enemy.isCrawling)
                                     enemy.StartCrawling();
                             }
 
-                            if (UnityEngine.Random.Range(0, 2) == 1)
+                            if (UnityEngine.Random.Range(0, 4) == 1)
                             {
                                 limbScript.RemoveLimb(2); // LeftUpperLeg
                                 if (!enemy.isCrawling)
                                     enemy.StartCrawling();
                             }
 
-                            if (UnityEngine.Random.Range(0, 2) == 1)
+                            if (UnityEngine.Random.Range(0, 4) == 1)
                             {
                                 limbScript.RemoveLimb(3); // RightLowerLeg
                                 if (!enemy.isCrawling)
                                     enemy.StartCrawling();
                             }
 
-                            if (UnityEngine.Random.Range(0, 2) == 1)
+                            if (UnityEngine.Random.Range(0, 4) == 1)
                             {
                                 limbScript.RemoveLimb(4); // RightUpperLeg
                                 if (!enemy.isCrawling)
                                     enemy.StartCrawling();
                             }
 
-                            if (UnityEngine.Random.Range(0, 2) == 1) limbScript.RemoveLimb(5); // RightArm     
-                            if (UnityEngine.Random.Range(0, 2) == 1) limbScript.RemoveLimb(6); // RightShoulder
-                            if (UnityEngine.Random.Range(0, 2) == 1) limbScript.RemoveLimb(7); // LeftArm     
-                            if (UnityEngine.Random.Range(0, 2) == 1) limbScript.RemoveLimb(8); // LeftShoulder
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(5); // RightArm     
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(6); // RightShoulder
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(7); // LeftArm     
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(8); // LeftShoulder
                         }
                     }
                 }

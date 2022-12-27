@@ -46,8 +46,12 @@ public class Enemy : MonoBehaviour
 
     public GameObject eyeRight, eyeLeft;
     public GameObject modelRoot;
-    private Material eyeMaterialR, eyeMaterialL;
+    public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
+    public float standUpMagnitude, standUpDelay;
+    private float countdown = 0f;
+    private bool standCountdowActive = false;
 
+    private Material eyeMaterialR, eyeMaterialL;
     public Color newEyeColor;
     public Gradient eyeGradient;
 
@@ -68,6 +72,8 @@ public class Enemy : MonoBehaviour
         navScript = GetComponent<EnemyNav>();
         navAgent = GetComponent<NavMeshAgent>();
         ogMovementSpeed = navAgent.speed;
+
+        bodyRB = modelRoot.GetComponent<Rigidbody>();
 
         eyeMaterialR = eyeRight.GetComponent<Renderer>().material;
         eyeMaterialL = eyeLeft.GetComponent<Renderer>().material;
@@ -92,6 +98,26 @@ public class Enemy : MonoBehaviour
         animator.SetFloat("Velocity", velocity);
 
         HandleSwinging();
+        CheckRagdollMagnitude();
+    }
+
+    private void CheckRagdollMagnitude()
+    {
+        // When magnitude has been low enough for certain time, stand up
+        if (bodyRB.velocity.magnitude < standUpMagnitude && ragdolling && !isDead && !standCountdowActive)
+        {
+            countdown = Time.time;
+            standCountdowActive = true;
+        }
+        else if (bodyRB.velocity.magnitude > standUpMagnitude && ragdolling && !isDead)
+        {
+            standCountdowActive = false;
+        }
+
+        if (Time.time > countdown + standUpDelay && ragdolling && !isDead && bodyRB.velocity.magnitude < standUpMagnitude)
+        {
+            TurnOffRagdoll();
+        }
     }
 
     public void Die()
@@ -193,6 +219,7 @@ public class Enemy : MonoBehaviour
             rb.isKinematic = false;
         }
         ragdolling = true;
+        standCountdowActive = false;
 
         animator.enabled = false;
         navScript.enabled = false;
@@ -244,7 +271,7 @@ public class Enemy : MonoBehaviour
 
     public void Attack(Player playerScript)
     {
-        if (isDead) return;
+        if (isDead || ragdolling) return;
         if (canAttack)
         {
             playerScript.TakeDamage(damage);
@@ -255,7 +282,7 @@ public class Enemy : MonoBehaviour
 
     public void HandleSwinging()
     {
-        if (isDead) return;
+        if (isDead || ragdolling) return;
         if (distanceToPlayer < attackDistance && canSwing) // Try to attack
         {
             if (!isCrawling)
