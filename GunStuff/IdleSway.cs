@@ -68,6 +68,7 @@ public class IdleSway : MonoBehaviour
 
     private void CalculateWeaponSway()
     {
+        if (!playerMovementScript.isGrounded) return;
         var targetPosition = LissajousCurve(idleSwayTime, idleSwayAmountA, idleSwayAmountB) / idleSwayScale;
 
         swayPosition = Vector3.Lerp(swayPosition, targetPosition, Time.smoothDeltaTime * idleSwayLerpSpeed);

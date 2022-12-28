@@ -261,6 +261,7 @@ public class Enemy : MonoBehaviour
         else
         {
             navAgent.isStopped = false;
+            animator.Play("Base Blend Tree Crawl");
         }
 
         foreach (Collider c in RagdollParts)
