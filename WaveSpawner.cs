@@ -94,6 +94,7 @@ public class WaveSpawner : MonoBehaviour
         }
     }
 
+    // Cast ray from sky to find spawn point
     IEnumerator SpawnFromAbove(int x)
     {
         for (int i = 0; i < x; i++)
@@ -112,13 +113,15 @@ public class WaveSpawner : MonoBehaviour
 
             if (Physics.Raycast(ray, out hitInfo))
             {
-                Debug.DrawRay(spawnPosition, -transform.up, Color.red);
+                // Debug.DrawRay(spawnPosition, -transform.up, Color.red);
                 spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y + 1f, hitInfo.point.z);
 
                 GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
                 GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
                 GameManager.GM.enemyCount++;
                 GameManager.GM.UpdateEnemyCount();
+
+                Debug.Log("Spawned at: " + spawnPosition);
             }
             else
             {

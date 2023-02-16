@@ -28,12 +28,13 @@ public class Enemy : MonoBehaviour
     private GameObject[] BodyParts;
     private GameObject player;
     private float distanceToPlayer, velocity;
-
-    private EnemyNav navScript;
-    // private Rigidbody RB;
     private Animator animator;
-    private NavMeshAgent navAgent;
     private float ogMovementSpeed;
+
+    // private EnemyNav navScript;
+    // private NavMeshAgent navAgent;
+    [SerializeField] private Pathfinding.AIDestinationSetter destSetter;
+    [SerializeField] private Pathfinding.RichAI richAI;
 
     public List<Collider> RagdollParts = new List<Collider>();
     public Rigidbody[] RigidBodies;
@@ -66,12 +67,11 @@ public class Enemy : MonoBehaviour
 
     private void Awake()
     {
+        player = GameObject.Find("Player");
+
         RigidBodies = GetComponentsInChildren<Rigidbody>();
         animator = GetComponent<Animator>();
         SetRagdollParts();
-        navScript = GetComponent<EnemyNav>();
-        navAgent = GetComponent<NavMeshAgent>();
-        ogMovementSpeed = navAgent.speed;
 
         bodyRB = modelRoot.GetComponent<Rigidbody>();
 
@@ -80,23 +80,26 @@ public class Enemy : MonoBehaviour
 
         float randomScaling = Random.Range(1.0f, 1.2f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
+
+        // navScript = GetComponent<EnemyNav>();
+        // navAgent = GetComponent<NavMeshAgent>();
+        // ogMovementSpeed = navAgent.speed;
     }
 
     private void Start()
     {
         SetRagdollParts();
-        player = GameObject.Find("Player");
         currentHealth = maxHealth;
         healthString = currentHealth + " / " + maxHealth;
         healthText.text = healthString;
+
+        destSetter.target = player.transform;
     }
 
     private void Update()
     {
         distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
-        velocity = navAgent.velocity.magnitude / navAgent.speed;
-        animator.SetFloat("Velocity", velocity);
-
+        animator.SetFloat("Velocity", richAI.velocity.magnitude);
         HandleSwinging();
         CheckRagdollMagnitude();
     }
@@ -133,14 +136,16 @@ public class Enemy : MonoBehaviour
 
         TurnOnRagdoll();
 
-        navScript.enabled = false;
-        navAgent.enabled = false;
-
         if (healthText != null)
             Destroy(healthText.gameObject);
 
         Destroy(gameObject, despawnTime);
-        // StartCoroutine(DespawnSequence());
+
+        destSetter.target = null;
+        richAI.maxSpeed = 0;
+
+        // navScript.enabled = false;
+        // navAgent.enabled = false;
     }
 
     public void Despawn() // Not in use
@@ -222,15 +227,14 @@ public class Enemy : MonoBehaviour
         standCountdowActive = false;
 
         animator.enabled = false;
-        navScript.enabled = false;
-
-        navAgent.isStopped = true;
-        navAgent.enabled = false;
-
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = false;
         }
+
+        // navScript.enabled = false;
+        // navAgent.isStopped = true;
+        // navAgent.enabled = false;
     }
 
     public void TurnOffRagdoll()
@@ -245,12 +249,6 @@ public class Enemy : MonoBehaviour
 
         transform.position = modelRoot.transform.position; //Enemy GO does not move with ragdoll, so do that when stop ragdoll
 
-        navScript.enabled = true;
-        if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
-
-        navAgent.enabled = true;
-        navAgent.isStopped = true; // Stop navAgent to wait standup animation to play
-
         // Animator stuff
         animator.enabled = true;
         if (!isCrawling)
@@ -260,7 +258,7 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            navAgent.isStopped = false;
+            // navAgent.isStopped = false;
             animator.Play("Base Blend Tree Crawl");
         }
 
@@ -268,6 +266,12 @@ public class Enemy : MonoBehaviour
         {
             c.isTrigger = true;
         }
+
+        // navScript.enabled = true;
+        // if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
+        //
+        // navAgent.enabled = true;
+        // navAgent.isStopped = true; // Stop navAgent to wait standup animation to play
     }
 
     public void Attack(Player playerScript)
@@ -359,8 +363,8 @@ public class Enemy : MonoBehaviour
     IEnumerator StandupDelay()
     {
         yield return new WaitForSeconds(2f);
-        if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
-        if (!isDead) navAgent.isStopped = false;
+        // if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
+        // if (!isDead) navAgent.isStopped = false;
     }
 
     public void StartCrawling()
@@ -368,8 +372,7 @@ public class Enemy : MonoBehaviour
         isCrawling = true;
         animator.Play("Start Crawling");
         SlowDown(crawlingSpeedMultiplier);
-        navAgent.stoppingDistance = 1.75f;
-        // attackDistance = attackDistance * 0.5f;
+        // navAgent.stoppingDistance = 1.75f;
     }
 
     public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
@@ -380,19 +383,19 @@ public class Enemy : MonoBehaviour
 
     public void SlowDown(float slowMultiplier)
     {
-        navAgent.speed = navAgent.speed * slowMultiplier;
+        // navAgent.speed = navAgent.speed * slowMultiplier;
     }
 
     public void RestoreMovementSpeed()
     {
-        if (!isCrawling)
-        {
-            navAgent.speed = ogMovementSpeed;
-        }
-        else
-        {
-            navAgent.speed = ogMovementSpeed * crawlingSpeedMultiplier;
-        }
+        // if (!isCrawling)
+        // {
+        //     navAgent.speed = ogMovementSpeed;
+        // }
+        // else
+        // {
+        //     navAgent.speed = ogMovementSpeed * crawlingSpeedMultiplier;
+        // }
     }
 
     public void DamagePopup(int number)
