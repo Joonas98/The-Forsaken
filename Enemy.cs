@@ -15,10 +15,7 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float runDistance;
     [SerializeField] private float attackDistance;
     [SerializeField] private int moneyReward;
-
     [SerializeField] private float crawlingSpeedMultiplier;
-
-    [SerializeField] private TextMeshPro healthText;
     //  [SerializeField] private GameObject Torso;
     // [SerializeField] NavMeshAgent navMeshAgent;
 
@@ -65,6 +62,9 @@ public class Enemy : MonoBehaviour
     public AudioClip[] attackSounds;
     public AudioClip[] randomSounds;
 
+    [Header("Debug information")]
+    public TextMeshProUGUI debugVelocityTextfield;
+
     private void Awake()
     {
         player = GameObject.Find("Player");
@@ -83,7 +83,7 @@ public class Enemy : MonoBehaviour
 
         // navScript = GetComponent<EnemyNav>();
         // navAgent = GetComponent<NavMeshAgent>();
-        // ogMovementSpeed = navAgent.speed;
+        ogMovementSpeed = richAI.maxSpeed;
     }
 
     private void Start()
@@ -91,7 +91,6 @@ public class Enemy : MonoBehaviour
         SetRagdollParts();
         currentHealth = maxHealth;
         healthString = currentHealth + " / " + maxHealth;
-        healthText.text = healthString;
 
         destSetter.target = player.transform;
     }
@@ -102,6 +101,7 @@ public class Enemy : MonoBehaviour
         animator.SetFloat("Velocity", richAI.velocity.magnitude);
         HandleSwinging();
         CheckRagdollMagnitude();
+        DebugUpdate();
     }
 
     private void CheckRagdollMagnitude()
@@ -136,13 +136,13 @@ public class Enemy : MonoBehaviour
 
         TurnOnRagdoll();
 
-        if (healthText != null)
-            Destroy(healthText.gameObject);
-
         Destroy(gameObject, despawnTime);
 
         destSetter.target = null;
         richAI.maxSpeed = 0;
+
+        richAI.enabled = false;
+        destSetter.enabled = false;
 
         // navScript.enabled = false;
         // navAgent.enabled = false;
@@ -153,9 +153,6 @@ public class Enemy : MonoBehaviour
         GameManager.GM.enemyCount--;
         GameManager.GM.UpdateEnemyCount();
 
-        if (healthText != null)
-            Destroy(healthText.gameObject);
-
         Destroy(gameObject, 0f);
     }
 
@@ -163,7 +160,6 @@ public class Enemy : MonoBehaviour
     {
         currentHealth -= damage;
         healthString = currentHealth + " / " + maxHealth;
-        healthText.text = healthString;
 
         healthPercentage = (100 / maxHealth) * currentHealth;
 
@@ -343,11 +339,6 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    IEnumerator WaitSeconds(float time)
-    {
-        yield return new WaitForSeconds(time);
-    }
-
     IEnumerator WaitSwing(float time)
     {
         yield return new WaitForSeconds(time);
@@ -384,6 +375,7 @@ public class Enemy : MonoBehaviour
     public void SlowDown(float slowMultiplier)
     {
         // navAgent.speed = navAgent.speed * slowMultiplier;
+        richAI.maxSpeed = richAI.maxSpeed * slowMultiplier;
     }
 
     public void RestoreMovementSpeed()
@@ -396,6 +388,15 @@ public class Enemy : MonoBehaviour
         // {
         //     navAgent.speed = ogMovementSpeed * crawlingSpeedMultiplier;
         // }
+
+        if (!isCrawling)
+        {
+            richAI.maxSpeed = ogMovementSpeed;
+        }
+        else
+        {
+            richAI.maxSpeed = ogMovementSpeed * crawlingSpeedMultiplier;
+        }
     }
 
     public void DamagePopup(int number)
@@ -406,6 +407,11 @@ public class Enemy : MonoBehaviour
         TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
         popText.text = number.ToString();
         Destroy(dmgPopupText.gameObject, 2f);
+    }
+
+    public void DebugUpdate()
+    {
+        debugVelocityTextfield.text = richAI.velocity.magnitude.ToString("F2");
     }
 
 }

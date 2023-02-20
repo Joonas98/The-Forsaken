@@ -6,8 +6,6 @@ using UnityEngine.UI;
 // Global holder for ability data
 public class AbilityMaster : MonoBehaviour
 {
-    // TODO: improve system for passive abilities?
-
     // Statics
     public static AbilityMaster instance = null;
     public static List<int> abilities = new List<int>();
@@ -15,11 +13,13 @@ public class AbilityMaster : MonoBehaviour
     // Monos
     public GameObject player;
     public List<Ability> abilitiesList = new List<Ability>();
+    public List<KeyCode> keycodesList = new List<KeyCode>();
 
     public GameObject abilityPrefab;
     public Transform abilitiesParent;
 
     private List<int> ownedAbilities = new List<int>();
+    private int hotkeyIndex = 0;
 
     private void Awake()
     {
@@ -32,6 +32,11 @@ public class AbilityMaster : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        keycodesList.Add(KeyCode.Z);
+        keycodesList.Add(KeyCode.X);
+        keycodesList.Add(KeyCode.C);
+        keycodesList.Add(KeyCode.V);
     }
 
     public void AddAbility(int abilityNumber)
@@ -55,10 +60,20 @@ public class AbilityMaster : MonoBehaviour
         abilityHolder.abilityImage = abilityImages[2];
         abilityHolder.backgroundImage = abilityImages[0];
 
-        if (abilitiesParent.transform.childCount == 1) abilityHolder.key = KeyCode.Z;
-        if (abilitiesParent.transform.childCount == 2) abilityHolder.key = KeyCode.X;
-        if (abilitiesParent.transform.childCount == 3) abilityHolder.key = KeyCode.C;
-        if (abilitiesParent.transform.childCount == 4) abilityHolder.key = KeyCode.V;
+        // Assign hotkeys to active abilities
+        if (abilitiesList[abilityNumber].GetPassiveType() == false) // If not passive ability
+        {
+            if (hotkeyIndex <= keycodesList.Count)
+            {
+                abilityHolder.key = keycodesList[hotkeyIndex];
+                hotkeyIndex++;
+            }
+            else
+            {
+                Debug.Log("Out of ability hotkeys");
+            }
+        }
+
     }
 
 }

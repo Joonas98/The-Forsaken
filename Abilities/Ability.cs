@@ -30,5 +30,16 @@ public class Ability : ScriptableObject
 
     }
 
+    public bool GetPassiveType()
+    {
+        if (passive)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
 }

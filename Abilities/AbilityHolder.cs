@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class AbilityHolder : MonoBehaviour
 {
-    // Ability systeemi https://www.youtube.com/watch?v=ry4I6QyPw4E
+    // Ability system https://www.youtube.com/watch?v=ry4I6QyPw4E
 
     public Ability ability;
     public Image abilityImage, backgroundImage;
