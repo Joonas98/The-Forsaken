@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 // Global holder for ability data
 public class AbilityMaster : MonoBehaviour
@@ -60,18 +61,25 @@ public class AbilityMaster : MonoBehaviour
         abilityHolder.abilityImage = abilityImages[2];
         abilityHolder.backgroundImage = abilityImages[0];
 
-        // Assign hotkeys to active abilities
+        TextMeshProUGUI hotkeyText = newAbility.GetComponentInChildren<TextMeshProUGUI>();
+
+        // Assign hotkeys to active abilities and display the hotkey
         if (abilitiesList[abilityNumber].GetPassiveType() == false) // If not passive ability
         {
             if (hotkeyIndex <= keycodesList.Count)
             {
                 abilityHolder.key = keycodesList[hotkeyIndex];
+                hotkeyText.text = keycodesList[hotkeyIndex].ToString();
                 hotkeyIndex++;
             }
             else
             {
                 Debug.Log("Out of ability hotkeys");
             }
+        }
+        else
+        {
+            hotkeyText.text = ""; // No hotkey on passives
         }
 
     }
