@@ -4,7 +4,7 @@ using UnityEngine;
 using TMPro;
 using Michsky.UI.MTP;
 
-// ! Vihollisten spawnaus systeemi. K‰ytet‰‰n ainoana skriptin‰ spawnaukseen
+// ! Only script to spawn enemies with
 public class WaveSpawner : MonoBehaviour
 {
 
