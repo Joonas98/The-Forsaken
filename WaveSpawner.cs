@@ -28,6 +28,9 @@ public class WaveSpawner : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip waveStartSound;
 
+    public LayerMask groundLayer;
+
+    // Privates
     private int waveNumber = 0;
     private GameObject playerGO;
     private float floatingHeight = 500f;
@@ -111,17 +114,16 @@ public class WaveSpawner : MonoBehaviour
             Ray ray = new Ray(spawnPosition, -transform.up);
             RaycastHit hitInfo;
 
-            if (Physics.Raycast(ray, out hitInfo))
+            if (Physics.Raycast(ray, out hitInfo, 100000, groundLayer))
             {
-                // Debug.DrawRay(spawnPosition, -transform.up, Color.red);
-                spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y + 1f, hitInfo.point.z);
+                Debug.DrawRay(spawnPosition, -transform.up, Color.red);
+                spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y, hitInfo.point.z);
+                Debug.Log("Spawned at: " + spawnPosition);
 
                 GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
                 GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
                 GameManager.GM.enemyCount++;
                 GameManager.GM.UpdateEnemyCount();
-
-                Debug.Log("Spawned at: " + spawnPosition);
             }
             else
             {
@@ -130,7 +132,5 @@ public class WaveSpawner : MonoBehaviour
             yield return new WaitForSeconds(spawnRate);
         }
     }
-
-
 
 }

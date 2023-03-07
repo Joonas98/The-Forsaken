@@ -6,6 +6,7 @@ using TMPro;
 
 public class Enemy : MonoBehaviour
 {
+    public bool debugMode; // Show or delete debug information
     [SerializeField] private int maxHealth;
     [SerializeField] private int damage;
     [Tooltip("Attack CD when hit")] [SerializeField] private float attackCooldown;
@@ -84,6 +85,11 @@ public class Enemy : MonoBehaviour
         // navScript = GetComponent<EnemyNav>();
         // navAgent = GetComponent<NavMeshAgent>();
         ogMovementSpeed = richAI.maxSpeed;
+
+        if (!debugMode)
+        {
+            Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
+        }
     }
 
     private void Start()
