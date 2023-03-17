@@ -116,7 +116,7 @@ public class WaveSpawner : MonoBehaviour
 
             if (Physics.Raycast(ray, out hitInfo, 100000, groundLayer))
             {
-                Debug.DrawRay(spawnPosition, -transform.up, Color.red);
+                Debug.DrawRay(spawnPosition, -transform.up * 100000, Color.red, 3.0f);
                 spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y, hitInfo.point.z);
                 Debug.Log("Spawned at: " + spawnPosition);
 

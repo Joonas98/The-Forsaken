@@ -6,6 +6,10 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    public bool useVireDebug, useGunDebug;
+    public GameObject vireDebugObjects, gunDebugObjects;
+    public TextMeshProUGUI[] vireDebugTexts, gunDebugTexts; // Textfields for debug information
+
     public static GameManager GM;
 
     public GameObject WeaponHolster, aimingSymbol;
@@ -14,6 +18,8 @@ public class GameManager : MonoBehaviour
     public int enemyCount = 0;
     public int currentWave = 0;
     public int money;
+
+    public Gun currentGun;
 
     private void Awake()
     {
@@ -28,6 +34,9 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
         WeaponHolster = GameObject.Find("WeaponHolster");
+
+        if (!useVireDebug) Destroy(vireDebugObjects.gameObject);
+        if (!useGunDebug) Destroy(gunDebugObjects.gameObject);
     }
 
     private void Start()
@@ -39,6 +48,7 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         HandleKeybinds();
+        HandleDebugs();
     }
 
     public void HandleKeybinds()
@@ -101,9 +111,27 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public Gun GetCurrentGun()
+    public void HandleDebugs()
     {
-        return WeaponHolster.GetComponentInChildren<Gun>();
+        if (useVireDebug)
+        {
+
+        }
+
+        if (useGunDebug)
+        {
+            if (currentGun == null) return;
+            gunDebugTexts[0].text = "Name: " + currentGun.gunName;
+            gunDebugTexts[1].text = "Dmg: " + currentGun.damage.ToString();
+            gunDebugTexts[2].text = "Pellets: " + currentGun.pelletCount.ToString();
+            gunDebugTexts[3].text = "Penetr: " + currentGun.penetration.ToString();
+            gunDebugTexts[4].text = "RPM: " + currentGun.RPM.ToString();
+        }
+    }
+
+    public Gun GetCurrentGun() // Easy way to get reference to current gun script from anywhere
+    {
+        return currentGun;
     }
 
     public void UpdateEnemyCount()
@@ -121,7 +149,6 @@ public class GameManager : MonoBehaviour
     {
         money += amount;
         moneyText.text = money.ToString() + " €";
-
     }
 
 }

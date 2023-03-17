@@ -8,7 +8,7 @@ public class WeaponSwitcher : MonoBehaviour
     public int selectedWeapon = 0;
     public static bool canSwitchWeapon = true;
 
-    public Gun CurrentGun;
+    public Gun currentGun;
 
     public GameObject weaponsPanel;
     private GameObject highlight;
@@ -94,7 +94,7 @@ public class WeaponSwitcher : MonoBehaviour
 
         if (previousSelectedWeapon != selectedWeapon && canSwitchWeapon)
         {
-            if (CurrentGun != null)
+            if (currentGun != null)
             {
                 StartCoroutine(UnequipTimer());
             }
@@ -118,12 +118,19 @@ public class WeaponSwitcher : MonoBehaviour
             i++;
         }
 
-        CurrentGun = GameManager.GM.GetCurrentGun();
+        // currentGun = GameManager.GM.GetCurrentGun();
+        currentGun = gameObject.GetComponentInChildren<Gun>();
+        Debug.Log(currentGun);
 
-        if (CurrentGun != null)
+        if (currentGun != null)
         {
-            CurrentGun.ResetFOV();
-            unequipTime = CurrentGun.unequipTime;
+            currentGun.ResetFOV();
+            unequipTime = currentGun.unequipTime;
+            GameManager.GM.currentGun = currentGun;
+        }
+        else
+        {
+            GameManager.GM.currentGun = null;
         }
 
         if (highlight != null) highlight.SetActive(false);
@@ -140,7 +147,7 @@ public class WeaponSwitcher : MonoBehaviour
 
     IEnumerator UnequipTimer()
     {
-        CurrentGun.UnequipWeapon();
+        currentGun.UnequipWeapon();
         yield return new WaitForSeconds(unequipTime - 0.01f);
         SelectWeapon();
         canSwitchWeapon = true;

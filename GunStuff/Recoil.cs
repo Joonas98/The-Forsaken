@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class Recoil : MonoBehaviour
 {
+    public bool useDebug;
     public static Recoil Instance;
 
     public Rigidbody RB;
@@ -27,6 +29,9 @@ public class Recoil : MonoBehaviour
     public PlayerMovement movementScript;
     public float rec1, rec2, rec3, rec4, rec5, rec6;
 
+    [SerializeField] private GameObject debugTexts;
+    [SerializeField] private TextMeshProUGUI recXText, recYText, recZText, snappinessText, returnSpeedText, recMultiplierText;
+
     private void Awake()
     {
         if (Instance == null)
@@ -37,6 +42,9 @@ public class Recoil : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        if (!useDebug) Destroy(debugTexts.gameObject);
+
     }
 
     void Update()
@@ -44,6 +52,16 @@ public class Recoil : MonoBehaviour
         targetRotation = Vector3.Lerp(targetRotation, new Vector3(targetRotation.x, 0, 0), returnSpeed * Time.deltaTime);
         currentRotation = Vector3.Slerp(currentRotation, targetRotation, snappiness * Time.fixedDeltaTime);
         transform.localRotation = Quaternion.Euler(currentRotation);
+
+        if (useDebug)
+        {
+            recXText.text = "X :" + recoilX.ToString();
+            recYText.text = "Y :" + recoilY.ToString();
+            recZText.text = "Z :" + recoilZ.ToString();
+            snappinessText.text = "Snp :" + snappiness.ToString();
+            returnSpeedText.text = "Rtn :" + returnSpeed.ToString();
+            recMultiplierText.text = "RecMP :" + recoilMultiplier.ToString();
+        }
     }
 
     private void LateUpdate()

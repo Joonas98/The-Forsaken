@@ -23,18 +23,18 @@ public class Gun : MonoBehaviour
     [Tooltip("Left and right")] [SerializeField] public float recoilY;
     [Tooltip("Tilt")] [SerializeField] public float recoilZ;
     [SerializeField] public float snappiness, returnSpeed;
-    [Tooltip("Rekyylin kerroin ilmassa")] public float rec1;
-    [Tooltip("Rekyylin kerroin maassa liikutaan ei t‰hd‰t‰")] public float rec2;
-    [Tooltip("Rekyylin kerroin maassa liikutaan t‰hd‰t‰‰n")] public float rec3;
-    [Tooltip("Rekyylin kerroin maassa ei liikuta ei t‰hd‰t‰")] public float rec4;
-    [Tooltip("Rekyylin kerroin maassa ei liikuta t‰hd‰t‰‰n")] public float rec5;
-    [Tooltip("Rekyylin kerroin ei mik‰‰n aiempi")] public float rec6;
+    [Tooltip("Recoil multiplier midair")] public float rec1;
+    [Tooltip("Grounded, moving, not aiming")] public float rec2;
+    [Tooltip("Grounded, moving, aiming")] public float rec3;
+    [Tooltip("Grounded, not moving, not aiming")] public float rec4;
+    [Tooltip("Grounded, not moving, aiming")] public float rec5;
+    [Tooltip("Recoil multiplier if nothing previous matches")] public float rec6;
 
     [Header("Visual Recoil")]
-    [Tooltip("Vire ylˆs")] public float vireX = -2;
-    [Tooltip("Vire vasen ja oikea")] public float vireY = 2;
-    [Tooltip("Vire k‰‰ntely")] public float vireZ = 7;
-    [Tooltip("Ase potkaisee taaksep‰in")] public float vireKick = 0.2f;
+    [Tooltip("Vire up")] public float vireX = -2;
+    [Tooltip("Vire left and right")] public float vireY = 2;
+    [Tooltip("Vire rotation")] public float vireZ = 7;
+    [Tooltip("Recoil kicking towards player")] public float vireKick = 0.2f;
     public float vireSnap = 5;
     public float vireReturn = 8;
 
