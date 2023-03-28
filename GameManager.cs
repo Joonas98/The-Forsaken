@@ -6,9 +6,9 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public bool useVireDebug, useGunDebug;
-    public GameObject vireDebugObjects, gunDebugObjects;
-    public TextMeshProUGUI[] vireDebugTexts, gunDebugTexts; // Textfields for debug information
+    public bool useGunDebug, useRecoilDebug, useVireDebug;
+    public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
+    public TextMeshProUGUI[] gunDebugTexts, recoilDebugTexts, vireDebugTexts; // Textfields for debug information
 
     public static GameManager GM;
 
@@ -20,6 +20,8 @@ public class GameManager : MonoBehaviour
     public int money;
 
     public Gun currentGun;
+    public Recoil recoil;
+    public VisualRecoil vire;
 
     private void Awake()
     {
@@ -113,11 +115,7 @@ public class GameManager : MonoBehaviour
 
     public void HandleDebugs()
     {
-        if (useVireDebug)
-        {
-
-        }
-
+        // To update debugging text fields
         if (useGunDebug)
         {
             if (currentGun == null) return;
@@ -126,6 +124,26 @@ public class GameManager : MonoBehaviour
             gunDebugTexts[2].text = "Pellets: " + currentGun.pelletCount.ToString();
             gunDebugTexts[3].text = "Penetr: " + currentGun.penetration.ToString();
             gunDebugTexts[4].text = "RPM: " + currentGun.RPM.ToString();
+        }
+
+        if (useRecoilDebug)
+        {
+            recoilDebugTexts[0].text = "X: " + recoil.recoilX.ToString();
+            recoilDebugTexts[1].text = "Y: " + recoil.recoilY.ToString();
+            recoilDebugTexts[2].text = "Z: " + recoil.recoilZ.ToString();
+            recoilDebugTexts[3].text = "Snp: " + recoil.snappiness.ToString();
+            recoilDebugTexts[4].text = "Rtn: " + recoil.returnSpeed.ToString();
+            recoilDebugTexts[5].text = "RecMP: " + recoil.recoilMultiplier.ToString();
+        }
+
+        if (useVireDebug)
+        {
+            vireDebugTexts[0].text = "VRX: " + vire.vrecoilX.ToString();
+            vireDebugTexts[1].text = "VRY: " + vire.vrecoilY.ToString();
+            vireDebugTexts[2].text = "VRZ: " + vire.vrecoilZ.ToString();
+            vireDebugTexts[3].text = "VRKB: " + vire.kickbackZ.ToString();
+            vireDebugTexts[4].text = "VRSnap: " + vire.snappiness.ToString();
+            vireDebugTexts[5].text = "VRRtrn: " + vire.returnAmount.ToString();
         }
     }
 

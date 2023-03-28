@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using TMPro;
+using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
@@ -56,6 +57,8 @@ public class Enemy : MonoBehaviour
 
     public GameObject damagePopupText;
     public Transform popupTransform;
+
+    public DamageNumber numberPrefab;
 
     [Header("Audio")]
     public AudioSource audioSource;
@@ -171,7 +174,13 @@ public class Enemy : MonoBehaviour
 
         UpdateEyeColor();
 
-        if (!isDead) DamagePopup(damage);
+        // if (!isDead) DamagePopup(damage); // Old selfmade damage popup system, now using Damage Numbers Pro
+
+        if (!isDead)
+        {
+            DamageNumber damageNumber = numberPrefab.Spawn(popupTransform.position, damage);
+            if (damage < 0) damageNumber.SetColor(Color.green); // Healing
+        }
 
         if (!isDead && Random.Range(0, 3) == 1)
         {

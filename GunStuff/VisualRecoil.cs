@@ -11,8 +11,8 @@ public class VisualRecoil : MonoBehaviour
     public float vrecoilY;
     public float vrecoilZ;
     public float kickbackZ;
-    public float snappiness; // Nopeus, jolla aseen rekyyli aiheutuu
-    public float returnAmount; // Nopeus, jolla ase palaa takaisin
+    public float snappiness; // Speed for recoil
+    public float returnAmount; // Speed for return
 
     public bool aiming;
 
@@ -58,6 +58,7 @@ public class VisualRecoil : MonoBehaviour
             transform.localPosition = currentPosition;
         }
     }
+
 
     #region Setters
 

@@ -120,7 +120,6 @@ public class WeaponSwitcher : MonoBehaviour
 
         // currentGun = GameManager.GM.GetCurrentGun();
         currentGun = gameObject.GetComponentInChildren<Gun>();
-        Debug.Log(currentGun);
 
         if (currentGun != null)
         {
