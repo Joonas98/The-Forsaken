@@ -6,7 +6,7 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public bool useGunDebug, useRecoilDebug, useVireDebug;
+    public bool useGunDebug, useRecoilDebug, useVireDebug, useSpawnDebug;
     public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
     public TextMeshProUGUI[] gunDebugTexts, recoilDebugTexts, vireDebugTexts; // Textfields for debug information
 

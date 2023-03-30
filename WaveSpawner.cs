@@ -7,7 +7,6 @@ using Michsky.UI.MTP;
 // ! Only script to spawn enemies with
 public class WaveSpawner : MonoBehaviour
 {
-
     public StyleManager styleManager;
     public TextMeshProUGUI roundPopup1, roundPopup2;
 
@@ -30,6 +29,7 @@ public class WaveSpawner : MonoBehaviour
 
     public LayerMask groundLayer;
 
+    public GameObject spawnDebugPrefab;
     // Privates
     private int waveNumber = 0;
     private GameObject playerGO;
@@ -114,20 +114,29 @@ public class WaveSpawner : MonoBehaviour
             Ray ray = new Ray(spawnPosition, -transform.up);
             RaycastHit hitInfo;
 
-            if (Physics.Raycast(ray, out hitInfo, 100000, groundLayer))
+            if (Physics.Raycast(ray, out hitInfo, 10000, groundLayer))
             {
-                Debug.DrawRay(spawnPosition, -transform.up * 100000, Color.red, 3.0f);
                 spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y, hitInfo.point.z);
-                Debug.Log("Spawned at: " + spawnPosition);
 
                 GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
                 GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
                 GameManager.GM.enemyCount++;
                 GameManager.GM.UpdateEnemyCount();
+
+                if (GameManager.GM.useSpawnDebug)
+                {
+                    Debug.Log("Spawned at: " + spawnPosition);
+                    Debug.DrawRay(new Vector3(randomPoint.x, transform.position.y, randomPoint.y), -transform.up * 1000, Color.green, 15.0f);
+                    GameObject newSpawnDebugPrefab = Instantiate(spawnDebugPrefab, spawnPosition, Quaternion.identity);
+                }
             }
             else
             {
-                Debug.Log("Spawn ray missed");
+                if (GameManager.GM.useSpawnDebug)
+                {
+                    Debug.Log("Spawn ray missed");
+                    Debug.DrawRay(new Vector3(randomPoint.x, transform.position.y, randomPoint.y), -transform.up * 1000, Color.red, 15.0f);
+                }
             }
             yield return new WaitForSeconds(spawnRate);
         }
