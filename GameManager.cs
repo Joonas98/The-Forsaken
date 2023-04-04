@@ -23,6 +23,12 @@ public class GameManager : MonoBehaviour
     public Recoil recoil;
     public VisualRecoil vire;
 
+    public List<Enemy> enemiesAlive = new List<Enemy>();
+    public List<GameObject> enemiesAliveGos = new List<GameObject>();
+
+    public GameObject playerGO;
+    public AudioSource playerAS;
+
     private void Awake()
     {
         // Singleton logiikka

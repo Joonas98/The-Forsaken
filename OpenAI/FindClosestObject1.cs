@@ -8,6 +8,8 @@ public class FindClosestObject1 : MonoBehaviour
     [Tooltip("The maximum distance to search for the object.")]
     public float maxDistance = 10f;
 
+    public GameObject[] objectsToSearchFrom;
+
     private GameObject closestObject;
 
     private void Start()
@@ -17,10 +19,10 @@ public class FindClosestObject1 : MonoBehaviour
 
     private void FindClosestObjectWithTag()
     {
-        GameObject[] objectsWithTag = GameObject.FindGameObjectsWithTag(objectTag);
+        // GameObject[] objectsWithTag = GameObject.FindGameObjectsWithTag(objectTag); Search from all objects, super expensive
         float closestDistance = Mathf.Infinity;
 
-        foreach (GameObject obj in objectsWithTag)
+        foreach (GameObject obj in objectsToSearchFrom)
         {
             if (obj != gameObject)
             {

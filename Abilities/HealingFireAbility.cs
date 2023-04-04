@@ -12,6 +12,7 @@ public class HealingFireAbility : Ability
     public override void Activate(GameObject parent)
     {
         // Debug.Log("Healing fire casted");
+        base.Activate(parent);
         GameObject healingBall = Instantiate(healingFireBall, Camera.main.transform);
         HealingFireball ballScript = healingBall.GetComponent<HealingFireball>();
         ballScript.healAmount = healingAmount;
@@ -22,7 +23,8 @@ public class HealingFireAbility : Ability
 
     public override void BeginCooldown(GameObject parent)
     {
-        // Debug.Log("Dash ended");
+        // Debug.Log("Healing ball cooldown");
+        base.BeginCooldown(parent);
     }
 
 }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Testi toimiiko git
-
 public class Ability : ScriptableObject
 {
     public new string name;
@@ -15,19 +13,26 @@ public class Ability : ScriptableObject
     public AudioClip activateSFX, endSFX;
     public AudioSource audioSource;
 
-    protected virtual void OnEnable() // Inherited in all abilities to find the AudioSource
+    protected virtual void OnEnable()
     {
-        audioSource = GameObject.Find("Player").GetComponent<AudioSource>();
+
     }
 
-    public virtual void Activate(GameObject parent)
+    public virtual void Activate(GameObject parent) // Call base.Activate(parent) in all abilities
     {
+        if (audioSource == null && GameManager.GM.playerAS != null) // First activation sets audioSource
+        {
+            audioSource = GameManager.GM.playerAS;
+            Debug.Log("Set audiosource to an ability");
+        }
+
+        if (audioSource != null && activateSFX != null) audioSource.PlayOneShot(activateSFX);
 
     }
 
     public virtual void BeginCooldown(GameObject parent)
     {
-
+        if (audioSource != null && endSFX != null) audioSource.PlayOneShot(endSFX);
     }
 
     public bool GetPassiveType()

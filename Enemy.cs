@@ -71,6 +71,9 @@ public class Enemy : MonoBehaviour
 
     private void Awake()
     {
+        GameManager.GM.enemiesAlive.Add(this);
+        GameManager.GM.enemiesAliveGos.Add(gameObject);
+
         player = GameObject.Find("Player");
 
         RigidBodies = GetComponentsInChildren<Rigidbody>();
@@ -152,6 +155,9 @@ public class Enemy : MonoBehaviour
 
         richAI.enabled = false;
         destSetter.enabled = false;
+
+        GameManager.GM.enemiesAlive.Remove(this);
+        GameManager.GM.enemiesAliveGos.Remove(gameObject);
 
         // navScript.enabled = false;
         // navAgent.enabled = false;
