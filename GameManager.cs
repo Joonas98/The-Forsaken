@@ -57,6 +57,7 @@ public class GameManager : MonoBehaviour
     {
         HandleKeybinds();
         HandleDebugs();
+        HandleAbilities();
     }
 
     public void HandleKeybinds()
@@ -73,6 +74,7 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.P))
         {
+            Debug.Log("Killing all enemies");
             GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
             foreach (GameObject enemy in enemiesToDestroy)
             {
@@ -82,41 +84,32 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.N))
         {
-            GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
-            foreach (GameObject enemy in enemiesToDestroy)
-            {
-                // Debug.Log("Now do the harlem shake");
-                enemy.GetComponent<Enemy>().TurnOnRagdoll();
-            }
+            Time.timeScale = 0f;
         }
 
         if (Input.GetKeyDown(KeyCode.M))
         {
-            GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
-            foreach (GameObject enemy in enemiesToDestroy)
-            {
-                // Debug.Log("Harlem shake cancelled");
-                enemy.GetComponent<Enemy>().TurnOffRagdoll();
-            }
+            Time.timeScale = 1f;
         }
 
-        if (GetCurrentGun() != null && GetCurrentGun().isAiming)
-        {
-            aimingSymbol.SetActive(true);
-        }
-        else
-        {
-            aimingSymbol.SetActive(false);
-        }
+        // if (Input.GetKeyDown(KeyCode.N))
+        // {
+        //     GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
+        //     foreach (GameObject enemy in enemiesToDestroy)
+        //     {
+        //         enemy.GetComponent<Enemy>().TurnOnRagdoll();
+        //     }
+        // }
+        //
+        // if (Input.GetKeyDown(KeyCode.M))
+        // {
+        //     GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
+        //     foreach (GameObject enemy in enemiesToDestroy)
+        //     {
+        //         enemy.GetComponent<Enemy>().TurnOffRagdoll();
+        //     }
+        // }
 
-        // Functionality for underdog ability
-        if (AbilityMaster.abilities.Contains(3))
-        {
-            if (GetCurrentGun() == null) return;
-            GetCurrentGun().RPM = GetCurrentGun().RPMOG * (1f + (enemyCount / 100f));
-            GetCurrentGun().UpdateFirerate();
-            // Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
-        }
     }
 
     public void HandleDebugs()
@@ -150,6 +143,27 @@ public class GameManager : MonoBehaviour
             vireDebugTexts[3].text = "VRKB: " + vire.kickbackZ.ToString();
             vireDebugTexts[4].text = "VRSnap: " + vire.snappiness.ToString();
             vireDebugTexts[5].text = "VRRtrn: " + vire.returnAmount.ToString();
+        }
+    }
+
+    public void HandleAbilities()
+    {
+        if (GetCurrentGun() != null && GetCurrentGun().isAiming)
+        {
+            aimingSymbol.SetActive(true);
+        }
+        else
+        {
+            aimingSymbol.SetActive(false);
+        }
+
+        // Functionality for underdog ability
+        if (AbilityMaster.abilities.Contains(3))
+        {
+            if (GetCurrentGun() == null) return;
+            GetCurrentGun().RPM = GetCurrentGun().RPMOG * (1f + (enemyCount / 100f));
+            GetCurrentGun().UpdateFirerate();
+            // Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
         }
     }
 
