@@ -18,6 +18,7 @@ public class LimbManager : MonoBehaviour
     public GameObject LeftShoulder;   // 8
 
     [Header("Others")]
+    public Enemy enemyScript;
     public GameObject Neck;           // 0
 
     public ParticleSystem headshotFX;
@@ -49,24 +50,36 @@ public class LimbManager : MonoBehaviour
         {
             LeftLowerLeg.transform.localScale = new Vector3(0, 0, 0);
             audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+
+            if (!enemyScript.isCrawling)
+                enemyScript.StartCrawling();
         }
 
         if (limbNumber == 2)
         {
             LeftUpperLeg.transform.localScale = new Vector3(0, 0, 0);
             audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+
+            if (!enemyScript.isCrawling)
+                enemyScript.StartCrawling();
         }
 
         if (limbNumber == 3)
         {
             RightLowerLeg.transform.localScale = new Vector3(0, 0, 0);
             audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+
+            if (!enemyScript.isCrawling)
+                enemyScript.StartCrawling();
         }
 
         if (limbNumber == 4)
         {
             RightUpperLeg.transform.localScale = new Vector3(0, 0, 0);
             audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+
+            if (!enemyScript.isCrawling)
+                enemyScript.StartCrawling();
         }
 
         if (limbNumber == 5)

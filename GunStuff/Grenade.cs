@@ -91,6 +91,7 @@ public class Grenade : MonoBehaviour
                         float locationalPercentage = 1f - (distance / explosionRadius); // eg. distance 2 and radius 8 = deal 75% damage: 1 - (2 / 8) = 0,75
                         float calculatedDamage = explosionDamage * locationalPercentage;
                         int roundedDamage = (int)calculatedDamage;
+                        if (roundedDamage < 0) roundedDamage = 0;
                         enemy.TakeDamage(roundedDamage);
                         damagedEnemies.Add(enemy);
 
@@ -100,33 +101,10 @@ public class Grenade : MonoBehaviour
                         {
                             LimbManager limbScript = enemy.GetComponent<LimbManager>();
 
-                            if (UnityEngine.Random.Range(0, 4) == 1)
-                            {
-                                limbScript.RemoveLimb(1); // LeftLowerLeg
-                                if (!enemy.isCrawling)
-                                    enemy.StartCrawling();
-                            }
-
-                            if (UnityEngine.Random.Range(0, 4) == 1)
-                            {
-                                limbScript.RemoveLimb(2); // LeftUpperLeg
-                                if (!enemy.isCrawling)
-                                    enemy.StartCrawling();
-                            }
-
-                            if (UnityEngine.Random.Range(0, 4) == 1)
-                            {
-                                limbScript.RemoveLimb(3); // RightLowerLeg
-                                if (!enemy.isCrawling)
-                                    enemy.StartCrawling();
-                            }
-
-                            if (UnityEngine.Random.Range(0, 4) == 1)
-                            {
-                                limbScript.RemoveLimb(4); // RightUpperLeg
-                                if (!enemy.isCrawling)
-                                    enemy.StartCrawling();
-                            }
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(1); // LeftLowerLeg
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(2); // LeftUpperLeg
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(3); // RightLowerLeg
+                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(4); // RightUpperLeg
 
                             if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(5); // RightArm     
                             if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(6); // RightShoulder

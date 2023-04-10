@@ -79,8 +79,7 @@ public class Gun : MonoBehaviour
     private WeaponSway swayScript;
     private CanvasManager canvasManagerScript;
     private TextMeshProUGUI magazineText, totalAmmoText;
-    private float shotCounter;
-    private float FireRate;
+    private float shotCounter, fireRate;
     private int CurrentMagazine;
     [HideInInspector] public bool isFiring = false;
     private bool hasFired = false;
@@ -278,26 +277,8 @@ public class Gun : MonoBehaviour
 
     private void HandleAnimationStrings()
     {
-        if (hasShootAnimation)
-        {
-            shootAnimationName = "Shoot " + gunName;
-        }
-        else
-        {
-            shootAnimationName = "";
-        }
-
-        if (overrideReloadName == "")
-        {
-            reloadAnimationName = "Reload " + gunName;
-        }
-        else
-        {
-            reloadAnimationName = overrideReloadName;
-        }
-
-        equipAnimationName = "Equip " + gunName;
-        unequipAnimationName = "Unequip " + gunName;
+        shootAnimationName = hasShootAnimation ? "Shoot " + gunName : "";
+        reloadAnimationName = (overrideReloadName == "") ? "Reload " + gunName : overrideReloadName;
     }
 
     public void HandleReloading()
@@ -368,7 +349,7 @@ public class Gun : MonoBehaviour
 
             if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
             {
-                shotCounter = FireRate;
+                shotCounter = fireRate;
                 Shoot(pelletCount);
                 vire.Recoil();
                 --CurrentMagazine;
@@ -389,7 +370,7 @@ public class Gun : MonoBehaviour
 
             if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
             {
-                shotCounter = FireRate;
+                shotCounter = fireRate;
                 Shoot(pelletCount);
                 vire.Recoil();
                 --CurrentMagazine;
@@ -413,6 +394,7 @@ public class Gun : MonoBehaviour
         crosshairScript.AdjustCrosshair(spread);
     }
 
+    // Mouse wheel changes scope zoom
     private void HandleScopeZoom()
     {
         if (scopeCam != null)
@@ -457,8 +439,9 @@ public class Gun : MonoBehaviour
             //     scopeCam.fieldOfView = minZoom;
             // }
         }
-    } // Mouse wheel changes scope zoom
+    }
 
+    // Handle lerps for switching weapons
     public void HandleSwitchingLerps()
     {
         // Ase esille
@@ -476,11 +459,12 @@ public class Gun : MonoBehaviour
             transform.position = Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime);
             transform.rotation = Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime);
         }
-    } // Handle lerps for switching weapons
+    }
 
+    // Handle impact, eg. hit enemies
     public void HandleImpact(RaycastHit hit)
     {
-        if (hit.collider.gameObject.layer == 6) return; // Osuessa casings eli hylsyihin, ei tehd‰ mit‰‰n
+        if (hit.collider.gameObject.layer == 6) return; // Ignore when hitting bullet cases
 
         // Push rigidbodies
         if (hit.collider.GetComponent<Rigidbody>() != null)
@@ -489,7 +473,7 @@ public class Gun : MonoBehaviour
             targetRB.AddForce(((mainCamera.transform.position - hit.transform.position) * -1) * knockbackPower, ForceMode.Impulse);
         }
 
-        // Tuhottavat jutut kuten ikkunat
+        // Destroyable stuff like windows or boxes etc.
         if (hit.collider.CompareTag("Destroyable"))
         {
             Destroy(hit.collider.gameObject);
@@ -502,7 +486,7 @@ public class Gun : MonoBehaviour
             LimbManager limbScript = hit.collider.gameObject.GetComponentInParent<LimbManager>();
             EnemyImpactFX(hit);
 
-            if (enemy.GetHealth() > 0)
+            if (enemy.GetHealth() > 0) // Hitmarker
             {
                 if (hit.collider.tag == "Head")
                 {
@@ -543,7 +527,6 @@ public class Gun : MonoBehaviour
                 if (limbScript != null && enemy.GetHealth() <= 50)
                 {
                     limbScript.RemoveLimb(2);
-                    if (enemy.isCrawling == false) enemy.StartCrawling();
                 }
 
             }
@@ -562,7 +545,6 @@ public class Gun : MonoBehaviour
                 if (limbScript != null && enemy.GetHealth() <= 50)
                 {
                     limbScript.RemoveLimb(1);
-                    if (enemy.isCrawling == false) enemy.StartCrawling();
                 }
             }
 
@@ -580,7 +562,6 @@ public class Gun : MonoBehaviour
                 if (limbScript != null && enemy.GetHealth() <= 50)
                 {
                     limbScript.RemoveLimb(4);
-                    if (enemy.isCrawling == false) enemy.StartCrawling();
                 }
             }
 
@@ -598,7 +579,6 @@ public class Gun : MonoBehaviour
                 if (limbScript != null && enemy.GetHealth() <= 50)
                 {
                     limbScript.RemoveLimb(3);
-                    if (enemy.isCrawling == false) enemy.StartCrawling();
                 }
             }
 
@@ -689,8 +669,9 @@ public class Gun : MonoBehaviour
             GroundImpactFX(hit);
             bulletHoleScript.AddBulletHole(hit);
         }
-    } // Handle impact, eg. hit enemies
+    }
 
+    // Main shooting function
     public void Shoot(int pelletCount)
     {
         MuzzleFlash.Play();
@@ -938,8 +919,9 @@ public class Gun : MonoBehaviour
                 }
             }
         }
-    } // Main shooting function
+    }
 
+    // Blood effect at enemies
     public void EnemyImpactFX(RaycastHit hit)
     {
         if (BloodFX != null)
@@ -953,14 +935,16 @@ public class Gun : MonoBehaviour
             ParticleSystem hitFXGO = Instantiate(HitFX, hit.point, Quaternion.identity);
             Destroy(hitFXGO, 2f);
         }
-    } // Blood effect at enemies
+    }
 
+    // Ground impacts
     public void GroundImpactFX(RaycastHit hit)
     {
         ParticleSystem groundFXGO = Instantiate(GroundFX, hit.point, Quaternion.identity);
         Destroy(groundFXGO, 2f);
-    } // Ground impacts
+    }
 
+    // Linerenderer between muzzle and hit point
     public void DrawLaser(Vector3 v0, Vector3 v1)
     {
         // TODO: object pooling to optimize
@@ -979,7 +963,7 @@ public class Gun : MonoBehaviour
         lr.SetPosition(0, v0);
         lr.SetPosition(1, v1);
         Destroy(InstantiatedLaser.gameObject, laserTime);
-    } // Linerenderer between muzzle and hit point
+    }
 
     private void SetFOV(float fov)
     {
@@ -987,6 +971,7 @@ public class Gun : MonoBehaviour
         weaponCam.fieldOfView = fov;
     }
 
+    // Update recoil script, ViRe and recoil
     private void UpdateRecoil()
     {
         recoilScript.SetRecoilX(recoilX * -1);
@@ -1007,8 +992,9 @@ public class Gun : MonoBehaviour
         vire.SetVireKickback(vireKick);
         vire.SetVireSnappiness(vireSnap);
         vire.SetVireReturn(vireReturn);
-    } // Update recoil script, ViRe and recoil
+    }
 
+    // Not in use
     private void Penetrate(RaycastHit hit, int penetrationLeft)
     {
         // OBSOLETE, NOT IN USE
@@ -1036,7 +1022,7 @@ public class Gun : MonoBehaviour
                 }
             }
         }
-    }  // Not in use
+    }
 
     public void EquipWeapon()
     {
@@ -1068,10 +1054,11 @@ public class Gun : MonoBehaviour
 
     public void UpdateFirerate()
     {
-        FireRate = (RPM / 60);
-        FireRate = 1 / FireRate;
+        fireRate = (RPM / 60);
+        fireRate = 1 / fireRate;
     }
 
+    // Reloading delay etc.
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {
         swayScript.enabled = false;
@@ -1084,8 +1071,9 @@ public class Gun : MonoBehaviour
         isReloading = false;
         reloadSymbol.SetActive(false);
         swayScript.enabled = true;
-    } // Reloading delay etc.
+    }
 
+    // Delay for equipping weapon
     IEnumerator WaitEquipTime()
     {
         audioSource.PlayOneShot(equipSound);
@@ -1093,7 +1081,7 @@ public class Gun : MonoBehaviour
         swayScript.enabled = true;
         canAim2 = true;
         WeaponSwitcher.canSwitch(true);
-    } // Delay for equipping weapon
+    }
 
     // Adjust values from other scripts
     #region Adjust Values 

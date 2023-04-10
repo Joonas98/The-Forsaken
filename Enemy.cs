@@ -178,12 +178,11 @@ public class Enemy : MonoBehaviour
 
         healthPercentage = (100 / maxHealth) * currentHealth;
 
-        UpdateEyeColor();
+        UpdateEyeColor(); // Enemy health can be seen from eyes
 
-        // if (!isDead) DamagePopup(damage); // Old selfmade damage popup system, now using Damage Numbers Pro
-
-        if (!isDead)
+        if (!isDead) // Damage popups
         {
+            if (damage == 0) return;
             DamageNumber damageNumber = numberPrefab.Spawn(popupTransform.position, damage);
             if (damage < 0) damageNumber.SetColor(Color.green); // Healing
         }
