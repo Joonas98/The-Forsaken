@@ -23,7 +23,6 @@ public class Ability : ScriptableObject
         if (audioSource == null && GameManager.GM.playerAS != null) // First activation sets audioSource
         {
             audioSource = GameManager.GM.playerAS;
-            Debug.Log("Set audiosource to an ability");
         }
 
         if (audioSource != null && activateSFX != null) audioSource.PlayOneShot(activateSFX);

@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Abilities/HealingFire")]
 public class HealingFireAbility : Ability
 {
     public float healingDuration, healingInterval;

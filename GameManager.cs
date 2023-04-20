@@ -6,7 +6,7 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public bool useGunDebug, useRecoilDebug, useVireDebug, useSpawnDebug;
+    public bool useGunDebug, useRecoilDebug, useVireDebug, useSpawnDebug, useEnemyDebug;
     public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
     public TextMeshProUGUI[] gunDebugTexts, recoilDebugTexts, vireDebugTexts; // Textfields for debug information
 
@@ -27,11 +27,12 @@ public class GameManager : MonoBehaviour
     public List<GameObject> enemiesAliveGos = new List<GameObject>();
 
     public GameObject playerGO;
-    public AudioSource playerAS;
+    public AudioSource playerAS, GMAS;
+    public AudioClip[] confirmKillSFX;
 
     private void Awake()
     {
-        // Singleton logiikka
+        // Singleton
         if (GM == null)
         {
             DontDestroyOnLoad(gameObject);
@@ -170,6 +171,11 @@ public class GameManager : MonoBehaviour
     public Gun GetCurrentGun() // Easy way to get reference to current gun script from anywhere
     {
         return currentGun;
+    }
+
+    public void ConfirmKillFX() // Extra effects for kills
+    {
+        GMAS.PlayOneShot(confirmKillSFX[Random.Range(0, confirmKillSFX.Length)]);
     }
 
     public void UpdateEnemyCount()

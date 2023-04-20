@@ -22,17 +22,15 @@ public class Player : MonoBehaviour
 
     [Header("Other Stuff")]
 
-    public GameObject runningSymbol, fallingSymbol, regenSymbol;
-    // public GameObject feetCollider;
-    public TextMeshProUGUI healthText, healthTextRaw;
     public Gradient healthGradient;
+    public GameObject runningSymbol, fallingSymbol, regenSymbol;
+    public TextMeshProUGUI healthText, healthTextRaw;
     public Image healthSlider;
     private string healthString, healthStringRaw;
 
     private Vector3 spawnLocation;
     private bool regenerating = true;
     private float currentHPPercentage = 100f;
-    private float currentPPPercentage;
 
     public IdleSway idleSwayScript;
 
@@ -40,7 +38,7 @@ public class Player : MonoBehaviour
 
     public Animator animator;
 
-    [Header("Audio")] // Handled now in playermovement script
+    [Header("Audio")]
     public AudioSource playerAS;
     public AudioClip[] damageGrunts, kickSounds;
     public AudioClip regenSound;
@@ -56,7 +54,7 @@ public class Player : MonoBehaviour
 
     private void Awake()
     {
-        spawnLocation = this.transform.position;
+        spawnLocation = transform.position;
         currentHealth = maxHealth;
         UpdateHealthUI();
     }

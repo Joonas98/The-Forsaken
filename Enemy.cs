@@ -7,33 +7,28 @@ using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
-    public bool debugMode; // Show or delete debug information
     [SerializeField] private int maxHealth;
     [SerializeField] private int damage;
+    [SerializeField] private float speedType1, speedType2, speedType3;
     [Tooltip("Attack CD when hit")] [SerializeField] private float attackCooldown;
     [Tooltip("Attack CD when missed")] [SerializeField] private float swingCooldown;
-    [SerializeField] private float despawnTime;
-    [SerializeField] private float despawnDistance;
-    [SerializeField] private float runDistance;
-    [SerializeField] private float attackDistance;
+    [SerializeField] private float despawnTime, despawnDistance;
+    [SerializeField] private float runDistance, attackDistance;
     [SerializeField] private int moneyReward;
     [SerializeField] private float crawlingSpeedMultiplier;
-    //  [SerializeField] private GameObject Torso;
-    // [SerializeField] NavMeshAgent navMeshAgent;
 
     private int currentHealth, healthPercentage;
     private string healthString;
     public bool isDead = false;
     private GameObject[] BodyParts;
     private GameObject player;
-    private float distanceToPlayer, velocity;
+    private float distanceToPlayer;
     private Animator animator;
     private float ogMovementSpeed;
 
-    // private EnemyNav navScript;
-    // private NavMeshAgent navAgent;
     [SerializeField] private Pathfinding.AIDestinationSetter destSetter;
     [SerializeField] private Pathfinding.RichAI richAI;
+    [SerializeField] private Pathfinding.RVO.RVOController rvoController;
 
     public List<Collider> RagdollParts = new List<Collider>();
     public Rigidbody[] RigidBodies;
@@ -67,7 +62,7 @@ public class Enemy : MonoBehaviour
     public AudioClip[] randomSounds;
 
     [Header("Debug information")]
-    public TextMeshProUGUI debugVelocityTextfield;
+    public TextMeshProUGUI debugVelocityTextfield, debugAnimatorVelocity;
 
     private void Awake()
     {
@@ -85,14 +80,29 @@ public class Enemy : MonoBehaviour
         eyeMaterialR = eyeRight.GetComponent<Renderer>().material;
         eyeMaterialL = eyeLeft.GetComponent<Renderer>().material;
 
-        float randomScaling = Random.Range(1.0f, 1.2f); // Default scale is 1.1
+        float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
 
-        // navScript = GetComponent<EnemyNav>();
-        // navAgent = GetComponent<NavMeshAgent>();
+        float animationFloat = UnityEngine.Random.value;
+        if (animationFloat < 0.33f)
+        {
+            animator.Play("Base Blend Tree");
+            richAI.maxSpeed = speedType1;
+        }
+        else if (animationFloat < 0.66f && animationFloat > 0.33f)
+        {
+            animator.Play("Blend Tree v2");
+            richAI.maxSpeed = speedType2;
+        }
+        else
+        {
+            animator.Play("Blend Tree v3");
+            richAI.maxSpeed = speedType3;
+        }
+
         ogMovementSpeed = richAI.maxSpeed;
 
-        if (!debugMode)
+        if (!GameManager.GM.useEnemyDebug)
         {
             Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
         }
@@ -110,7 +120,7 @@ public class Enemy : MonoBehaviour
     private void Update()
     {
         distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
-        animator.SetFloat("Velocity", richAI.velocity.magnitude);
+        animator.SetFloat("Velocity", richAI.velocity.magnitude / richAI.maxSpeed);
         HandleSwinging();
         CheckRagdollMagnitude();
         DebugUpdate();
@@ -151,16 +161,15 @@ public class Enemy : MonoBehaviour
         Destroy(gameObject, despawnTime);
 
         destSetter.target = null;
+        rvoController.enabled = false;
         richAI.maxSpeed = 0;
-
+        richAI.canMove = false;
         richAI.enabled = false;
         destSetter.enabled = false;
 
+        GameManager.GM.ConfirmKillFX();
         GameManager.GM.enemiesAlive.Remove(this);
         GameManager.GM.enemiesAliveGos.Remove(gameObject);
-
-        // navScript.enabled = false;
-        // navAgent.enabled = false;
     }
 
     public void Despawn() // Not in use
@@ -241,16 +250,12 @@ public class Enemy : MonoBehaviour
         }
         ragdolling = true;
         standCountdowActive = false;
-
+        richAI.canMove = false;
         animator.enabled = false;
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = false;
         }
-
-        // navScript.enabled = false;
-        // navAgent.isStopped = true;
-        // navAgent.enabled = false;
     }
 
     public void TurnOffRagdoll()
@@ -261,33 +266,30 @@ public class Enemy : MonoBehaviour
         {
             rb.isKinematic = true;
         }
+
         ragdolling = false;
-
         transform.position = modelRoot.transform.position; //Enemy GO does not move with ragdoll, so do that when stop ragdoll
-
-        // Animator stuff
         animator.enabled = true;
         if (!isCrawling)
         {
-            StartCoroutine(StandupDelay());
             animator.Play("Stand up");
+            Invoke("ContinueAfterRagdoll", 2f);
         }
         else
         {
-            // navAgent.isStopped = false;
             animator.Play("Base Blend Tree Crawl");
+            Invoke("ContinueAfterRagdoll", 1f);
         }
 
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = true;
         }
+    }
 
-        // navScript.enabled = true;
-        // if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
-        //
-        // navAgent.enabled = true;
-        // navAgent.isStopped = true; // Stop navAgent to wait standup animation to play
+    private void ContinueAfterRagdoll()
+    {
+        richAI.canMove = true;
     }
 
     public void Attack(Player playerScript)
@@ -371,19 +373,11 @@ public class Enemy : MonoBehaviour
         canAttack = true;
     }
 
-    IEnumerator StandupDelay()
-    {
-        yield return new WaitForSeconds(2f);
-        // if (!navScript.IsAgentOnNavMesh(gameObject)) navScript.MoveToNavMesh();
-        // if (!isDead) navAgent.isStopped = false;
-    }
-
     public void StartCrawling()
     {
         isCrawling = true;
         animator.Play("Start Crawling");
         SlowDown(crawlingSpeedMultiplier);
-        // navAgent.stoppingDistance = 1.75f;
     }
 
     public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
@@ -394,7 +388,6 @@ public class Enemy : MonoBehaviour
 
     public void SlowDown(float slowMultiplier)
     {
-        // navAgent.speed = navAgent.speed * slowMultiplier;
         richAI.maxSpeed = richAI.maxSpeed * slowMultiplier;
     }
 
@@ -432,6 +425,7 @@ public class Enemy : MonoBehaviour
     public void DebugUpdate()
     {
         debugVelocityTextfield.text = richAI.velocity.magnitude.ToString("F2");
+        debugAnimatorVelocity.text = animator.GetFloat("Velocity").ToString();
     }
 
 }

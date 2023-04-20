@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu]
+[CreateAssetMenu(menuName = "Abilities/SelfExplosion")]
 public class SelfExplosionAbility : Ability
 {
     public int damage;

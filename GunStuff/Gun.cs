@@ -661,6 +661,16 @@ public class Gun : MonoBehaviour
                 {
                     enemy.TakeDamage(damage);
                 }
+
+                if (AbilityMaster.abilities.Contains(6))
+                {
+                    if (UnityEngine.Random.value < 0.25f) // 25% chance
+                    {
+                        enemy.TurnOnRagdoll();
+                        audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
+                        enemy.Invoke("TurnOffRagdoll", 1f);
+                    }
+                }
             }
 
         }

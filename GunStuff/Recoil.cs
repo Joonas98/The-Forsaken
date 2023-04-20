@@ -57,35 +57,29 @@ public class Recoil : MonoBehaviour
 
     public void RecoilFire()
     {
-        if (!movementScript.isGrounded) // Ollaan ilmassa
+        if (!movementScript.isGrounded) // Mid air
         {
-            recoilMultiplier = rec1; //1.5f;
-                                     // print("Ilmassa");
+            recoilMultiplier = rec1;
         }
-        else if (movementScript.isGrounded && !movementScript.isStationary && !aiming) // Maassa, liikutaan, ei t‰hd‰t‰
+        else if (movementScript.isGrounded && !movementScript.isStationary && !aiming) // Grounded, moving, not aiming
         {
-            recoilMultiplier = rec2; //1f;
-                                     // print("Maassa, liikutaan, ei t‰hd‰t‰");
+            recoilMultiplier = rec2;
         }
-        else if (movementScript.isGrounded && !movementScript.isStationary && aiming) // Maassa, liikutaan, t‰hd‰t‰‰n
+        else if (movementScript.isGrounded && !movementScript.isStationary && aiming) // Grounded, moving, aiming
         {
-            recoilMultiplier = rec3; //0.5f;
-                                     // print("Maassa, liikutaan, t‰hd‰t‰‰n");
+            recoilMultiplier = rec3;
         }
-        else if (movementScript.isGrounded && movementScript.isStationary && !aiming)  // Maassa, liikkumatta, ei t‰hd‰t‰
+        else if (movementScript.isGrounded && movementScript.isStationary && !aiming) // Grounded, not moving, not aiming
         {
-            recoilMultiplier = rec4; //0.5f;
-                                     // print("Maassa, liikkumatta, ei t‰hd‰t‰");
+            recoilMultiplier = rec4;
         }
-        else if (movementScript.isGrounded && movementScript.isStationary && aiming)  // Maassa, liikkumatta, t‰hd‰t‰‰n
+        else if (movementScript.isGrounded && movementScript.isStationary && aiming)  // Grounded, not moving, aiming
         {
-            recoilMultiplier = rec5; //0.1f;
-                                     // print("Maassa, liikkumatta, t‰hd‰t‰‰n");
+            recoilMultiplier = rec5;
         }
-        else
+        else // Nothing above, probably never used
         {
-            recoilMultiplier = rec6; //0.5f;
-                                     // print("Ei mik‰‰n edell‰");
+            recoilMultiplier = rec6;
         }
 
         targetRotation += new Vector3(recoilX, Random.Range(-recoilY * 0.1f, recoilY * 0.1f), Random.Range(-recoilZ, recoilZ)) * recoilMultiplier;
