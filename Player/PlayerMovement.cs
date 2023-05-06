@@ -18,6 +18,7 @@ public class PlayerMovement : MonoBehaviour
     public float groundDistance; // Radius of sphere that checks if player is grounded
     public GameObject mainCamera;
     public GameObject fallingSymbol;
+    public Animator camAnimator, weaponHolsterAnimator;
 
     [HideInInspector] public bool isStationary;
     [HideInInspector] public float ogSpeed;
@@ -28,7 +29,6 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 moveDirection;
     [HideInInspector] public bool isGrounded, isRunning;
     private Vector3 lastPosition = new Vector3(0, 0, 0);
-    public Animator camAnimator;
 
     [HideInInspector] public bool canRun = true;
 
@@ -109,6 +109,8 @@ public class PlayerMovement : MonoBehaviour
         }
 
         controller.Move(moveDirection * speed * Time.deltaTime);
+
+        weaponHolsterAnimator.SetBool("Stationary", isStationary);
     }
 
     private void HandleJump()
@@ -159,7 +161,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void HandleHeadbob() // Videosta https://www.youtube.com/watch?v=_c5IoF1op4E
+    private void HandleHeadbob() // From video: https://www.youtube.com/watch?v=_c5IoF1op4E
     {
         if (!isGrounded) return;
 

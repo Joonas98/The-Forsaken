@@ -7,13 +7,28 @@ public class WeaponSwitcher : MonoBehaviour
 {
     public int selectedWeapon = 0;
     public static bool canSwitchWeapon = true;
-
     public Gun currentGun;
-
     public GameObject weaponsPanel;
-    private GameObject highlight;
+    public Animator animator;
 
+    public static WeaponSwitcher instance;
+
+    private GameObject highlight;
     private float unequipTime;
+
+    private void Awake()
+    {
+        // Singleton
+        if (instance == null)
+        {
+            DontDestroyOnLoad(gameObject);
+            instance = this;
+        }
+        else if (instance != this)
+        {
+            Destroy(gameObject);
+        }
+    }
 
     void Update()
     {

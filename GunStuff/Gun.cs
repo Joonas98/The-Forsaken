@@ -296,6 +296,7 @@ public class Gun : MonoBehaviour
 
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
 
+            // Adjust reload speed to animation and sound
             animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / ReloadTime);
             audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / ReloadTime);
 
@@ -308,6 +309,7 @@ public class Gun : MonoBehaviour
             if (animator != null && reloadAnimationName != "")
                 animator.Play(reloadAnimationName);
 
+            // Handle ammo correctly
             if (inventoryScript.GetAmmoCount(ammoType) >= MagazineSize)
             {
                 // Debug.Log("Full reload");
@@ -1072,6 +1074,7 @@ public class Gun : MonoBehaviour
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {
         swayScript.enabled = false;
+        WeaponSwitcher.instance.animator.SetBool("Reloading", isReloading); // Pause Weapon Holster animations
         yield return new WaitForSeconds(r + 0.05f);
         CurrentMagazine = ammoAmount;
         magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
@@ -1081,6 +1084,7 @@ public class Gun : MonoBehaviour
         isReloading = false;
         reloadSymbol.SetActive(false);
         swayScript.enabled = true;
+        WeaponSwitcher.instance.animator.SetBool("Reloading", isReloading); // Continue Weapon Holster animations
     }
 
     // Delay for equipping weapon

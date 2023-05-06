@@ -42,7 +42,7 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        WeaponHolster = GameObject.Find("WeaponHolster");
+        WeaponHolster = GameObject.Find("WeaponHolster"); // 6.5.23 WeaponSwitcher can be now referenced as WeaponSwitcher.instance
 
         if (!useVireDebug) Destroy(vireDebugObjects.gameObject);
         if (!useGunDebug) Destroy(gunDebugObjects.gameObject);
