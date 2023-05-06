@@ -12,15 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb8bf802fdce2c2459720bf51484500c, type: 3}
   m_Name: ElectricBoltAbility
   m_EditorClassIdentifier: 
-  name: Electric Bolt
+  name: Sugma Thunder
   picture: {fileID: 21300000, guid: 586b1944535a99349b317a36561ed36d, type: 3}
   passive: 0
   cooldownTime: 5
-  activeTime: 0.5
+  activeTime: 2
   activateSFX: {fileID: 8300000, guid: a1bd4d5ee337f9f4b9b79a6217e8c497, type: 3}
   endSFX: {fileID: 0}
   audioSource: {fileID: 0}
-  boltFX: {fileID: 5563621555663493539, guid: d2c896e30a8a4d842afbed526813903b, type: 3}
+  boltFX: {fileID: 122258, guid: b130633139b221841898b87ec1eea873, type: 3}
   totalEnemyCount: 5
   damage: 50
   maxDistance: 30

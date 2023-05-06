@@ -9,7 +9,7 @@ public class ElectricBoltAbility : Ability
     public int totalEnemyCount, damage;
     public float maxDistance = 30f;
 
-    public List<Enemy> affectedEnemies = new List<Enemy>();
+    public List<Enemy> affectedEnemies;
     private GameObject closestObject; // Temp helper to find closest enemy
 
     public override void Activate(GameObject parent)
@@ -18,6 +18,7 @@ public class ElectricBoltAbility : Ability
         base.Activate(parent);
 
         // First create the list of affected enemies
+        affectedEnemies = new List<Enemy>();
         if (FindClosestEnemy(parent, affectedEnemies) == null) // No enemies in range
         {
             Debug.Log("No enemies found for electric bolt");
@@ -27,36 +28,50 @@ public class ElectricBoltAbility : Ability
         affectedEnemies.Add(FindClosestEnemy(parent, affectedEnemies));
         for (int i = 0; i <= totalEnemyCount - 2; i++)
         {
+            // Find chain of enemies, each enemy can appear in the list only once
             affectedEnemies.Add(FindClosestEnemy(affectedEnemies[i].gameObject, affectedEnemies));
         }
 
         // Create effects and deal damage etc.
         GameObject electricFX = Instantiate(boltFX);
-        LineRenderer lr = electricFX.GetComponent<LineRenderer>();
-        // lr.transform.SetParent(parent.transform);
+        electricFX.transform.SetParent(GameManager.GM.playerGO.transform);
+        DigitalRuby.ThunderAndLightning.LightningBoltPathScript boltScript = electricFX.GetComponent<DigitalRuby.ThunderAndLightning.LightningBoltPathScript>();
+        boltScript.Camera = Camera.main;
+        boltScript.LightningPath[0] = GameManager.GM.playerGO; // The FX starts from player
 
-        lr.positionCount = affectedEnemies.Count;
-        lr.SetPosition(0, parent.transform.position);
-        for (int i = 1; i < affectedEnemies.Count; i++)
+        for (int i = 0; i < affectedEnemies.Count; i++)
         {
-            lr.SetPosition(i, affectedEnemies[i].transform.position);
+            boltScript.LightningPath[i + 1] = affectedEnemies[i].gameObject;
         }
+
+        boltScript.Trigger();
 
         foreach (Enemy x in affectedEnemies)
         {
             x.TakeDamage(damage);
         }
 
-        Debug.Log(affectedEnemies.Count);
+        Destroy(electricFX, activeTime);
 
-        Destroy(lr, activeTime);
+        #region
+        // If FX uses line renderer
+        // LineRenderer lr = electricFX.GetComponent<LineRenderer>();
+        // // lr.transform.SetParent(parent.transform);
+        //
+        // lr.positionCount = affectedEnemies.Count;
+        // lr.SetPosition(0, parent.transform.position);
+        // for (int i = 1; i < affectedEnemies.Count; i++)
+        // {
+        //     lr.SetPosition(i, affectedEnemies[i].transform.position);
+        // }
+        #endregion
     }
 
     public override void BeginCooldown(GameObject parent)
     {
         // Debug.Log("Electric bolt cooldown");
         base.BeginCooldown(parent);
-        affectedEnemies.Clear();
+        affectedEnemies = null;
     }
 
     private Enemy FindClosestEnemy(GameObject searcherObject, List<Enemy> enemiesToIgnore)
