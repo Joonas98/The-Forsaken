@@ -112,17 +112,17 @@ public class Gun : MonoBehaviour
     private float equipRotX, equipRotY, equipRotZ;
 
     //OG THINGS
+    [HideInInspector] public float RPMOG;
+
     private AudioClip shootSoundOG;
     private GameObject gunTipOG;
     [HideInInspector] public GameObject aimingSpotOG;
     private ParticleSystem muzzleFlashOG;
-    private float originalSpread;
     private float aimSpeedOG;
-    [HideInInspector] public float RPMOG;
 
     private float recoilXOG, recoilYOG, recoilZOG;
-
     private VisualRecoil vire;
+
     private void Awake()
     {
         vire = GameObject.Find("ViRe").GetComponent<VisualRecoil>();
@@ -134,7 +134,6 @@ public class Gun : MonoBehaviour
         recoilScript = GetComponentInParent<Recoil>();
         mainCamera = Camera.main;
         weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
-
         magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
         totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
         GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
@@ -155,7 +154,6 @@ public class Gun : MonoBehaviour
         recoilXOG = recoilX;
         recoilYOG = recoilY;
         recoilZOG = recoilZ;
-        originalSpread = spread;
         RPMOG = RPM;
 
         equipTrans = GameObject.Find("EquipTrans").transform;
@@ -218,7 +216,6 @@ public class Gun : MonoBehaviour
 
     public void HandleAiming()
     {
-
         if (playerMovementScript.isRunning || !playerMovementScript.isGrounded)
         {
             canAim = false;
@@ -238,9 +235,8 @@ public class Gun : MonoBehaviour
         {
             isAiming = true;
             playedUnaimSound = false;
-            idleSwayScript.ResetPosition();
-            // swayScript.enabled = false;
-            idleSwayScript.enabled = false;
+            // idleSwayScript.ResetPosition();
+            // idleSwayScript.enabled = false;
             CrosshairContents.SetActive(false);
             WeaponSwitcher.canSwitch(false);
 
@@ -266,7 +262,7 @@ public class Gun : MonoBehaviour
             SetFOV(Mathf.Lerp(Camera.main.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
             SetFOV(Mathf.Lerp(weaponCam.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
             // swayScript.enabled = true;
-            idleSwayScript.enabled = true;
+            // idleSwayScript.enabled = true;
             CrosshairContents.SetActive(true);
 
             if (Time.timeScale > 0 && canAim2 && !isReloading)
@@ -283,16 +279,15 @@ public class Gun : MonoBehaviour
 
     public void HandleReloading()
     {
-
-        if (isReloading)
-        {
-            swayScript.enabled = false;
-        }
+        // if (isReloading)
+        // {
+        //     swayScript.enabled = false;
+        // }
 
         // Reloading
         if (Input.GetKeyDown(KeyCode.R) && shotCounter <= 0 && CurrentMagazine != MagazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
         {
-            swayScript.ResetSway();
+            // swayScript.ResetSway();
 
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
 
@@ -446,7 +441,7 @@ public class Gun : MonoBehaviour
     // Handle lerps for switching weapons
     public void HandleSwitchingLerps()
     {
-        // Ase esille
+        // Take gun out
         if (canAim2 == false && !unequipping && equipLerp <= equipTime)
         {
             equipLerp += Time.deltaTime;
@@ -454,7 +449,7 @@ public class Gun : MonoBehaviour
             transform.rotation = Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime);
         }
 
-        // Ase poies
+        // Put gun away
         if (unequipping && unequipLerp <= unequipTime)
         {
             unequipLerp += Time.deltaTime;
@@ -1043,7 +1038,7 @@ public class Gun : MonoBehaviour
         WeaponSwitcher.canSwitch(false);
         canAim2 = false;
         unequipping = false;
-        swayScript.enabled = false;
+        // swayScript.enabled = false;
         shotCounter = equipTime;
 
         if (weaponSpot == null)
@@ -1058,7 +1053,7 @@ public class Gun : MonoBehaviour
         unequipLerp = 0f;
         unequipping = true;
         canAim2 = false;
-        swayScript.enabled = false;
+        // swayScript.enabled = false;
         shotCounter = unequipTime + 0.01f;
         WeaponSwitcher.canSwitch(false);
         audioSource.PlayOneShot(unequipSound);
@@ -1073,8 +1068,7 @@ public class Gun : MonoBehaviour
     // Reloading delay etc.
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {
-        swayScript.enabled = false;
-        WeaponSwitcher.instance.animator.SetBool("Reloading", isReloading); // Pause Weapon Holster animations
+        // swayScript.enabled = false;
         yield return new WaitForSeconds(r + 0.05f);
         CurrentMagazine = ammoAmount;
         magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
@@ -1083,8 +1077,7 @@ public class Gun : MonoBehaviour
         audioMixer.SetFloat("WeaponsPitch", 1f);
         isReloading = false;
         reloadSymbol.SetActive(false);
-        swayScript.enabled = true;
-        WeaponSwitcher.instance.animator.SetBool("Reloading", isReloading); // Continue Weapon Holster animations
+        // swayScript.enabled = true;
     }
 
     // Delay for equipping weapon
@@ -1092,7 +1085,7 @@ public class Gun : MonoBehaviour
     {
         audioSource.PlayOneShot(equipSound);
         yield return new WaitForSeconds(equipTime);
-        swayScript.enabled = true;
+        // swayScript.enabled = true;
         canAim2 = true;
         WeaponSwitcher.canSwitch(true);
     }

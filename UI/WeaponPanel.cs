@@ -5,17 +5,15 @@ using UnityEngine.UI;
 
 public class WeaponPanel : MonoBehaviour
 {
-
     public GameObject weaponHolster;
-
     public Button upButton;
     public Button downButton;
     public Button sellButton;
+    public GameObject[] buttons;
+    public GameObject highlightObject;
 
     private int currentIndex;
     private GameObject handledGun;
-
-    public GameObject[] buttons;
 
     private void Awake()
     {

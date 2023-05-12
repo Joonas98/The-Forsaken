@@ -9,11 +9,10 @@ public class WeaponSwitcher : MonoBehaviour
     public static bool canSwitchWeapon = true;
     public Gun currentGun;
     public GameObject weaponsPanel;
-    public Animator animator;
 
     public static WeaponSwitcher instance;
 
-    private GameObject highlight;
+    private WeaponPanel handledPanel;
     private float unequipTime;
 
     private void Awake()
@@ -21,13 +20,13 @@ public class WeaponSwitcher : MonoBehaviour
         // Singleton
         if (instance == null)
         {
-            DontDestroyOnLoad(gameObject);
             instance = this;
         }
         else if (instance != this)
         {
             Destroy(gameObject);
         }
+
     }
 
     void Update()
@@ -133,7 +132,6 @@ public class WeaponSwitcher : MonoBehaviour
             i++;
         }
 
-        // currentGun = GameManager.GM.GetCurrentGun();
         currentGun = gameObject.GetComponentInChildren<Gun>();
 
         if (currentGun != null)
@@ -141,17 +139,18 @@ public class WeaponSwitcher : MonoBehaviour
             currentGun.ResetFOV();
             unequipTime = currentGun.unequipTime;
             GameManager.GM.currentGun = currentGun;
+            WeaponSwayAndBob.instance.currentGun = currentGun;
         }
         else
         {
             GameManager.GM.currentGun = null;
+            WeaponSwayAndBob.instance.currentGun = null;
         }
 
-        if (highlight != null) highlight.SetActive(false);
-
-        // Highlight selected weapon
-        highlight = weaponsPanel.transform.GetChild(selectedWeapon).GetChild(3).gameObject;
-        highlight.SetActive(true);
+        // Handle highlight for HUD
+        if (handledPanel != null) handledPanel.highlightObject.SetActive(false);
+        handledPanel = weaponsPanel.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();
+        handledPanel.highlightObject.SetActive(true);
     }
 
     public static void canSwitch(bool boolean)

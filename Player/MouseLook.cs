@@ -4,8 +4,7 @@ using UnityEngine;
 
 public class MouseLook : MonoBehaviour
 {
-    // Hiiren liikuttaminen
-    // Pohja suoraan Brackeysiltä
+    // Basic camera movement
     public float mouseSensitivity = 100f;
     public float aimSensMultiplier = 0.5f;
     public Transform playerBody;

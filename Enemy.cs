@@ -7,9 +7,9 @@ using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
-    [SerializeField] private int maxHealth;
-    [SerializeField] private int damage;
-    [SerializeField] private float speedType1, speedType2, speedType3;
+    public int maxHealth;
+    public int damage;
+    public float speedType1, speedType2, speedType3;
     [Tooltip("Attack CD when hit")] [SerializeField] private float attackCooldown;
     [Tooltip("Attack CD when missed")] [SerializeField] private float swingCooldown;
     [SerializeField] private float despawnTime, despawnDistance;
@@ -17,10 +17,8 @@ public class Enemy : MonoBehaviour
     [SerializeField] private int moneyReward;
     [SerializeField] private float crawlingSpeedMultiplier;
 
-    private int currentHealth, healthPercentage;
-    private string healthString;
-    public bool isDead = false;
-    private GameObject[] BodyParts;
+    public int currentHealth, healthPercentage;
+    [HideInInspector] public bool isDead = false;
     private GameObject player;
     private float distanceToPlayer;
     private Animator animator;
@@ -40,20 +38,28 @@ public class Enemy : MonoBehaviour
     public bool isCrawling = false;
 
     public GameObject eyeRight, eyeLeft;
-    public GameObject modelRoot;
+    public GameObject modelRoot; // Hips
     public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
     public float standUpMagnitude, standUpDelay;
     private float countdown = 0f;
     private bool standCountdowActive = false;
 
-    private Material eyeMaterialR, eyeMaterialL;
-    public Color newEyeColor;
-    public Gradient eyeGradient;
-
     public GameObject damagePopupText;
     public Transform popupTransform;
 
     public DamageNumber numberPrefab;
+
+    [Header("Effects")]
+    public Color newEyeColor;
+    public Gradient eyeGradient;
+    public GameObject[] effectList;
+    public enum debuffs
+    {
+        Arcane, Crimson, Dark, Fairy, Fire, Frost, Holy, Light, Mist, Nature, ShockBlue, ShockYellow,
+        Universe, Void, Water, Wind
+    }
+
+    private Material eyeMaterialR, eyeMaterialL;
 
     [Header("Audio")]
     public AudioSource audioSource;
@@ -62,7 +68,8 @@ public class Enemy : MonoBehaviour
     public AudioClip[] randomSounds;
 
     [Header("Debug information")]
-    public TextMeshProUGUI debugVelocityTextfield, debugAnimatorVelocity;
+    public TextMeshProUGUI debugVelocityTextfield;
+    public TextMeshProUGUI debugAnimatorVelocity;
 
     private void Awake()
     {
@@ -112,7 +119,6 @@ public class Enemy : MonoBehaviour
     {
         SetRagdollParts();
         currentHealth = maxHealth;
-        healthString = currentHealth + " / " + maxHealth;
 
         destSetter.target = player.transform;
     }
@@ -124,6 +130,12 @@ public class Enemy : MonoBehaviour
         HandleSwinging();
         CheckRagdollMagnitude();
         DebugUpdate();
+    }
+
+    private void FixedUpdate()
+    {
+        // Partial fix to make the enemy GO follow the ragdolling body
+        // if (isDead) transform.position = transform.GetChild(0).position;
     }
 
     private void CheckRagdollMagnitude()
@@ -148,18 +160,9 @@ public class Enemy : MonoBehaviour
     public void Die()
     {
         if (isDead) return;
+
         isDead = true;
-
-        GameManager.GM.enemyCount--;
-        GameManager.GM.UpdateEnemyCount();
-        GameManager.GM.AdjustMoney(moneyReward);
-
         enemyCollider.enabled = false;
-
-        TurnOnRagdoll();
-
-        Destroy(gameObject, despawnTime);
-
         destSetter.target = null;
         rvoController.enabled = false;
         richAI.maxSpeed = 0;
@@ -167,6 +170,20 @@ public class Enemy : MonoBehaviour
         richAI.enabled = false;
         destSetter.enabled = false;
 
+        effectList[Random.Range(0, effectList.Length)].gameObject.SetActive(true);
+
+        TurnOnRagdoll();
+        Destroy(gameObject, despawnTime);
+
+        bodyRB.velocity = new Vector3(0, 0, 0);
+        foreach (Rigidbody rb in RigidBodies) // Otherwise gameobjects keep moving forever
+        {
+            rb.velocity = new Vector3(0, 0, 0);
+        }
+
+        GameManager.GM.enemyCount--;
+        GameManager.GM.UpdateEnemyCount();
+        GameManager.GM.AdjustMoney(moneyReward);
         GameManager.GM.ConfirmKillFX();
         GameManager.GM.enemiesAlive.Remove(this);
         GameManager.GM.enemiesAliveGos.Remove(gameObject);
@@ -183,8 +200,6 @@ public class Enemy : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
-        healthString = currentHealth + " / " + maxHealth;
-
         healthPercentage = (100 / maxHealth) * currentHealth;
 
         UpdateEyeColor(); // Enemy health can be seen from eyes
@@ -222,6 +237,18 @@ public class Enemy : MonoBehaviour
         return currentHealth;
     }
 
+    public IEnumerator ApplyDebuff(debuffs debuffenum, float duration)
+    {
+        effectList[(int)debuffenum].SetActive(true); // FX
+        yield return new WaitForSeconds(duration);
+        RemoveDebuff(debuffenum);
+    }
+
+    public void RemoveDebuff(debuffs debuffenum)
+    {
+        effectList[(int)debuffenum].SetActive(false); // FX
+    }
+
     private void SetRagdollParts()
     {
         Collider[] colliders = this.gameObject.GetComponentsInChildren<Collider>();
@@ -243,12 +270,12 @@ public class Enemy : MonoBehaviour
     public void TurnOnRagdoll()
     {
         if (ragdolling) return;
+        ragdolling = true;
 
         foreach (Rigidbody rb in RigidBodies)
         {
             rb.isKinematic = false;
         }
-        ragdolling = true;
         standCountdowActive = false;
         richAI.canMove = false;
         animator.enabled = false;

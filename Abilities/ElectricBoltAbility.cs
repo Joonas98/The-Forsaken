@@ -18,7 +18,7 @@ public class ElectricBoltAbility : Ability
         base.Activate(parent);
 
         // First create the list of affected enemies
-        affectedEnemies = new List<Enemy>();
+        affectedEnemies = new List<Enemy>(totalEnemyCount);
         if (FindClosestEnemy(parent, affectedEnemies) == null) // No enemies in range
         {
             Debug.Log("No enemies found for electric bolt");
@@ -26,10 +26,12 @@ public class ElectricBoltAbility : Ability
         }
 
         affectedEnemies.Add(FindClosestEnemy(parent, affectedEnemies));
-        for (int i = 0; i <= totalEnemyCount - 2; i++)
+
+        for (int i = 0; i < totalEnemyCount; i++)
         {
             // Find chain of enemies, each enemy can appear in the list only once
-            affectedEnemies.Add(FindClosestEnemy(affectedEnemies[i].gameObject, affectedEnemies));
+            affectedEnemies.Add(FindClosestEnemy(affectedEnemies[i].gameObject, affectedEnemies).GetComponent<Enemy>());
+            // Debug.Log("Found enemy");
         }
 
         // Create effects and deal damage etc.
@@ -39,16 +41,18 @@ public class ElectricBoltAbility : Ability
         boltScript.Camera = Camera.main;
         boltScript.LightningPath[0] = GameManager.GM.playerGO; // The FX starts from player
 
-        for (int i = 0; i < affectedEnemies.Count; i++)
+        foreach (Enemy obj in affectedEnemies)
         {
-            boltScript.LightningPath[i + 1] = affectedEnemies[i].gameObject;
+            if (!boltScript.LightningPath.Contains(obj.modelRoot)) boltScript.LightningPath.Add(obj.modelRoot);
         }
-
-        boltScript.Trigger();
 
         foreach (Enemy x in affectedEnemies)
         {
-            x.TakeDamage(damage);
+            if (x != null)
+            {
+                x.TakeDamage(damage);
+                x.StartCoroutine(x.ApplyDebuff(Enemy.debuffs.ShockBlue, 2f));
+            }
         }
 
         Destroy(electricFX, activeTime);
@@ -71,7 +75,6 @@ public class ElectricBoltAbility : Ability
     {
         // Debug.Log("Electric bolt cooldown");
         base.BeginCooldown(parent);
-        affectedEnemies = null;
     }
 
     private Enemy FindClosestEnemy(GameObject searcherObject, List<Enemy> enemiesToIgnore)

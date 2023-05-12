@@ -18,7 +18,6 @@ public class PlayerMovement : MonoBehaviour
     public float groundDistance; // Radius of sphere that checks if player is grounded
     public GameObject mainCamera;
     public GameObject fallingSymbol;
-    public Animator camAnimator, weaponHolsterAnimator;
 
     [HideInInspector] public bool isStationary;
     [HideInInspector] public float ogSpeed;
@@ -40,6 +39,7 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float walkBobAmount = 0.05f;
     [SerializeField] private float sprintBobSpeed = 18f;
     [SerializeField] private float sprintBobAmount = 0.1f;
+    [SerializeField] private float bobReturnSpeed = 0.25f; // How fast to return -> 0, 0, 0 when not bobbing
     private float defaultYPos = 0;
     private float bobTimer;
 
@@ -109,8 +109,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
         controller.Move(moveDirection * speed * Time.deltaTime);
-
-        weaponHolsterAnimator.SetBool("Stationary", isStationary);
     }
 
     private void HandleJump()
@@ -161,11 +159,15 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void HandleHeadbob() // From video: https://www.youtube.com/watch?v=_c5IoF1op4E
+    private void HandleHeadbob() // Original from video: https://www.youtube.com/watch?v=_c5IoF1op4E
     {
-        if (!isGrounded) return;
-
-        if (Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f)
+        if (!isGrounded || isStationary) // Disable sway, return to original position if stationary or mid-air
+        {
+            mainCamera.transform.localPosition =
+                 Vector3.MoveTowards(mainCamera.transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * bobReturnSpeed);
+            bobTimer = 0;
+        }
+        else if (Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f)
         {
             bobTimer += Time.deltaTime * (isRunning ? sprintBobSpeed : walkBobSpeed);
             mainCamera.transform.localPosition = new Vector3(

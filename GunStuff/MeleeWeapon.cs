@@ -34,6 +34,22 @@ public class MeleeWeapon : MonoBehaviour
     public AudioClip[] swingSounds;
     public AudioClip hitFloorSound;
 
+    private void Awake()
+    {
+        magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
+        totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
+        animator = GetComponent<Animator>();
+
+        GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
+        crosshairScript = CrosshairCanvas.GetComponentInChildren<Crosshair>();
+    }
+
+    private void OnEnable()
+    {
+        magazineText.text = magString;
+        totalAmmoText.text = totalAmmoString;
+    }
+
     private void Update()
     {
         if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack == true)
@@ -51,23 +67,6 @@ public class MeleeWeapon : MonoBehaviour
         }
 
         crosshairScript.AdjustCrosshair(1f);
-
-    }
-
-    private void Awake()
-    {
-        magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
-        totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
-        animator = GetComponent<Animator>();
-
-        GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
-        crosshairScript = CrosshairCanvas.GetComponentInChildren<Crosshair>();
-    }
-
-    private void OnEnable()
-    {
-        magazineText.text = magString;
-        totalAmmoText.text = totalAmmoString;
     }
 
     IEnumerator Attack()
@@ -79,31 +78,10 @@ public class MeleeWeapon : MonoBehaviour
         animator.Play(attackAnimations[raIndexAnim]);
 
         canAttack = false;
-        // StartCoroutine(TrailEffect());
         yield return new WaitForSeconds(AttackCooldown);
         attackedEnemies.Clear();
         canAttack = true;
     }
-
-    IEnumerator TrailEffect()
-    {
-        yield return new WaitForSeconds(0.07f);
-
-        if (trailParticleFX != null)
-            trailParticleFX.SetActive(true);
-
-        if (trailFX != null)
-            trailFX.SetActive(true);
-
-        yield return new WaitForSeconds(0.13f);
-
-        if (trailParticleFX != null)
-            trailParticleFX.SetActive(false);
-
-        if (trailFX != null)
-            trailFX.SetActive(false);
-    }
-
 
     private void OnTriggerEnter(Collider other)
     {
