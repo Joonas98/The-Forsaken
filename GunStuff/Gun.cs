@@ -231,16 +231,17 @@ public class Gun : MonoBehaviour
             audioSource.PlayOneShot(aimSound);
         }
 
+        // Actual aiming
         if (Input.GetButton("Fire2") && canAim && canAim2 && !isReloading && Time.timeScale > 0)
         {
             isAiming = true;
             playedUnaimSound = false;
-            // idleSwayScript.ResetPosition();
-            // idleSwayScript.enabled = false;
+            WeaponSwayAndBob.instance.disableSwayBob = true;
             CrosshairContents.SetActive(false);
             WeaponSwitcher.canSwitch(false);
 
             transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), (aimSpeed * 2f) * Time.deltaTime);
+            transform.localRotation = Quaternion.Euler(0, 180, 0);
 
             SetFOV(Mathf.Lerp(Camera.main.fieldOfView, zoomAmount * defaultFov, aimSpeed * Time.deltaTime));
             SetFOV(Mathf.Lerp(weaponCam.fieldOfView, zoomAmount * defaultFov, aimSpeed * Time.deltaTime));
@@ -255,14 +256,13 @@ public class Gun : MonoBehaviour
 
             isAiming = false;
             playedAimSound = false;
+            WeaponSwayAndBob.instance.disableSwayBob = false;
 
             if (canAim2 == true && unequipping == false)
                 transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, (aimSpeed * 2f) * Time.deltaTime);
 
             SetFOV(Mathf.Lerp(Camera.main.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
             SetFOV(Mathf.Lerp(weaponCam.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
-            // swayScript.enabled = true;
-            // idleSwayScript.enabled = true;
             CrosshairContents.SetActive(true);
 
             if (Time.timeScale > 0 && canAim2 && !isReloading)
@@ -1085,7 +1085,6 @@ public class Gun : MonoBehaviour
     {
         audioSource.PlayOneShot(equipSound);
         yield return new WaitForSeconds(equipTime);
-        // swayScript.enabled = true;
         canAim2 = true;
         WeaponSwitcher.canSwitch(true);
     }

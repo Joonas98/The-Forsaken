@@ -5,7 +5,6 @@ using TMPro;
 
 public class MeleeWeapon : MonoBehaviour
 {
-
     [SerializeField] private float AttackCooldown;
     [SerializeField] private int Damage;
     [SerializeField] private string[] attackAnimations;

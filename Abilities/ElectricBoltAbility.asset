@@ -24,4 +24,10 @@ MonoBehaviour:
   totalEnemyCount: 5
   damage: 50
   maxDistance: 30
-  affectedEnemies: []
+  affectedEnemies:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}

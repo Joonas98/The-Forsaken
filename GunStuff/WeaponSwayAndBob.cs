@@ -13,7 +13,6 @@ public class WeaponSwayAndBob : MonoBehaviour
     public Gun currentGun;
 
     public float returnSpeed;
-    private Transform transOG; // Original starting transform, set in Awake
     private bool aiming = false;
 
     [Header("Enable Components")]
@@ -54,34 +53,25 @@ public class WeaponSwayAndBob : MonoBehaviour
     private void Awake()
     {
         instance = this; // Allow this to be accessed anywhere via WeaponSwayAndBob.instance
-        transOG = transform;
         // transOG.localPosition = transform.localPosition;
         // transOG.localRotation = transform.localRotation;
     }
 
     void Update()
     {
-        if (currentGun != null)
+        if (disableSwayBob)
         {
-            if (currentGun.isAiming)
-            {
-                // ReturnToOriginal();
-                aiming = true;
-                goto skip;
-            }
-            else
-            {
-                aiming = false;
-            }
+            ReturnToOriginal();
         }
-        if (disableSwayBob) return;
-        GetInput();
-        if (sway) Sway();
-        if (swayRotation) SwayRotation();
-        if (bobOffset) BobOffset();
-        if (bobRotation) BobRotation();
-        skip:;
-        CompositePositionRotation();
+        else
+        {
+            GetInput();
+            if (sway && !disableSwayBob) Sway();
+            if (swayRotation && !disableSwayBob) SwayRotation();
+            if (bobOffset && !disableSwayBob) BobOffset();
+            if (bobRotation && !disableSwayBob) BobRotation();
+            CompositePositionRotation();
+        }
     }
 
     Vector2 walkInput;
@@ -97,13 +87,14 @@ public class WeaponSwayAndBob : MonoBehaviour
         lookInput.y = Input.GetAxis("Mouse Y");
     }
 
-    void ReturnToOriginal() // Return to original position and rotation
+    public void ReturnToOriginal() // Return to original position and rotation
     {
-        swayPos = new Vector3(0, 0, 0);
-        bobPosition = new Vector3(0, 0, 0);
+        // swayPos = bobPosition = swayEulerRot = bobEulerRotation = new Vector3(0, 0, 0);
 
-        swayEulerRot = new Vector3(0, 0, 0);
-        bobEulerRotation = new Vector3(0, 0, 0);
+        transform.localPosition = new Vector3(0, 0, 0);
+        transform.localRotation = Quaternion.Euler(new Vector3(0, 0, 0));
+
+        Debug.Log("Bob and Sway zeroed");
     }
 
     void Sway() // Mouse movement -> position change

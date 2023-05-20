@@ -170,8 +170,6 @@ public class Enemy : MonoBehaviour
         richAI.enabled = false;
         destSetter.enabled = false;
 
-        effectList[Random.Range(0, effectList.Length)].gameObject.SetActive(true);
-
         TurnOnRagdoll();
         Destroy(gameObject, despawnTime);
 
