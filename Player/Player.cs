@@ -21,9 +21,8 @@ public class Player : MonoBehaviour
     public float flinchY, flinchX;
 
     [Header("Other Stuff")]
-
     public Gradient healthGradient;
-    public GameObject runningSymbol, fallingSymbol, regenSymbol;
+    public GameObject runningSymbol, fallingSymbol, regenSymbol, kickSymbol;
     public TextMeshProUGUI healthText, healthTextRaw;
     public Image healthSlider;
     private string healthString, healthStringRaw;
@@ -71,7 +70,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        calculateRegen();
+        CalculateRegen();
         HandleInputs();
     }
 
@@ -80,21 +79,21 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F) && kickTimeStamp <= Time.time)
         {
             kickTimeStamp = Time.time + kickCooldown;
-            StartCoroutine(WaitKickAnimation(0.15f));
+            Invoke("Kick", 0.15f);
         }
+        if (kickTimeStamp <= Time.time) kickSymbol.SetActive(true);
     }
 
     public void Kick()
     {
+        // FX and SFX
         animator.Play("Kick");
-
         int kickSFXIndex = Random.Range(0, kickSounds.Length);
         playerAS.PlayOneShot(kickSounds[kickSFXIndex]);
+        kickSymbol.SetActive(false);
 
-        damagedEnemies.Clear();
-
+        // Physics and functionality
         Collider[] kickedColliders = Physics.OverlapSphere(kickTransform.position, kickRadius);
-
         foreach (Collider target in kickedColliders)
         {
             Rigidbody rb = target.GetComponent<Rigidbody>();
@@ -112,6 +111,7 @@ public class Player : MonoBehaviour
                 damagedEnemies.Add(enemy);
             }
         }
+        damagedEnemies.Clear();
     }
 
     public void TakeDamage(int amount, float flinchMultiplier = 1f)
@@ -172,7 +172,7 @@ public class Player : MonoBehaviour
         healthSlider.color = healthGradient.Evaluate(1f - currentHPPercentage / 100);
     }
 
-    public void calculateRegen()
+    public void CalculateRegen()
     {
         if (regenerating)
         {
@@ -200,12 +200,6 @@ public class Player : MonoBehaviour
         playerAS.PlayOneShot(regenSound, 2f);
         regenSymbol.SetActive(true);
         regenerating = true;
-    }
-
-    IEnumerator WaitKickAnimation(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        Kick();
     }
 
 }

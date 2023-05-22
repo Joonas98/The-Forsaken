@@ -5,6 +5,11 @@ using TMPro;
 
 public class MeleeWeapon : MonoBehaviour
 {
+    public AudioSource audioSource;
+    public AudioClip[] stabSounds;
+    public AudioClip[] swingSounds;
+    public AudioClip hitFloorSound;
+
     [SerializeField] private float AttackCooldown;
     [SerializeField] private int Damage;
     [SerializeField] private string[] attackAnimations;
@@ -27,11 +32,6 @@ public class MeleeWeapon : MonoBehaviour
     private string totalAmmoString = "Unlimited ammo";
 
     private List<Enemy> attackedEnemies = new List<Enemy>();
-
-    public AudioSource audioSource;
-    public AudioClip[] stabSounds;
-    public AudioClip[] swingSounds;
-    public AudioClip hitFloorSound;
 
     private void Awake()
     {

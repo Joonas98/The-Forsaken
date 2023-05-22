@@ -52,9 +52,7 @@ public class WeaponSwayAndBob : MonoBehaviour
 
     private void Awake()
     {
-        instance = this; // Allow this to be accessed anywhere via WeaponSwayAndBob.instance
-        // transOG.localPosition = transform.localPosition;
-        // transOG.localRotation = transform.localRotation;
+        instance = this;
     }
 
     void Update()
