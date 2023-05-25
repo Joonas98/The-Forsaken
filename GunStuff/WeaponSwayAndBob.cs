@@ -87,12 +87,8 @@ public class WeaponSwayAndBob : MonoBehaviour
 
     public void ReturnToOriginal() // Return to original position and rotation
     {
-        // swayPos = bobPosition = swayEulerRot = bobEulerRotation = new Vector3(0, 0, 0);
-
         transform.localPosition = new Vector3(0, 0, 0);
         transform.localRotation = Quaternion.Euler(new Vector3(0, 0, 0));
-
-        Debug.Log("Bob and Sway zeroed");
     }
 
     void Sway() // Mouse movement -> position change

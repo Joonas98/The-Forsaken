@@ -59,7 +59,10 @@ public class Enemy : MonoBehaviour
         Universe, Void, Water, Wind
     }
 
+    public Material originalMaterial;
     private Material eyeMaterialR, eyeMaterialL;
+    private SkinnedMeshRenderer smr;
+    private Material newMaterial;
 
     [Header("Audio")]
     public AudioSource audioSource;
@@ -86,6 +89,9 @@ public class Enemy : MonoBehaviour
 
         eyeMaterialR = eyeRight.GetComponent<Renderer>().material;
         eyeMaterialL = eyeLeft.GetComponent<Renderer>().material;
+        newMaterial = new Material(originalMaterial);
+        smr = GetComponentInChildren<SkinnedMeshRenderer>();
+        smr.material = newMaterial;
 
         float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
@@ -113,6 +119,7 @@ public class Enemy : MonoBehaviour
         {
             Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
         }
+
     }
 
     private void Start()
@@ -199,6 +206,8 @@ public class Enemy : MonoBehaviour
     {
         currentHealth -= damage;
         healthPercentage = (100 / maxHealth) * currentHealth;
+
+        newMaterial.SetFloat("_BloodAmount", 1f);
 
         UpdateEyeColor(); // Enemy health can be seen from eyes
 

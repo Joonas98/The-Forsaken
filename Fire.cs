@@ -7,17 +7,23 @@ public class Fire : MonoBehaviour
     public bool healingFire = false;
     public float damageInterval;
     public int damage;
-    [HideInInspector] public float radius; // radius = localScale.x / 2
+    public float radius;
 
     public AudioSource audioSource;
     public AudioClip startSFX;
+    public ParticleSystem ps;
+    public Light fireLight;
 
     private float damageCounter;
+    private bool stopped = false;
+    private float lightCountDown;
 
     private void Awake()
     {
         damageCounter = damageInterval;
-        radius = transform.localScale.x / 2;
+
+        ParticleSystem.ShapeModule sm = ps.shape;
+        sm.radius = radius;
         if (audioSource != null && startSFX != null) audioSource.PlayOneShot(startSFX);
     }
 
@@ -28,6 +34,7 @@ public class Fire : MonoBehaviour
 
     private void CalculateDamageIntervals()
     {
+        if (stopped) return; // Stopped it used to let particle systems finish before destroying this gameobject
         if (damageCounter <= 0)
         {
             damageCounter = damageInterval;
@@ -73,36 +80,19 @@ public class Fire : MonoBehaviour
         }
     }
 
-    // private void OnTriggerEnter(Collider other)
-    // {
-    //     if (other.CompareTag("Torso") && other.gameObject.layer == 2)
-    //     {
-    //         enemyScript = other.GetComponentInParent<Enemy>();
-    //         if (!collidedEnemies.Contains(enemyScript) && enemyScript != null)
-    //         {
-    //             if (!collidedEnemies.Contains(enemyScript))
-    //                 collidedEnemies.Add(enemyScript);
-    //
-    //         }
-    //     }
-    // }
-    //
-    // private void OnTriggerExit(Collider other)
-    // {
-    //     if (other.CompareTag("Torso") && other.gameObject.layer == 2)
-    //     {
-    //         enemyScriptExit = other.GetComponentInParent<Enemy>();
-    //
-    //         if (collidedEnemies.Contains(enemyScriptExit))
-    //         {
-    //             collidedEnemies.Remove(enemyScriptExit);
-    //         }
-    //     }
-    // }
-
-    public void SetDuration(float duration)
+    public void InitializeFire(float duration)
     {
-        Destroy(gameObject, duration);
+        Debug.Log("Fire initialized");
+        Invoke("StopFire", duration);
+    }
+
+    public void StopFire()
+    {
+        Debug.Log("Stopping fire");
+        stopped = true;
+        ps.Stop();
+        fireLight.intensity /= 2f;
+        Destroy(gameObject, 3f); // 3f to let the fire particles finish
     }
 
 }

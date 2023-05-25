@@ -60,6 +60,8 @@ public class Gun : MonoBehaviour
     public AudioClip zoomScopeInSound, zoomScopeOutSound;
     public AudioClip equipSound, unequipSound;
     public AudioClip aimSound, unaimSound;
+    public AudioClip actionSound; // Pump shotgun, bolt action etc.
+    public float actionDelay = 0f; // Seconds to wait before playing action sound
 
     public AudioSource audioSource;
     public AudioMixer audioMixer;
@@ -279,16 +281,9 @@ public class Gun : MonoBehaviour
 
     public void HandleReloading()
     {
-        // if (isReloading)
-        // {
-        //     swayScript.enabled = false;
-        // }
-
         // Reloading
-        if (Input.GetKeyDown(KeyCode.R) && shotCounter <= 0 && CurrentMagazine != MagazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
+        if (Input.GetKeyDown(KeyCode.R) && !isReloading && CurrentMagazine != MagazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
         {
-            // swayScript.ResetSway();
-
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
 
             // Adjust reload speed to animation and sound
@@ -684,8 +679,8 @@ public class Gun : MonoBehaviour
         MuzzleFlash.Play();
         int penetrationLeft = penetration;
         recoilScript.RecoilFire();
-        // audioSource.PlayOneShot(shootSounds[Random.Range(0, shootSounds.Length)]);
         audioSource.PlayOneShot(shootSound);
+        Invoke("PlayActionSound", actionDelay);
 
         // Casing creation
         if (dropCasings)
@@ -1087,6 +1082,13 @@ public class Gun : MonoBehaviour
         yield return new WaitForSeconds(equipTime);
         canAim2 = true;
         WeaponSwitcher.canSwitch(true);
+    }
+
+    // Invoked after action delay
+    public void PlayActionSound()
+    {
+        if (actionSound == null) return;
+        audioSource.PlayOneShot(actionSound);
     }
 
     // Adjust values from other scripts

@@ -23,20 +23,10 @@ public class GunShop : MonoBehaviour
 
     public Sprite defaultGunSprite;
 
-    [SerializeField] private TextMeshProUGUI gunNameText;
-    [SerializeField] private TextMeshProUGUI firemodeText;
-    [SerializeField] private TextMeshProUGUI pelletCountText;
-    [SerializeField] private TextMeshProUGUI spreadText;
-    [SerializeField] private TextMeshProUGUI penetrationText;
-    [SerializeField] private TextMeshProUGUI damageText;
-    [SerializeField] private TextMeshProUGUI headshotMultiplierText;
-    [SerializeField] private TextMeshProUGUI RPMText;
-    [SerializeField] private TextMeshProUGUI magazineSizeText;
-    [SerializeField] private TextMeshProUGUI reloadTimeText;
-    [SerializeField] private TextMeshProUGUI aimingSpeedText;
-    [SerializeField] private TextMeshProUGUI zoomAmountText;
-    [SerializeField] private TextMeshProUGUI recoilText;
-    [SerializeField] private TextMeshProUGUI stationaryAccuracyText;
+    [SerializeField] private TextMeshProUGUI gunNameText, firemodeText, pelletCountText, spreadText;
+    [SerializeField] private TextMeshProUGUI penetrationText, damageText, headshotMultiplierText, RPMText;
+    [SerializeField] private TextMeshProUGUI magazineSizeText, reloadTimeText, aimingSpeedText, zoomAmountText;
+    [SerializeField] private TextMeshProUGUI recoilText, stationaryAccuracyText;
 
     public GameObject weaponListGO;
     public WeaponList weaponListScript;
@@ -54,9 +44,6 @@ public class GunShop : MonoBehaviour
     {
         audioSource.ignoreListenerPause = true;
         SelectWeapon(0);
-        // WeaponHolster = GameObject.Find("WeaponHolster");
-        // weaponListGO = GameObject.Find("WeaponsPanel");
-        // weaponListScript = weaponListGO.GetComponent<WeaponList>();
     }
 
     private void OnEnable()
@@ -126,6 +113,7 @@ public class GunShop : MonoBehaviour
     {
         GameObject newWeapon = Instantiate(weaponPrefabs[GunNumber], equipTrans.position, equipTrans.transform.rotation);
         newWeapon.transform.parent = WeaponHolster.transform;
+        newWeapon.SetActive(false);
 
 
         if (WeaponHolster.transform.childCount == 1)

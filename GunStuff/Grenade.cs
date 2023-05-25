@@ -138,7 +138,7 @@ public class Grenade : MonoBehaviour
     {
         GameObject fireObject = Instantiate(firePrefab, new Vector3(transform.position.x, transform.position.y + 0.5f, transform.position.z), Quaternion.identity);
         Fire fireScript = fireObject.GetComponent<Fire>();
-        fireScript.SetDuration(fireDuration);
+        fireScript.InitializeFire(fireDuration);
         fireScript.damage = fireDamage;
         fireScript.damageInterval = fireInterval;
         meshRenderer.enabled = false;
