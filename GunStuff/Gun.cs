@@ -56,21 +56,20 @@ public class Gun : MonoBehaviour
 
     [Header("Audio")]
     public AudioClip shootSound;
-    public AudioClip reloadSound, dryFireSound;
-    public AudioClip zoomScopeInSound, zoomScopeOutSound;
-    public AudioClip equipSound, unequipSound;
-    public AudioClip aimSound, unaimSound;
-    public AudioClip actionSound; // Pump shotgun, bolt action etc.
+    public AudioClip reloadSound, aimSound, unaimSound;
+    public AudioClip equipSound, unequipSound, zoomScopeInSound, zoomScopeOutSound;
+    public AudioClip actionSound, dryFireSound; // Pump shotgun, bolt action etc.
     public float actionDelay = 0f; // Seconds to wait before playing action sound
 
     public AudioSource audioSource;
     public AudioMixer audioMixer;
 
     [Header("Other Things")]
+    [Tooltip("What layers the gun can hit")] public LayerMask targetLayers;
     public GameObject gunTip;
     public Transform casingTransform;
     public AnimationClip reloadAnimation;
-    public String overrideReloadName;
+    public string overrideReloadName;
 
     [SerializeField] private Animator animator;
     public GameObject aimingSpot;
@@ -456,8 +455,6 @@ public class Gun : MonoBehaviour
     // Handle impact, eg. hit enemies
     public void HandleImpact(RaycastHit hit)
     {
-        if (hit.collider.gameObject.layer == 6) return; // Ignore when hitting bullet cases
-
         // Push rigidbodies
         if (hit.collider.GetComponent<Rigidbody>() != null)
         {
@@ -874,8 +871,8 @@ public class Gun : MonoBehaviour
 
             RaycastHit[] hitPointsList;
 
-            if (!isAiming) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity);
-            else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, forwardVector, Mathf.Infinity);
+            if (!isAiming) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity, targetLayers);
+            else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, forwardVector, Mathf.Infinity, targetLayers);
 
             System.Array.Sort(hitPointsList, (x, y) => x.distance.CompareTo(y.distance));
 
