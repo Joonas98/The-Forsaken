@@ -7,13 +7,12 @@ public class MouseLook : MonoBehaviour
     // Basic camera movement
     public float mouseSensitivity = 100f;
     public float aimSensMultiplier = 0.5f;
+    public float minClamp, maxClamp;
     public Transform playerBody;
-    private float xRotation = 0f;
+    public Transform recoilTrans;
     [HideInInspector] public bool canRotate = true;
 
-    public Transform recoilTrans;
-    private float minClamp, maxClamp;
-
+    private float xRotation = 0f;
     private float mouseX, mouseY;
 
     void Start()
@@ -21,7 +20,7 @@ public class MouseLook : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    private void LateUpdate()
+    private void Update()
     {
         RotateCamera();
     }
@@ -42,8 +41,7 @@ public class MouseLook : MonoBehaviour
         }
 
         xRotation -= mouseY;
-        //  xRotation = Mathf.Clamp(xRotation, -90f + recoilTrans.transform.rotation.eulerAngles.x * -1, 90f + recoilTrans.transform.rotation.eulerAngles.x * -1);
-        //  Debug.Log(-90f + recoilTrans.transform.rotation.eulerAngles.x * -1);
+        xRotation = Mathf.Clamp(xRotation, minClamp, maxClamp);
 
         playerBody.Rotate(Vector3.up * mouseX);
         transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);

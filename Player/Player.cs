@@ -197,9 +197,12 @@ public class Player : MonoBehaviour
     IEnumerator regenerate()
     {
         yield return new WaitForSeconds(regenationDelayAfterDamage);
-        playerAS.PlayOneShot(regenSound, 2f);
-        regenSymbol.SetActive(true);
-        regenerating = true;
+        if (currentHPPercentage < 100f)
+        {
+            playerAS.PlayOneShot(regenSound, 2f);
+            regenSymbol.SetActive(true);
+            regenerating = true;
+        }
     }
 
 }

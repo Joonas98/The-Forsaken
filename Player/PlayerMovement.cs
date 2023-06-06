@@ -31,7 +31,7 @@ public class PlayerMovement : MonoBehaviour
 
     [HideInInspector] public bool canRun = true;
 
-    // Sliding thingy
+    // Important for cystom sliding system
     private Vector3 hitPointNormal;
 
     // Headbob
@@ -43,11 +43,12 @@ public class PlayerMovement : MonoBehaviour
     private float defaultYPos = 0;
     private float bobTimer;
 
+    // Custom slope sliding system
     private bool isSliding
     {
         get
         {
-            if (/*controller.isGrounded && */ Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 2f))
+            if (isGrounded && Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 2f, groundmask))
             {
                 hitPointNormal = slopeHit.normal;
                 return Vector3.Angle(hitPointNormal, Vector3.up) > controller.slopeLimit;

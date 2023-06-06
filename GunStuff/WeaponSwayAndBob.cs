@@ -124,6 +124,16 @@ public class WeaponSwayAndBob : MonoBehaviour
         bobEulerRotation.z = (walkInput != Vector2.zero ? multiplier.z * curveCos * walkInput.x : 0);
     }
 
+    // void FallOffset()
+    // {
+    //     fallPosition.y = -(_currentVelocity.Value.y * _travelLimitFall.y);
+    // }
+    //
+    // void FallRotatio()
+    // {
+    //     fallEulerRot.x = (_currentVelocity.Value.y * _fallMultiplier);
+    // }
+
     void CompositePositionRotation()
     {
         if (!aiming)

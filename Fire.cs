@@ -63,7 +63,7 @@ public class Fire : MonoBehaviour
 
                     if (!healingFire)
                     {
-                        playerScript.TakeDamage(damage, 0.1f);
+                        playerScript.TakeDamage(damage, 0f);
                     }
                     else
                     {

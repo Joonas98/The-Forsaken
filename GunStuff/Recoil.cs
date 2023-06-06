@@ -5,29 +5,22 @@ using TMPro;
 
 public class Recoil : MonoBehaviour
 {
-    public static Recoil Instance;
+    [HideInInspector] public static Recoil Instance;
+    [Tooltip("Will the camera return where it was before recoiling. Needs to be balanced seperately")] public bool useReturningRecoil;
+    [Tooltip("Up and down")] public float recoilX;
+    [Tooltip("Left and right")] public float recoilY;
+    [Tooltip("Tilt")] public float recoilZ;
 
-    public Rigidbody RB;
+    public float rec1, rec2, rec3, rec4, rec5, rec6;
+    public float snappiness;
+    public float returnSpeed;
     public Transform playerTrans;
+    public float recoilMultiplier;
+    [HideInInspector] public bool aiming;
+    public PlayerMovement movementScript;
 
     private Vector3 currentRotation;
     private Vector3 targetRotation;
-
-    [Tooltip("Up and down")]
-    public float recoilX;
-    [Tooltip("Left and right")]
-    public float recoilY;
-    [Tooltip("Tilt")]
-    public float recoilZ;
-
-    public float snappiness;
-    public float returnSpeed;
-    public float recoilMultiplier;
-    public bool aiming;
-
-    public PlayerMovement movementScript;
-    public float rec1, rec2, rec3, rec4, rec5, rec6;
-
     [SerializeField] private TextMeshProUGUI recXText, recYText, recZText, snappinessText, returnSpeedText, recMultiplierText;
 
     private void Awake()
@@ -40,12 +33,19 @@ public class Recoil : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
     }
 
     void Update()
     {
-        targetRotation = Vector3.Lerp(targetRotation, new Vector3(targetRotation.x, 0, 0), returnSpeed * Time.deltaTime);
+        if (useReturningRecoil)
+        {
+            targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);
+        }
+        else
+        {
+            targetRotation = Vector3.Lerp(targetRotation, new Vector3(targetRotation.x, 0, 0), returnSpeed * Time.deltaTime);
+        }
+
         currentRotation = Vector3.Slerp(currentRotation, targetRotation, snappiness * Time.fixedDeltaTime);
         transform.localRotation = Quaternion.Euler(currentRotation);
     }
