@@ -50,7 +50,7 @@ public class Gun : MonoBehaviour
     private float casingDespawnTime = 15f;
     private float laserTime = 0.05f;
 
-    private string reloadAnimationName, shootAnimationName, equipAnimationName, unequipAnimationName;
+    private string reloadAnimationName, shootAnimationName;
     private bool playedAimSound = false;
     private bool playedUnaimSound = true;
 
@@ -77,9 +77,8 @@ public class Gun : MonoBehaviour
 
     private GameObject reloadSymbol;
     private Recoil recoilScript;
-    private WeaponSway swayScript;
     private CanvasManager canvasManagerScript;
-    private TextMeshProUGUI magazineText, totalAmmoText;
+    private TextMeshProUGUI magazineText;
     private float shotCounter, fireRate;
     private int CurrentMagazine;
     [HideInInspector] public bool isFiring = false;
@@ -102,14 +101,13 @@ public class Gun : MonoBehaviour
     [HideInInspector] public BulletHoles bulletHoleScript;
     // public GameObject damagePopupText;
 
-    private IdleSway idleSwayScript;
     private GameObject CrosshairContents, weaponSpot;
     private Crosshair crosshairScript;
     private PlayerMovement playerMovementScript;
     private PlayerInventory inventoryScript;
 
     [HideInInspector] public Camera scopeCam = null;
-    private float equipLerp, unequipLerp;
+    private float equipLerp, unequipLerp, sprintLerp, unsprintLerp; // Timers to handle lerping
     private float equipRotX, equipRotY, equipRotZ;
 
     //OG THINGS
@@ -136,11 +134,9 @@ public class Gun : MonoBehaviour
         mainCamera = Camera.main;
         weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
         magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
-        totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
         GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
         crosshairScript = CrosshairCanvas.GetComponent<Crosshair>();
         reloadSymbol = CrosshairCanvas.transform.GetChild(0).gameObject;
-        swayScript = GetComponent<WeaponSway>();
         canvasManagerScript = GameObject.Find("Canvases").GetComponent<CanvasManager>();
         animator = GetComponent<Animator>();
         inventoryScript = GameObject.Find("Player").GetComponent<PlayerInventory>();
@@ -162,42 +158,36 @@ public class Gun : MonoBehaviour
 
     private void Start()
     {
-
         if (weaponSpot == null)
             weaponSpot = GameObject.Find("WeaponSpot");
-        idleSwayScript = GameObject.Find("WeaponHolster").GetComponent<IdleSway>();
+
         CrosshairContents = GameObject.Find("CrosshairPanel");
         playerMovementScript = GameObject.Find("Player").GetComponent<PlayerMovement>();
         animator = GetComponent<Animator>();
 
         shotsLeft = pelletCount;
-
-        UpdateFirerate();
-
         CurrentMagazine = MagazineSize;
-
         magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
         magazineText.text = magString;
 
+        UpdateFirerate();
         HandleAnimationStrings();
         UpdateRecoil();
     }
 
     private void OnEnable()
     {
-        SetFOV(defaultFov);
+        SetFOV(defaultFov); // Avoid bugs
 
+        // Handle ammo UI 
         magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
         magazineText.text = magString;
-
-        // totalAmmoString = inventoryScript.GetAmmoCount(ammoType).ToString() + " / " + inventoryScript.GetMaxAmmoCount(ammoType).ToString() + " - " + inventoryScript.GetAmmoString(ammoType);
-        // totalAmmoText.text = totalAmmoString;
         inventoryScript.UpdateTotalAmmoText(ammoType);
 
-        UpdateRecoil(); // Päivitetään recoil scriptiin aseen recoil arvot
-        EquipWeapon(); // Animaatiot yms. aseen esille ottamiseen
+        UpdateRecoil(); // Recoil is a singleton, update when taking weapon out
+        EquipWeapon(); // Animations etc. when equpping weapon
 
-        // Kun otetaan ase esille, ase käännetään satunnaisesta kulmasta
+        // Random rotation when pulling out weapon
         equipRotX = UnityEngine.Random.Range(0, 360);
         equipRotY = UnityEngine.Random.Range(0, 360);
         equipRotZ = UnityEngine.Random.Range(0, 360);
@@ -211,6 +201,7 @@ public class Gun : MonoBehaviour
         HandleCrosshair();
         HandleScopeZoom();
         HandleSwitchingLerps();
+        HandleSprinting();
         recoilScript.aiming = isAiming;
         vire.aiming = isAiming;
     }
@@ -249,13 +240,13 @@ public class Gun : MonoBehaviour
         }
         else
         {
+            isAiming = false;
             if (playedUnaimSound == false)
             {
                 playedUnaimSound = true;
                 audioSource.PlayOneShot(unaimSound);
             }
 
-            isAiming = false;
             playedAimSound = false;
             WeaponSwayAndBob.instance.disableSwayBob = false;
 
@@ -284,6 +275,9 @@ public class Gun : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R) && !isReloading && CurrentMagazine != MagazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
         {
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
+            isReloading = true;
+            // Reset rotation
+            ResetRotation();
 
             // Adjust reload speed to animation and sound
             animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / ReloadTime);
@@ -292,7 +286,6 @@ public class Gun : MonoBehaviour
             WeaponSwitcher.canSwitch(false);
             reloadSymbol.SetActive(true);
             shotCounter = ReloadTime;
-            isReloading = true;
             audioSource.PlayOneShot(reloadSound);
 
             if (animator != null && reloadAnimationName != "")
@@ -322,6 +315,13 @@ public class Gun : MonoBehaviour
 
     public void HandleShooting()
     {
+        // Can't shoot when running
+        if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
+        {
+            isFiring = false;
+            return;
+        }
+
         // Shooting
         if (Input.GetButtonDown("Fire1") && Time.timeScale > 0)
         {
@@ -377,6 +377,28 @@ public class Gun : MonoBehaviour
         else
         {
             shotCounter -= Time.deltaTime;
+        }
+    }
+
+    // Mostly to lerp weapons
+    public void HandleSprinting()
+    {
+        // No rotating if reloading or we have bullet ballet ability
+        if (isReloading || AbilityMaster.abilities.Contains(7)) return;
+
+        if (!playerMovementScript.isRunning || !canAim2)
+        {
+            // Return to default gun rotation
+            unsprintLerp += Time.deltaTime;
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, 180, 0), unsprintLerp * 50f * Time.deltaTime);
+            sprintLerp = 0f;
+        }
+        else
+        {
+            // Move to running rotation
+            sprintLerp += Time.deltaTime;
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(50, 180, 0), sprintLerp * 50f * Time.deltaTime);
+            unsprintLerp = 0f;
         }
     }
 
@@ -1155,6 +1177,11 @@ public class Gun : MonoBehaviour
         recoilY = recoilYOG;
         recoilZ = recoilZOG;
         UpdateRecoil();
+    }
+
+    public void ResetRotation()
+    {
+        transform.localRotation = Quaternion.Euler(0, 180, 0);
     }
 
     #endregion

@@ -14,8 +14,8 @@ public class Player : MonoBehaviour
     public float regenationDelay, regenationDelayAfterDamage;
 
     public float sensitivity;
-    public float movementSpeed, sprintingMovementSpeed;
-    public float jumpForce, sprintingJumpForce;
+    // public float movementSpeed, sprintingMovementSpeed;
+    // public float jumpForce, sprintingJumpForce;
 
     public float maxBloom, maxVignette, maxChromaticAberration, maxGrain;
     public float flinchY, flinchX;

@@ -32,7 +32,7 @@ public class WeaponSwayAndBob : MonoBehaviour
     public float maxRotationStep = 5f;
     Vector3 swayEulerRot;
 
-    public float smooth = 10f; // Used for BobOffset and Sway
+    public float smooth = 500f; // Used for BobOffset and Sway
     float smoothRot = 12f; // Used for BobSway and TiltSway
 
     [Header("Bobbing")]
@@ -41,18 +41,22 @@ public class WeaponSwayAndBob : MonoBehaviour
     float curveCos { get => Mathf.Cos(speedCurve); }
 
     public Vector3 travelLimit = Vector3.one * 0.025f; // Max limits of travel from movement
-    public Vector3 bobLimit = Vector3.one * 0.01f; // Limit travol from bobbing over time
+    public Vector3 bobLimit = Vector3.one * 0.01f; // Limit travel from bobbing over time
     Vector3 bobPosition;
 
     public float bobExaggeration;
 
     [Header("Bob Rotation")]
     public Vector3 multiplier;
-    Vector3 bobEulerRotation;
+    public Vector3 runningMultiplier;
+
+    private Vector3 defaultMultiplier;
+    private Vector3 bobEulerRotation;
 
     private void Awake()
     {
         instance = this;
+        defaultMultiplier = multiplier;
     }
 
     void Update()
@@ -70,6 +74,16 @@ public class WeaponSwayAndBob : MonoBehaviour
             if (bobRotation && !disableSwayBob) BobRotation();
             CompositePositionRotation();
         }
+
+        if (mover.isRunning)
+        {
+            multiplier = runningMultiplier;
+        }
+        else
+        {
+            multiplier = defaultMultiplier;
+        }
+
     }
 
     Vector2 walkInput;
