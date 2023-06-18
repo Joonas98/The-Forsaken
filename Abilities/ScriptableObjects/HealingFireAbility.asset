@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: HealingFireAbility
   m_EditorClassIdentifier: 
   name: Healing Flames
+  abilityDescription: 'Healing Flames:
+
+    Summon healing flames'
   picture: {fileID: 21300000, guid: 522690a8eece2b147b0f2514e9e951c5, type: 3}
   passive: 0
   cooldownTime: 5

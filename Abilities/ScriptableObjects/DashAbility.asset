@@ -13,6 +13,12 @@ MonoBehaviour:
   m_Name: DashAbility
   m_EditorClassIdentifier: 
   name: Dash
+  abilityDescription: 'Hyper Sprint:
+
+    Run really fast briefly.
+
+    Duration:
+    2s'
   picture: {fileID: 21300000, guid: b5b757ea60aa9f94cb19ca3245390407, type: 3}
   passive: 0
   cooldownTime: 8

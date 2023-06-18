@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class MeleeWeapon : MonoBehaviour
+public class MeleeWeapon : Weapon
 {
-    public AudioSource audioSource;
     public AudioClip[] stabSounds;
     public AudioClip[] swingSounds;
     public AudioClip hitFloorSound;
@@ -17,9 +16,6 @@ public class MeleeWeapon : MonoBehaviour
     [SerializeField] private ParticleSystem bloodFX;
     [SerializeField] private GameObject trailFX;
     [SerializeField] private GameObject trailParticleFX;
-
-    private GameObject CrosshairContents;
-    private Crosshair crosshairScript;
 
     private bool attacking = false;
     private bool canAttack = true;
@@ -40,7 +36,6 @@ public class MeleeWeapon : MonoBehaviour
         animator = GetComponent<Animator>();
 
         GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
-        crosshairScript = CrosshairCanvas.GetComponentInChildren<Crosshair>();
     }
 
     private void OnEnable()
@@ -64,8 +59,6 @@ public class MeleeWeapon : MonoBehaviour
         {
             StartCoroutine(Attack());
         }
-
-        crosshairScript.AdjustCrosshair(1f);
     }
 
     IEnumerator Attack()

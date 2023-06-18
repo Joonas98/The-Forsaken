@@ -6,14 +6,14 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.Audio;
 
-public class Gun : MonoBehaviour
+public class Gun : Weapon
 {
     [Header("Gun Settings")]
     public Sprite gunSprite;
     public string gunName;
     public bool semiAutomatic;
     public int pelletCount, penetration, damage, MagazineSize;
-    public float hipSpread, spread, headshotMultiplier, RPM, ReloadTime, knockbackPower, range, equipTime, unequipTime;
+    public float hipSpread, spread, headshotMultiplier, RPM, ReloadTime, knockbackPower, range;
     [Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
     [Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
     public int ammoType; //0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
@@ -57,11 +57,10 @@ public class Gun : MonoBehaviour
     [Header("Audio")]
     public AudioClip shootSound;
     public AudioClip reloadSound, aimSound, unaimSound;
-    public AudioClip equipSound, unequipSound, zoomScopeInSound, zoomScopeOutSound;
+    public AudioClip zoomScopeInSound, zoomScopeOutSound;
     public AudioClip actionSound, dryFireSound; // Pump shotgun, bolt action etc.
     public float actionDelay = 0f; // Seconds to wait before playing action sound
 
-    public AudioSource audioSource;
     public AudioMixer audioMixer;
 
     [Header("Other Things")]
@@ -89,26 +88,23 @@ public class Gun : MonoBehaviour
     [HideInInspector] public ParticleSystem PS;
     [HideInInspector] public ParticleSystemRenderer rend;
     [HideInInspector] public Vector3 equipVector;
-    [HideInInspector] public Transform equipTrans;
     [HideInInspector] public Camera mainCamera, weaponCam;
     [HideInInspector] public string magString, totalAmmoString;
     [HideInInspector] public bool isReloading = false, isAiming = false, unequipping = false;
     [HideInInspector] public bool canAim; // True in update unless mid air etc.
-    [HideInInspector] public bool canAim2; // Switching guns
     [HideInInspector] public float maxZoom, minZoom;
     [HideInInspector] public int shotsLeft;
 
     [HideInInspector] public BulletHoles bulletHoleScript;
     // public GameObject damagePopupText;
 
-    private GameObject CrosshairContents, weaponSpot;
+    private GameObject CrosshairContents;
     private Crosshair crosshairScript;
     private PlayerMovement playerMovementScript;
     private PlayerInventory inventoryScript;
 
     [HideInInspector] public Camera scopeCam = null;
-    private float equipLerp, unequipLerp, sprintLerp, unsprintLerp; // Timers to handle lerping
-    private float equipRotX, equipRotY, equipRotZ;
+    private float sprintLerp, unsprintLerp; // Timers to handle lerping
 
     //OG THINGS
     [HideInInspector] public float RPMOG;
@@ -186,11 +182,6 @@ public class Gun : MonoBehaviour
 
         UpdateRecoil(); // Recoil is a singleton, update when taking weapon out
         EquipWeapon(); // Animations etc. when equpping weapon
-
-        // Random rotation when pulling out weapon
-        equipRotX = UnityEngine.Random.Range(0, 360);
-        equipRotY = UnityEngine.Random.Range(0, 360);
-        equipRotZ = UnityEngine.Random.Range(0, 360);
     }
 
     private void Update()
@@ -224,7 +215,7 @@ public class Gun : MonoBehaviour
         }
 
         // Actual aiming
-        if (Input.GetButton("Fire2") && canAim && canAim2 && !isReloading && Time.timeScale > 0)
+        if (Input.GetButton("Fire2") && canAim && equipped && !isReloading && Time.timeScale > 0)
         {
             isAiming = true;
             playedUnaimSound = false;
@@ -250,14 +241,14 @@ public class Gun : MonoBehaviour
             playedAimSound = false;
             WeaponSwayAndBob.instance.disableSwayBob = false;
 
-            if (canAim2 == true && unequipping == false)
+            if (equipped == true && unequipping == false)
                 transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, (aimSpeed * 2f) * Time.deltaTime);
 
             SetFOV(Mathf.Lerp(Camera.main.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
             SetFOV(Mathf.Lerp(weaponCam.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
             CrosshairContents.SetActive(true);
 
-            if (Time.timeScale > 0 && canAim2 && !isReloading)
+            if (Time.timeScale > 0 && equipped && !isReloading)
                 WeaponSwitcher.canSwitch(true);
         }
 
@@ -276,6 +267,7 @@ public class Gun : MonoBehaviour
         {
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
             isReloading = true;
+
             // Reset rotation
             ResetRotation();
 
@@ -386,7 +378,7 @@ public class Gun : MonoBehaviour
         // No rotating if reloading or we have bullet ballet ability
         if (isReloading || AbilityMaster.abilities.Contains(7)) return;
 
-        if (!playerMovementScript.isRunning || !canAim2)
+        if (!playerMovementScript.isRunning || !equipped)
         {
             // Return to default gun rotation
             unsprintLerp += Time.deltaTime;
@@ -455,24 +447,25 @@ public class Gun : MonoBehaviour
     }
 
     // Handle lerps for switching weapons
-    public void HandleSwitchingLerps()
-    {
-        // Take gun out
-        if (canAim2 == false && !unequipping && equipLerp <= equipTime)
-        {
-            equipLerp += Time.deltaTime;
-            transform.position = Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime);
-            transform.rotation = Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime);
-        }
-
-        // Put gun away
-        if (unequipping && unequipLerp <= unequipTime)
-        {
-            unequipLerp += Time.deltaTime;
-            transform.position = Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime);
-            transform.rotation = Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime);
-        }
-    }
+    // public void HandleSwitchingLerps()
+    // {
+    //     base.HandleSwitchingLerps();
+    //     // Take gun out
+    //     if (canAim2 == false && !unequipping && equipLerp <= equipTime)
+    //     {
+    //         equipLerp += Time.deltaTime;
+    //         transform.position = Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime);
+    //         transform.rotation = Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime);
+    //     }
+    //
+    //     // Put gun away
+    //     if (unequipping && unequipLerp <= unequipTime)
+    //     {
+    //         unequipLerp += Time.deltaTime;
+    //         transform.position = Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime);
+    //         transform.rotation = Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime);
+    //     }
+    // }
 
     // Handle impact, eg. hit enemies
     public void HandleImpact(RaycastHit hit)
@@ -992,6 +985,24 @@ public class Gun : MonoBehaviour
         weaponCam.fieldOfView = fov;
     }
 
+    public override void EquipWeapon()
+    {
+        base.EquipWeapon();
+        shotCounter = equipTime;
+    }
+
+    public override void UnequipWeapon()
+    {
+        base.UnequipWeapon();
+        shotCounter = unequipTime + 0.01f;
+    }
+
+    public void UpdateFirerate()
+    {
+        fireRate = (RPM / 60);
+        fireRate = 1 / fireRate;
+    }
+
     // Update recoil script, ViRe and recoil
     private void UpdateRecoil()
     {
@@ -1015,74 +1026,9 @@ public class Gun : MonoBehaviour
         vire.SetVireReturn(vireReturn);
     }
 
-    // Not in use
-    private void Penetrate(RaycastHit hit, int penetrationLeft)
-    {
-        // OBSOLETE, NOT IN USE
-        // NEW PENETRATION SYSTEM IS INSIDE SHOOT()
-        Enemy hitEnemy = hit.collider.gameObject.GetComponentInParent<Enemy>();
-
-        RaycastHit newHit;
-        if (Physics.Raycast(hit.point, mainCamera.transform.TransformDirection(Vector3.forward), out newHit, range))
-        {
-            Enemy newEnemy = newHit.collider.gameObject.GetComponentInParent<Enemy>();
-            if (penetrationLeft > 0)
-            {
-                penetrationLeft--;
-                if (newEnemy != null)
-                {
-                    //  Debug.Log("New enemy penetrated");
-                    HandleImpact(newHit);
-                    Penetrate(newHit, penetrationLeft);
-
-                }
-                else
-                {
-                    //  Debug.Log("Non-enemy penetrated");
-                    Penetrate(newHit, penetrationLeft);
-                }
-            }
-        }
-    }
-
-    public void EquipWeapon()
-    {
-        equipLerp = 0f;
-        unequipLerp = 0f;
-        WeaponSwitcher.canSwitch(false);
-        canAim2 = false;
-        unequipping = false;
-        // swayScript.enabled = false;
-        shotCounter = equipTime;
-
-        if (weaponSpot == null)
-            weaponSpot = GameObject.Find("WeaponSpot");
-
-        StartCoroutine(WaitEquipTime());
-    }
-
-    public void UnequipWeapon()
-    {
-        equipLerp = 0f;
-        unequipLerp = 0f;
-        unequipping = true;
-        canAim2 = false;
-        // swayScript.enabled = false;
-        shotCounter = unequipTime + 0.01f;
-        WeaponSwitcher.canSwitch(false);
-        audioSource.PlayOneShot(unequipSound);
-    }
-
-    public void UpdateFirerate()
-    {
-        fireRate = (RPM / 60);
-        fireRate = 1 / fireRate;
-    }
-
     // Reloading delay etc.
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {
-        // swayScript.enabled = false;
         yield return new WaitForSeconds(r + 0.05f);
         CurrentMagazine = ammoAmount;
         magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
@@ -1091,17 +1037,8 @@ public class Gun : MonoBehaviour
         audioMixer.SetFloat("WeaponsPitch", 1f);
         isReloading = false;
         reloadSymbol.SetActive(false);
-        // swayScript.enabled = true;
     }
 
-    // Delay for equipping weapon
-    IEnumerator WaitEquipTime()
-    {
-        audioSource.PlayOneShot(equipSound);
-        yield return new WaitForSeconds(equipTime);
-        canAim2 = true;
-        WeaponSwitcher.canSwitch(true);
-    }
 
     // Invoked after action delay
     public void PlayActionSound()

@@ -84,4 +84,17 @@ public class AbilityMaster : MonoBehaviour
 
     }
 
+    public string GetAbilityDescription(int abilityNumber)
+    {
+        if (abilitiesList[abilityNumber] != null)
+        {
+            return abilitiesList[abilityNumber].abilityDescription;
+        }
+        else
+        {
+            Debug.Log("Ability number: " + abilityNumber + " was not found!");
+            return null;
+        }
+    }
+
 }

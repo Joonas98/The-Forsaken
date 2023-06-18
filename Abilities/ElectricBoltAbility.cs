@@ -2,14 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[CreateAssetMenu(menuName = "Abilities/ElectricBolt")]
-public class ElectricBoltAbility : Ability
+[CreateAssetMenu(menuName = "Abilities/UkkoBlast")]
+public class UkkoBlastAbility : Ability
 {
     public GameObject boltFX;
     public int totalEnemyCount, damage;
     public float maxDistance = 30f;
 
-    public List<Enemy> affectedEnemies;
+    private List<Enemy> affectedEnemies, damagedEnemies;
     private GameObject closestObject; // Temp helper to find closest enemy
 
     public override void Activate(GameObject parent)
@@ -18,16 +18,17 @@ public class ElectricBoltAbility : Ability
         base.Activate(parent);
 
         // First create the list of affected enemies
-        affectedEnemies = new List<Enemy>(totalEnemyCount);
+        affectedEnemies = new List<Enemy>(totalEnemyCount - 1);
+        damagedEnemies = new List<Enemy>(totalEnemyCount - 1);
         if (FindClosestEnemy(parent, affectedEnemies) == null) // No enemies in range
         {
-            Debug.Log("No enemies found for electric bolt");
+            Debug.Log("No enemies found for Ukko Blast");
             return;
         }
 
         affectedEnemies.Add(FindClosestEnemy(parent, affectedEnemies));
 
-        for (int i = 0; i < totalEnemyCount; i++)
+        for (int i = 0; i < totalEnemyCount - 1; i++)
         {
             // Find chain of enemies, each enemy can appear in the list only once
             affectedEnemies.Add(FindClosestEnemy(affectedEnemies[i].gameObject, affectedEnemies).GetComponent<Enemy>());
@@ -48,27 +49,15 @@ public class ElectricBoltAbility : Ability
 
         foreach (Enemy x in affectedEnemies)
         {
-            if (x != null)
+            if (x != null && !damagedEnemies.Contains(x))
             {
                 x.TakeDamage(damage);
+                damagedEnemies.Add(x);
                 x.StartCoroutine(x.ApplyDebuff(Enemy.debuffs.ShockBlue, 2f));
             }
         }
 
         Destroy(electricFX, activeTime);
-
-        #region
-        // If FX uses line renderer
-        // LineRenderer lr = electricFX.GetComponent<LineRenderer>();
-        // // lr.transform.SetParent(parent.transform);
-        //
-        // lr.positionCount = affectedEnemies.Count;
-        // lr.SetPosition(0, parent.transform.position);
-        // for (int i = 1; i < affectedEnemies.Count; i++)
-        // {
-        //     lr.SetPosition(i, affectedEnemies[i].transform.position);
-        // }
-        #endregion
     }
 
     public override void BeginCooldown(GameObject parent)
@@ -86,7 +75,6 @@ public class ElectricBoltAbility : Ability
             if (!enemiesToIgnore.Contains(obj.GetComponent<Enemy>()))
             {
                 float distance = Vector3.Distance(searcherObject.transform.position, obj.transform.position);
-
                 if (distance < closestDistance && distance <= maxDistance)
                 {
                     closestDistance = distance;

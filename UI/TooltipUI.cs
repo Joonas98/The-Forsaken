@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-// Modifioitu videosta https://www.youtube.com/watch?v=YUIohCXt_pc
-// Videon kommenteissa korjaus jos vaihtaa vain uuteen input j‰rjestelm‰‰n
-// Abilityjen tooltipit
+// Original base from https://www.youtube.com/watch?v=YUIohCXt_pc
+// Ability tooltips
 public class TooltipUI : MonoBehaviour
 {
     [SerializeField] private RectTransform backgroundRectTransform;
@@ -14,19 +13,12 @@ public class TooltipUI : MonoBehaviour
 
     [SerializeField] private RectTransform canvasRectTransform;
 
-    private void Awake()
+    public void SetText(int index)
     {
-        // SetText("Penis :D \n" + "Lis‰‰ teksti testi‰ blaa blaa xD xD");
-    }
-
-    public void SetText(TextMeshProUGUI newText)
-    {
-        tooltipText.text = newText.text;
+        tooltipText.text = AbilityMaster.instance.GetAbilityDescription(index);
         tooltipText.ForceMeshUpdate();
-
         Vector2 textSize = tooltipText.GetRenderedValues(false);
         Vector2 paddingSize = new Vector2(tooltipText.margin.x * 2, tooltipText.margin.y * 2);
-        // Vector2 paddingSize = new Vector2(8, 8);
         backgroundRectTransform.sizeDelta = textSize + paddingSize;
     }
 

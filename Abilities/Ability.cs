@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class Ability : ScriptableObject
 {
     public new string name;
+    [TextArea] public string abilityDescription;
     public Sprite picture;
     public bool passive;
 

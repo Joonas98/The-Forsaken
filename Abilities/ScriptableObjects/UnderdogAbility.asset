@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0406d79593a401b42886d44af9b3c37a, type: 3}
   m_Name: UnderdogAbility
   m_EditorClassIdentifier: 
-  name: Underdog
+  name: Desperation Blitz
+  abilityDescription: "Desperation Blitz:\nGain 1 % of shooting\nspeed for each enemy
+    \nalive at the moment."
   picture: {fileID: 21300000, guid: 00413fe8b3e127c49ad3ae4e58cb6154, type: 3}
   passive: 1
   cooldownTime: 0

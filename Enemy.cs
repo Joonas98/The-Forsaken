@@ -7,6 +7,7 @@ using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
+    public GameObject[] zombieSkins;
     public int maxHealth;
     public int damage;
     public float speedType1, speedType2, speedType3;
@@ -79,6 +80,8 @@ public class Enemy : MonoBehaviour
         GameManager.GM.enemiesAlive.Add(this);
         GameManager.GM.enemiesAliveGos.Add(gameObject);
 
+        RandomizeSkins();
+
         player = GameObject.Find("Player");
 
         RigidBodies = GetComponentsInChildren<Rigidbody>();
@@ -86,12 +89,6 @@ public class Enemy : MonoBehaviour
         SetRagdollParts();
 
         bodyRB = modelRoot.GetComponent<Rigidbody>();
-
-        eyeMaterialR = eyeRight.GetComponent<Renderer>().material;
-        eyeMaterialL = eyeLeft.GetComponent<Renderer>().material;
-        newMaterial = new Material(originalMaterial);
-        smr = GetComponentInChildren<SkinnedMeshRenderer>();
-        smr.material = newMaterial;
 
         float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
@@ -119,7 +116,6 @@ public class Enemy : MonoBehaviour
         {
             Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
         }
-
     }
 
     private void Start()
@@ -454,6 +450,27 @@ public class Enemy : MonoBehaviour
         TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
         popText.text = number.ToString();
         Destroy(dmgPopupText.gameObject, 2f);
+    }
+
+    private void RandomizeSkins()
+    {
+        // 18.6.23 All zombies are 1 prefab and the skin is randomized on awake
+        if (zombieSkins.Length > 0)
+        {
+            int randomIndex = Random.Range(0, zombieSkins.Length);
+            for (int i = 0; i < zombieSkins.Length; i++)
+            {
+                // Set the selected object active and the rest inactive
+                zombieSkins[i].SetActive(i == randomIndex);
+            }
+        }
+
+        // Set materials
+        eyeMaterialR = eyeRight.GetComponent<Renderer>().material;
+        eyeMaterialL = eyeLeft.GetComponent<Renderer>().material;
+        newMaterial = new Material(originalMaterial);
+        smr = GetComponentInChildren<SkinnedMeshRenderer>();
+        smr.material = newMaterial;
     }
 
     public void DebugUpdate()

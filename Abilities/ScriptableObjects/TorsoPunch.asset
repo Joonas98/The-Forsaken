@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: TorsoPunch
   m_EditorClassIdentifier: 
   name: Torso Punch
+  abilityDescription: "Torso Punch:\nTorso shots have \na chance to ragdoll.\nChance:
+    25%."
   picture: {fileID: 21300000, guid: c8c77ea272294dd49baf2d6306150b61, type: 3}
   passive: 1
   cooldownTime: 0

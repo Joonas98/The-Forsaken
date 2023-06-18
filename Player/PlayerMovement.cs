@@ -8,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Variables")]
     public float speed, runningSpeed, slopeSpeed, gravity, jumpHeight;
     public AudioClip[] jumpSounds;
+    private float runThreshold = 5f; // If controller.velocity.magnitude is less than this, can't be running
 
     [Tooltip("Other stuff")]
     public AudioSource audioSource;
@@ -134,9 +135,16 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleRunning()
     {
-        if (Input.GetKey(KeyCode.LeftShift) && Time.timeScale > 0 && controller.velocity.magnitude >= 5f && canRun) //(Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0))
+        if (Input.GetKey(KeyCode.LeftShift) && Time.timeScale > 0 && canRun)
         {
-            Run(true);
+            if (controller.velocity.magnitude >= runThreshold)
+            {
+                Run(true);
+            }
+            else
+            {
+                Run(false);
+            }
         }
         else if (!Input.GetKey(KeyCode.LeftShift) && isRunning)
         {

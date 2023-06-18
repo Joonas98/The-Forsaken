@@ -10,13 +10,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cb8bf802fdce2c2459720bf51484500c, type: 3}
-  m_Name: ElectricBoltAbility
+  m_Name: UkkoBlastAbility
   m_EditorClassIdentifier: 
-  name: Sugma Thunder
+  name: Ukko Blast
+  abilityDescription: 'Ukko Blast:
+
+    Fire a chain lightning.
+
+    Damage: 50.
+
+    Enemies:
+    5.'
   picture: {fileID: 21300000, guid: 586b1944535a99349b317a36561ed36d, type: 3}
   passive: 0
   cooldownTime: 5
-  activeTime: 2
+  activeTime: 0.5
   activateSFX: {fileID: 8300000, guid: a1bd4d5ee337f9f4b9b79a6217e8c497, type: 3}
   endSFX: {fileID: 0}
   audioSource: {fileID: 0}
@@ -24,10 +32,3 @@ MonoBehaviour:
   totalEnemyCount: 5
   damage: 50
   maxDistance: 30
-  affectedEnemies:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}

@@ -6,17 +6,12 @@ using TMPro;
 
 public class Player : MonoBehaviour
 {
-
     [Header("Player Settings")]
     [HideInInspector] public int currentHealth;
     public int maxHealth;
     public int regenationAmount;
     public float regenationDelay, regenationDelayAfterDamage;
-
     public float sensitivity;
-    // public float movementSpeed, sprintingMovementSpeed;
-    // public float jumpForce, sprintingJumpForce;
-
     public float maxBloom, maxVignette, maxChromaticAberration, maxGrain;
     public float flinchY, flinchX;
 
@@ -25,17 +20,14 @@ public class Player : MonoBehaviour
     public GameObject runningSymbol, fallingSymbol, regenSymbol, kickSymbol;
     public TextMeshProUGUI healthText, healthTextRaw;
     public Image healthSlider;
-    private string healthString, healthStringRaw;
+    public IdleSway idleSwayScript;
+    public DamagePP damagePPScript;
+    public Animator animator;
 
+    private string healthString, healthStringRaw;
     private Vector3 spawnLocation;
     private bool regenerating = true;
     private float currentHPPercentage = 100f;
-
-    public IdleSway idleSwayScript;
-
-    public DamagePP damagePPScript;
-
-    public Animator animator;
 
     [Header("Audio")]
     public AudioSource playerAS;
