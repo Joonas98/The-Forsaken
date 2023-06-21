@@ -22,8 +22,6 @@ public class Weapon : MonoBehaviour
 
     protected virtual void Awake()
     {
-        // equipTrans = GameObject.Find("EquipTrans").transform;
-        // weaponSpot = GameObject.Find("WeaponSpot");
         equipTrans = GameManager.GM.equipTrans;
         weaponSpot = GameManager.GM.weaponSpot;
     }
@@ -39,12 +37,10 @@ public class Weapon : MonoBehaviour
         equipRotX = Random.Range(0, 360);
         equipRotY = Random.Range(0, 360);
         equipRotZ = Random.Range(0, 360);
-        Debug.Log("Randomed equip lerp");
     }
 
     public virtual void EquipWeapon()
     {
-        Debug.Log("Equip called from: " + name);
         equipLerp = 0f;
         unequipLerp = 0f;
         WeaponSwitcher.CanSwitch(false);
@@ -55,7 +51,6 @@ public class Weapon : MonoBehaviour
 
     public virtual void UnequipWeapon()
     {
-        Debug.Log("Unequip called from: " + name);
         equipLerp = 0f;
         unequipLerp = 0f;
         equipped = false;
@@ -70,16 +65,14 @@ public class Weapon : MonoBehaviour
         if (equipped == false && equipLerp <= equipTime)
         {
             equipLerp += Time.deltaTime;
-            transform.position = Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime);
-            transform.rotation = Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime);
+            transform.SetPositionAndRotation(Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime), Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime));
         }
 
         // Put gun away
         if (equipped == false && unequipLerp <= unequipTime)
         {
             unequipLerp += Time.deltaTime;
-            transform.position = Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime);
-            transform.rotation = Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime);
+            transform.SetPositionAndRotation(Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime), Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime));
         }
     }
 

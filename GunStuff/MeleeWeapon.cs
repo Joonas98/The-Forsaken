@@ -9,8 +9,8 @@ public class MeleeWeapon : Weapon
     public AudioClip[] swingSounds;
     public AudioClip hitFloorSound;
 
-    [SerializeField] private float attackCooldown;
-    [SerializeField] private int damage;
+    [SerializeField] private float attackCooldown, secondaryAttackCooldown;
+    [SerializeField] private int damage, damageSecondary;
     [SerializeField] private string[] attackAnimations;
 
     [SerializeField] private ParticleSystem bloodFX;
@@ -18,6 +18,7 @@ public class MeleeWeapon : Weapon
     [SerializeField] private GameObject trailParticleFX;
 
     private bool attacking = false;
+    private bool attackingSecondary = false;
     private bool canAttack = true;
 
     private Animator animator;
@@ -49,6 +50,26 @@ public class MeleeWeapon : Weapon
     protected override void Update()
     {
         base.Update();
+
+        HandleInputs();
+
+        if (canAttack == true && attacking == true)
+        {
+            int randomSwingClip = Random.Range(0, swingSounds.Length);
+            audioSource.PlayOneShot(swingSounds[randomSwingClip]);
+            StartCoroutine(Attack(false));
+        }
+
+        if (canAttack == true && attackingSecondary == true)
+        {
+            int randomSwingClip = Random.Range(0, swingSounds.Length);
+            audioSource.PlayOneShot(swingSounds[randomSwingClip]);
+            StartCoroutine(Attack(true));
+        }
+    }
+
+    public void HandleInputs()
+    {
         if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack == true)
         {
             attacking = true;
@@ -58,9 +79,13 @@ public class MeleeWeapon : Weapon
             attacking = false;
         }
 
-        if (canAttack == true && attacking == true)
+        if (Input.GetButtonDown("Fire2") && Time.timeScale > 0 && canAttack == true)
         {
-            StartCoroutine(Attack());
+            attackingSecondary = true;
+        }
+        else if (Input.GetButtonUp("Fire2"))
+        {
+            attackingSecondary = false;
         }
     }
 
@@ -74,45 +99,70 @@ public class MeleeWeapon : Weapon
         base.UnequipWeapon();
     }
 
-    IEnumerator Attack()
+    IEnumerator Attack(bool secondaryAttack)
     {
-        int raIndex = Random.Range(0, swingSounds.Length);
-        audioSource.PlayOneShot(swingSounds[raIndex]);
-
-        int raIndexAnim = Random.Range(0, attackAnimations.Length);
-        animator.Play(attackAnimations[raIndexAnim]);
-
-        canAttack = false;
-        yield return new WaitForSeconds(attackCooldown);
-        attackedEnemies.Clear();
-        canAttack = true;
+        if (!secondaryAttack)
+        {
+            animator.Play(attackAnimations[0]);
+            canAttack = false;
+            yield return new WaitForSeconds(attackCooldown);
+            attackedEnemies.Clear();
+            canAttack = true;
+        }
+        else
+        {
+            animator.Play(attackAnimations[1]);
+            canAttack = false;
+            yield return new WaitForSeconds(secondaryAttackCooldown);
+            attackedEnemies.Clear();
+            canAttack = true;
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (attacking)
+        if (IsAnimationPlaying(attackAnimations[0]))
         {
             enemyScript = other.GetComponentInParent<Enemy>();
-            if (enemyScript != null)
+            if (enemyScript == null) return;
+
+            if (!attackedEnemies.Contains(enemyScript))
             {
+                enemyScript.TakeDamage(damage);
+                ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
+                audioSource.PlayOneShot(stabSounds[0]);
+                Destroy(bloodFXGO.gameObject, 2f);
+
                 if (!attackedEnemies.Contains(enemyScript))
-                {
-                    // Debug.Log("Applying damage to: " + enemyScript);
-                    enemyScript.TakeDamage(damage);
-
-                    ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
-                    audioSource.PlayOneShot(stabSounds[0]);
-                    Destroy(bloodFXGO.gameObject, 2f);
-
-                    if (!attackedEnemies.Contains(enemyScript))
-                        attackedEnemies.Add(enemyScript);
-                }
-            }
-            else
-            {
-                // audioSource.PlayOneShot(hitFloorSound);
+                    attackedEnemies.Add(enemyScript);
             }
         }
+
+        if (IsAnimationPlaying(attackAnimations[1]))
+        {
+            enemyScript = other.GetComponentInParent<Enemy>();
+            if (enemyScript == null) return;
+
+            if (!attackedEnemies.Contains(enemyScript))
+            {
+                enemyScript.TakeDamage(damageSecondary);
+                ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
+                audioSource.PlayOneShot(stabSounds[1]);
+                Destroy(bloodFXGO.gameObject, 2f);
+
+                if (!attackedEnemies.Contains(enemyScript))
+                    attackedEnemies.Add(enemyScript);
+            }
+        }
+    }
+
+    private bool IsAnimationPlaying(string animationName)
+    {
+        // Get the hash of the animation state using its name
+        int animationHash = Animator.StringToHash(animationName);
+
+        // Check if the Animator is currently playing the animation state
+        return animator.GetCurrentAnimatorStateInfo(0).shortNameHash == animationHash;
     }
 
 }
