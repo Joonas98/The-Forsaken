@@ -27,7 +27,7 @@ public class MuzzleDevice : MonoBehaviour
     private void OnEnable()
     {
         if (muzzleTip != null) gunScript.gunTip = muzzleTip;
-        if (muzzleEffect != null) gunScript.MuzzleFlash = muzzleEffect;
+        if (muzzleEffect != null) gunScript.muzzleFlash = muzzleEffect;
         if (muzzleSound != null) gunScript.shootSound = muzzleSound;
 
         if (xRecoilChange != 0 && yRecoilChange != 0 && zRecoilChange != 0)

@@ -33,9 +33,9 @@ public class Weapon : MonoBehaviour
     private void OnEnable()
     {
         // Random rotation when pulling out weapon
-        equipRotX = UnityEngine.Random.Range(0, 360);
-        equipRotY = UnityEngine.Random.Range(0, 360);
-        equipRotZ = UnityEngine.Random.Range(0, 360);
+        equipRotX = Random.Range(0, 360);
+        equipRotY = Random.Range(0, 360);
+        equipRotZ = Random.Range(0, 360);
     }
 
     public virtual void EquipWeapon()

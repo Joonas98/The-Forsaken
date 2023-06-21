@@ -77,8 +77,8 @@ public class GunShop : MonoBehaviour
         damageText.text = selectedGunScript.damage.ToString();
         headshotMultiplierText.text = selectedGunScript.headshotMultiplier.ToString();
         RPMText.text = selectedGunScript.RPM.ToString();
-        magazineSizeText.text = selectedGunScript.MagazineSize.ToString();
-        reloadTimeText.text = selectedGunScript.ReloadTime.ToString();
+        magazineSizeText.text = selectedGunScript.magazineSize.ToString();
+        reloadTimeText.text = selectedGunScript.reloadTime.ToString();
         aimingSpeedText.text = selectedGunScript.aimSpeed.ToString();
         zoomAmountText.text = selectedGunScript.zoomAmount.ToString();
         recoilText.text = "X" + selectedGunScript.recoilX.ToString() + ", Y" + selectedGunScript.recoilY.ToString() + ", Z" + selectedGunScript.recoilZ.ToString() + ", Snappiness " +

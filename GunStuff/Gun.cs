@@ -12,8 +12,8 @@ public class Gun : Weapon
     public Sprite gunSprite;
     public string gunName;
     public bool semiAutomatic;
-    public int pelletCount, penetration, damage, MagazineSize;
-    public float hipSpread, spread, headshotMultiplier, RPM, ReloadTime, knockbackPower, range;
+    public int pelletCount, penetration, damage, magazineSize;
+    public float hipSpread, spread, headshotMultiplier, RPM, reloadTime, knockbackPower, range;
     [Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
     [Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
     public int ammoType; //0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
@@ -39,10 +39,8 @@ public class Gun : Weapon
     public float vireReturn = 8;
 
     [Header("Effects")]
-    public ParticleSystem MuzzleFlash;
-    public ParticleSystem BloodFX;
-    [HideInInspector] public ParticleSystem HitFX;
-    public ParticleSystem GroundFX;
+    public ParticleSystem muzzleFlash;
+    public ParticleSystem bloodFX, hitFX, groundFX;
     public LineRenderer LR;
 
     public bool dropCasings;
@@ -86,7 +84,6 @@ public class Gun : Weapon
 
     [HideInInspector] public GameObject ImpactEffect;
     [HideInInspector] public ParticleSystem PS;
-    [HideInInspector] public ParticleSystemRenderer rend;
     [HideInInspector] public Vector3 equipVector;
     [HideInInspector] public Camera mainCamera, weaponCam;
     [HideInInspector] public string magString, totalAmmoString;
@@ -141,7 +138,7 @@ public class Gun : Weapon
 
         aimSpeedOG = aimSpeed;
         shootSoundOG = shootSound;
-        muzzleFlashOG = MuzzleFlash;
+        muzzleFlashOG = muzzleFlash;
         gunTipOG = gunTip;
         aimingSpotOG = aimingSpot;
         recoilXOG = recoilX;
@@ -162,8 +159,8 @@ public class Gun : Weapon
         animator = GetComponent<Animator>();
 
         shotsLeft = pelletCount;
-        CurrentMagazine = MagazineSize;
-        magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
+        CurrentMagazine = magazineSize;
+        magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
 
         UpdateFirerate();
@@ -176,7 +173,7 @@ public class Gun : Weapon
         SetFOV(defaultFov); // Avoid bugs
 
         // Handle ammo UI 
-        magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
+        magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
         inventoryScript.UpdateTotalAmmoText(ammoType);
 
@@ -193,8 +190,11 @@ public class Gun : Weapon
         HandleScopeZoom();
         HandleSwitchingLerps();
         HandleSprinting();
-        recoilScript.aiming = isAiming;
-        vire.aiming = isAiming;
+    }
+
+    private void OnGUI()
+    {
+        GUI.Label(new Rect(0, 0, 80, 20), shotCounter.ToString());
     }
 
     public void HandleAiming()
@@ -252,6 +252,9 @@ public class Gun : Weapon
                 WeaponSwitcher.canSwitch(true);
         }
 
+        // Update the aiming value for other scripts
+        recoilScript.aiming = isAiming;
+        vire.aiming = isAiming;
     }
 
     private void HandleAnimationStrings()
@@ -263,7 +266,7 @@ public class Gun : Weapon
     public void HandleReloading()
     {
         // Reloading
-        if (Input.GetKeyDown(KeyCode.R) && !isReloading && CurrentMagazine != MagazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
+        if (Input.GetKeyDown(KeyCode.R) && !isReloading && CurrentMagazine != magazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
         {
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
             isReloading = true;
@@ -272,34 +275,34 @@ public class Gun : Weapon
             ResetRotation();
 
             // Adjust reload speed to animation and sound
-            animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / ReloadTime);
-            audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / ReloadTime);
+            animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / reloadTime);
+            audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / reloadTime);
 
             WeaponSwitcher.canSwitch(false);
             reloadSymbol.SetActive(true);
-            shotCounter = ReloadTime;
+            shotCounter = reloadTime;
             audioSource.PlayOneShot(reloadSound);
 
             if (animator != null && reloadAnimationName != "")
                 animator.Play(reloadAnimationName);
 
             // Handle ammo correctly
-            if (inventoryScript.GetAmmoCount(ammoType) >= MagazineSize)
+            if (inventoryScript.GetAmmoCount(ammoType) >= magazineSize)
             {
                 // Debug.Log("Full reload");
-                StartCoroutine(WaitReloadTime(ReloadTime, MagazineSize));
-                inventoryScript.HandleAmmo(ammoType, CurrentMagazine - MagazineSize);
+                StartCoroutine(WaitReloadTime(reloadTime, magazineSize));
+                inventoryScript.HandleAmmo(ammoType, CurrentMagazine - magazineSize);
             }
-            else if (inventoryScript.GetAmmoCount(ammoType) + CurrentMagazine >= MagazineSize)
+            else if (inventoryScript.GetAmmoCount(ammoType) + CurrentMagazine >= magazineSize)
             {
                 // Debug.Log("Stock + clip >= full mag");
-                StartCoroutine(WaitReloadTime(ReloadTime, MagazineSize));
-                inventoryScript.HandleAmmo(ammoType, CurrentMagazine - MagazineSize);
+                StartCoroutine(WaitReloadTime(reloadTime, magazineSize));
+                inventoryScript.HandleAmmo(ammoType, CurrentMagazine - magazineSize);
             }
-            else if (inventoryScript.GetAmmoCount(ammoType) < MagazineSize)
+            else if (inventoryScript.GetAmmoCount(ammoType) < magazineSize)
             {
                 // Debug.Log("Stock + clip < full mag");
-                StartCoroutine(WaitReloadTime(ReloadTime, inventoryScript.GetAmmoCount(ammoType) + CurrentMagazine));
+                StartCoroutine(WaitReloadTime(reloadTime, inventoryScript.GetAmmoCount(ammoType) + CurrentMagazine));
                 inventoryScript.HandleAmmo(ammoType, inventoryScript.GetAmmoCount(ammoType) * -1);
             }
         }
@@ -307,6 +310,7 @@ public class Gun : Weapon
 
     public void HandleShooting()
     {
+        shotCounter -= Time.deltaTime;
         // Can't shoot when running
         if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
         {
@@ -328,7 +332,6 @@ public class Gun : Weapon
         // Fully automatic weapons
         if (isFiring == true && semiAutomatic == false)
         {
-            shotCounter -= Time.deltaTime;
 
             if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
             {
@@ -336,7 +339,7 @@ public class Gun : Weapon
                 Shoot(pelletCount);
                 vire.Recoil();
                 --CurrentMagazine;
-                magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
+                magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
             }
             else if (shotCounter <= 0 && CurrentMagazine <= 0)
@@ -345,10 +348,10 @@ public class Gun : Weapon
                 isFiring = false;
             }
         }
+
         // Semi automatic weapons
         else if (isFiring == true && semiAutomatic == true && hasFired == false)
         {
-            shotCounter -= Time.deltaTime;
             hasFired = true;
 
             if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
@@ -357,7 +360,7 @@ public class Gun : Weapon
                 Shoot(pelletCount);
                 vire.Recoil();
                 --CurrentMagazine;
-                magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
+                magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
             }
             else if (shotCounter <= 0 && CurrentMagazine <= 0)
@@ -365,10 +368,6 @@ public class Gun : Weapon
                 audioSource.PlayOneShot(dryFireSound);
                 isFiring = false;
             }
-        }
-        else
-        {
-            shotCounter -= Time.deltaTime;
         }
     }
 
@@ -433,39 +432,8 @@ public class Gun : Weapon
                     audioSource.PlayOneShot(zoomScopeOutSound);
                 }
             }
-
-            // if (scopeCam.fieldOfView < maxZoom)
-            // {
-            //     scopeCam.fieldOfView = maxZoom;
-            // }
-            //
-            // if (scopeCam.fieldOfView > minZoom)
-            // {
-            //     scopeCam.fieldOfView = minZoom;
-            // }
         }
     }
-
-    // Handle lerps for switching weapons
-    // public void HandleSwitchingLerps()
-    // {
-    //     base.HandleSwitchingLerps();
-    //     // Take gun out
-    //     if (canAim2 == false && !unequipping && equipLerp <= equipTime)
-    //     {
-    //         equipLerp += Time.deltaTime;
-    //         transform.position = Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime);
-    //         transform.rotation = Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime);
-    //     }
-    //
-    //     // Put gun away
-    //     if (unequipping && unequipLerp <= unequipTime)
-    //     {
-    //         unequipLerp += Time.deltaTime;
-    //         transform.position = Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime);
-    //         transform.rotation = Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime);
-    //     }
-    // }
 
     // Handle impact, eg. hit enemies
     public void HandleImpact(RaycastHit hit)
@@ -688,7 +656,7 @@ public class Gun : Weapon
     // Main shooting function
     public void Shoot(int pelletCount)
     {
-        MuzzleFlash.Play();
+        muzzleFlash.Play();
         int penetrationLeft = penetration;
         recoilScript.RecoilFire();
         audioSource.PlayOneShot(shootSound);
@@ -938,15 +906,15 @@ public class Gun : Weapon
     // Blood effect at enemies
     public void EnemyImpactFX(RaycastHit hit)
     {
-        if (BloodFX != null)
+        if (bloodFX != null)
         {
-            ParticleSystem bloodFXGO = Instantiate(BloodFX, hit.point, Quaternion.LookRotation(hit.normal));
+            ParticleSystem bloodFXGO = Instantiate(bloodFX, hit.point, Quaternion.LookRotation(hit.normal));
             Destroy(bloodFXGO.gameObject, 2f);
         }
 
-        if (HitFX != null)
+        if (hitFX != null)
         {
-            ParticleSystem hitFXGO = Instantiate(HitFX, hit.point, Quaternion.identity);
+            ParticleSystem hitFXGO = Instantiate(hitFX, hit.point, Quaternion.identity);
             Destroy(hitFXGO, 2f);
         }
     }
@@ -954,7 +922,7 @@ public class Gun : Weapon
     // Ground impacts
     public void GroundImpactFX(RaycastHit hit)
     {
-        ParticleSystem groundFXGO = Instantiate(GroundFX, hit.point, Quaternion.identity);
+        ParticleSystem groundFXGO = Instantiate(groundFX, hit.point, Quaternion.identity);
         Destroy(groundFXGO, 2f);
     }
 
@@ -1031,14 +999,13 @@ public class Gun : Weapon
     {
         yield return new WaitForSeconds(r + 0.05f);
         CurrentMagazine = ammoAmount;
-        magString = CurrentMagazine.ToString() + " / " + MagazineSize.ToString();
+        magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
         WeaponSwitcher.canSwitch(true);
         audioMixer.SetFloat("WeaponsPitch", 1f);
         isReloading = false;
         reloadSymbol.SetActive(false);
     }
-
 
     // Invoked after action delay
     public void PlayActionSound()
@@ -1057,7 +1024,7 @@ public class Gun : Weapon
 
     public void AdjustReloadtime(float amount)
     {
-        ReloadTime = ReloadTime + amount;
+        reloadTime = reloadTime + amount;
     }
 
     public void AdjustRecoil(float xAmount, float yAmount, float zAmount)
@@ -1098,7 +1065,7 @@ public class Gun : Weapon
     public void ResetGunTip()
     {
         gunTip = gunTipOG;
-        MuzzleFlash = muzzleFlashOG;
+        muzzleFlash = muzzleFlashOG;
         shootSound = shootSoundOG;
     }
 
