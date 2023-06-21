@@ -18,24 +18,28 @@ public class Weapon : MonoBehaviour
     private float equipRotX, equipRotY, equipRotZ;
 
     protected Transform equipTrans;
-    protected GameObject weaponSpot;
+    protected Transform weaponSpot;
 
-    private void Awake()
+    protected virtual void Awake()
     {
-        equipTrans = GameObject.Find("EquipTrans").transform;
+        // equipTrans = GameObject.Find("EquipTrans").transform;
+        // weaponSpot = GameObject.Find("WeaponSpot");
+        equipTrans = GameManager.GM.equipTrans;
+        weaponSpot = GameManager.GM.weaponSpot;
     }
 
-    private void Update()
+    protected virtual void Update()
     {
         HandleSwitchingLerps();
     }
 
-    private void OnEnable()
+    protected virtual void OnEnable()
     {
         // Random rotation when pulling out weapon
         equipRotX = Random.Range(0, 360);
         equipRotY = Random.Range(0, 360);
         equipRotZ = Random.Range(0, 360);
+        Debug.Log("Randomed equip lerp");
     }
 
     public virtual void EquipWeapon()
@@ -45,9 +49,6 @@ public class Weapon : MonoBehaviour
         unequipLerp = 0f;
         WeaponSwitcher.CanSwitch(false);
         equipped = false;
-
-        if (weaponSpot == null)
-            weaponSpot = GameObject.Find("WeaponSpot");
 
         StartCoroutine(WaitEquipTime());
     }

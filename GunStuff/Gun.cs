@@ -115,8 +115,9 @@ public class Gun : Weapon
     private float recoilXOG, recoilYOG, recoilZOG;
     private VisualRecoil vire;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         vire = GameObject.Find("ViRe").GetComponent<VisualRecoil>();
 
         if (bulletHoleScript == null)
@@ -151,9 +152,6 @@ public class Gun : Weapon
 
     private void Start()
     {
-        if (weaponSpot == null)
-            weaponSpot = GameObject.Find("WeaponSpot");
-
         CrosshairContents = GameObject.Find("CrosshairPanel");
         playerMovementScript = GameObject.Find("Player").GetComponent<PlayerMovement>();
         animator = GetComponent<Animator>();
@@ -168,8 +166,9 @@ public class Gun : Weapon
         UpdateRecoil();
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         SetFOV(defaultFov); // Avoid bugs
 
         // Handle ammo UI 
@@ -181,8 +180,9 @@ public class Gun : Weapon
         EquipWeapon(); // Animations etc. when equpping weapon
     }
 
-    private void Update()
+    protected override void Update()
     {
+        base.Update();
         HandleShooting();
         HandleAiming();
         HandleReloading();

@@ -12,7 +12,9 @@ public class GameManager : MonoBehaviour
 
     public static GameManager GM;
 
-    public GameObject WeaponHolster, aimingSymbol;
+    public Transform equipTrans, weaponSpot; // Optimization: weapon.cs Awake() gets these variables from here
+
+    public GameObject weaponHolster, aimingSymbol;
     public TextMeshProUGUI enemiesText, roundsText, moneyText;
 
     public int enemyCount = 0;
@@ -42,7 +44,7 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        WeaponHolster = GameObject.Find("WeaponHolster"); // 6.5.23 WeaponSwitcher can be now referenced as WeaponSwitcher.instance
+        weaponHolster = GameObject.Find("WeaponHolster"); // 6.5.23 WeaponSwitcher can be now referenced as WeaponSwitcher.instance
 
         if (!useVireDebug) Destroy(vireDebugObjects.gameObject);
         if (!useGunDebug) Destroy(gunDebugObjects.gameObject);

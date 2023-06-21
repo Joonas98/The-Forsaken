@@ -29,8 +29,9 @@ public class MeleeWeapon : Weapon
 
     private List<Enemy> attackedEnemies = new List<Enemy>();
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
         totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
         animator = GetComponent<Animator>();
@@ -38,14 +39,16 @@ public class MeleeWeapon : Weapon
         GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
     }
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
         magazineText.text = magString;
         totalAmmoText.text = totalAmmoString;
     }
 
-    private void Update()
+    protected override void Update()
     {
+        base.Update();
         if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack == true)
         {
             attacking = true;
