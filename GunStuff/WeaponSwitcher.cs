@@ -7,13 +7,14 @@ public class WeaponSwitcher : MonoBehaviour
 {
     public int selectedWeapon = 0;
     public static bool canSwitchWeapon = true;
-    public Gun currentGun;
+    public Weapon currentWeapon;
     public GameObject weaponsPanel;
 
     public static WeaponSwitcher instance;
 
     private WeaponPanel handledPanel;
     private float unequipTime;
+    private Gun currentGun;
 
     private void Awake()
     {
@@ -108,7 +109,7 @@ public class WeaponSwitcher : MonoBehaviour
 
         if (previousSelectedWeapon != selectedWeapon && canSwitchWeapon)
         {
-            if (currentGun != null)
+            if (currentWeapon != null)
             {
                 StartCoroutine(UnequipTimer());
             }
@@ -118,6 +119,20 @@ public class WeaponSwitcher : MonoBehaviour
             }
         }
 
+    }
+
+    private void OnGUI()
+    {
+        GUI.Label(new Rect(0, 0, 80, 20), currentWeapon.name);
+
+        if (currentGun != null)
+        {
+            GUI.Label(new Rect(0, 20, 80, 20), currentGun.name);
+        }
+        else
+        {
+            GUI.Label(new Rect(0, 20, 80, 20), "No gun found");
+        }
     }
 
     public void SelectWeapon()
@@ -132,12 +147,17 @@ public class WeaponSwitcher : MonoBehaviour
             i++;
         }
 
+        currentWeapon = gameObject.GetComponentInChildren<Weapon>();
         currentGun = gameObject.GetComponentInChildren<Gun>();
+
+        if (currentWeapon != null)
+        {
+            unequipTime = currentWeapon.unequipTime;
+        }
 
         if (currentGun != null)
         {
             currentGun.ResetFOV();
-            unequipTime = currentGun.unequipTime;
             GameManager.GM.currentGun = currentGun;
             WeaponSwayAndBob.instance.currentGun = currentGun;
         }
@@ -153,14 +173,14 @@ public class WeaponSwitcher : MonoBehaviour
         handledPanel.highlightObject.SetActive(true);
     }
 
-    public static void canSwitch(bool boolean)
+    public static void CanSwitch(bool boolean)
     {
         canSwitchWeapon = boolean;
     }
 
     IEnumerator UnequipTimer()
     {
-        currentGun.UnequipWeapon();
+        currentWeapon.UnequipWeapon();
         yield return new WaitForSeconds(unequipTime - 0.01f);
         SelectWeapon();
         canSwitchWeapon = true;

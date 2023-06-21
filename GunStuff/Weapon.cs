@@ -40,9 +40,10 @@ public class Weapon : MonoBehaviour
 
     public virtual void EquipWeapon()
     {
+        Debug.Log("Equip called from: " + name);
         equipLerp = 0f;
         unequipLerp = 0f;
-        WeaponSwitcher.canSwitch(false);
+        WeaponSwitcher.CanSwitch(false);
         equipped = false;
 
         if (weaponSpot == null)
@@ -53,10 +54,11 @@ public class Weapon : MonoBehaviour
 
     public virtual void UnequipWeapon()
     {
+        Debug.Log("Unequip called from: " + name);
         equipLerp = 0f;
         unequipLerp = 0f;
         equipped = false;
-        WeaponSwitcher.canSwitch(false);
+        WeaponSwitcher.CanSwitch(false);
         audioSource.PlayOneShot(unequipSound);
     }
 
@@ -85,6 +87,6 @@ public class Weapon : MonoBehaviour
         audioSource.PlayOneShot(equipSound);
         yield return new WaitForSeconds(equipTime);
         equipped = true;
-        WeaponSwitcher.canSwitch(true);
+        WeaponSwitcher.CanSwitch(true);
     }
 }

@@ -194,7 +194,7 @@ public class Gun : Weapon
 
     private void OnGUI()
     {
-        GUI.Label(new Rect(0, 0, 80, 20), shotCounter.ToString());
+        // GUI.Label(new Rect(0, 0, 80, 20), shotCounter.ToString());
     }
 
     public void HandleAiming()
@@ -221,7 +221,7 @@ public class Gun : Weapon
             playedUnaimSound = false;
             WeaponSwayAndBob.instance.disableSwayBob = true;
             CrosshairContents.SetActive(false);
-            WeaponSwitcher.canSwitch(false);
+            WeaponSwitcher.CanSwitch(false);
 
             transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), (aimSpeed * 2f) * Time.deltaTime);
             transform.localRotation = Quaternion.Euler(0, 180, 0);
@@ -249,7 +249,7 @@ public class Gun : Weapon
             CrosshairContents.SetActive(true);
 
             if (Time.timeScale > 0 && equipped && !isReloading)
-                WeaponSwitcher.canSwitch(true);
+                WeaponSwitcher.CanSwitch(true);
         }
 
         // Update the aiming value for other scripts
@@ -278,7 +278,7 @@ public class Gun : Weapon
             animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / reloadTime);
             audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / reloadTime);
 
-            WeaponSwitcher.canSwitch(false);
+            WeaponSwitcher.CanSwitch(false);
             reloadSymbol.SetActive(true);
             shotCounter = reloadTime;
             audioSource.PlayOneShot(reloadSound);
@@ -1001,7 +1001,7 @@ public class Gun : Weapon
         CurrentMagazine = ammoAmount;
         magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
-        WeaponSwitcher.canSwitch(true);
+        WeaponSwitcher.CanSwitch(true);
         audioMixer.SetFloat("WeaponsPitch", 1f);
         isReloading = false;
         reloadSymbol.SetActive(false);

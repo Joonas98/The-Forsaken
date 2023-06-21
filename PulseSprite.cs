@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class Sykkii : MonoBehaviour
+public class PulseSprite : MonoBehaviour
 {
     public Image targetImage;
     public float fl1, fl2, fl3, time;

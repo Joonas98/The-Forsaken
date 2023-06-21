@@ -170,7 +170,7 @@ public class CanvasManager : MonoBehaviour
         roundPopup.SetActive(false);
         AudioListener.pause = true;
         if (lookScript != null) lookScript.canRotate = false;
-        WeaponSwitcher.canSwitch(false);
+        WeaponSwitcher.CanSwitch(false);
         Cursor.lockState = CursorLockMode.None;
         Time.timeScale = 0f;
     }
@@ -184,7 +184,7 @@ public class CanvasManager : MonoBehaviour
         AudioListener.pause = false;
         // if (playerScript != null) playerScript.canRotate = true;
         if (lookScript != null) lookScript.canRotate = true;
-        WeaponSwitcher.canSwitch(true);
+        WeaponSwitcher.CanSwitch(true);
         Cursor.lockState = CursorLockMode.Locked;
         ShowTooltip(false);
         crosshairCanvas.SetActive(true);

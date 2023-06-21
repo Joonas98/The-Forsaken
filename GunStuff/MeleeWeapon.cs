@@ -9,8 +9,8 @@ public class MeleeWeapon : Weapon
     public AudioClip[] swingSounds;
     public AudioClip hitFloorSound;
 
-    [SerializeField] private float AttackCooldown;
-    [SerializeField] private int Damage;
+    [SerializeField] private float attackCooldown;
+    [SerializeField] private int damage;
     [SerializeField] private string[] attackAnimations;
 
     [SerializeField] private ParticleSystem bloodFX;
@@ -61,6 +61,16 @@ public class MeleeWeapon : Weapon
         }
     }
 
+    public override void EquipWeapon()
+    {
+        base.EquipWeapon();
+    }
+
+    public override void UnequipWeapon()
+    {
+        base.UnequipWeapon();
+    }
+
     IEnumerator Attack()
     {
         int raIndex = Random.Range(0, swingSounds.Length);
@@ -70,7 +80,7 @@ public class MeleeWeapon : Weapon
         animator.Play(attackAnimations[raIndexAnim]);
 
         canAttack = false;
-        yield return new WaitForSeconds(AttackCooldown);
+        yield return new WaitForSeconds(attackCooldown);
         attackedEnemies.Clear();
         canAttack = true;
     }
@@ -85,7 +95,7 @@ public class MeleeWeapon : Weapon
                 if (!attackedEnemies.Contains(enemyScript))
                 {
                     // Debug.Log("Applying damage to: " + enemyScript);
-                    enemyScript.TakeDamage(Damage);
+                    enemyScript.TakeDamage(damage);
 
                     ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
                     audioSource.PlayOneShot(stabSounds[0]);
