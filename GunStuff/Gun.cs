@@ -87,7 +87,7 @@ public class Gun : Weapon
     [HideInInspector] public Vector3 equipVector;
     [HideInInspector] public Camera mainCamera, weaponCam;
     [HideInInspector] public string magString, totalAmmoString;
-    [HideInInspector] public bool isReloading = false, isAiming = false, unequipping = false;
+    [HideInInspector] public bool isReloading = false, isAiming = false;
     [HideInInspector] public bool canAim; // True in update unless mid air etc.
     [HideInInspector] public float maxZoom, minZoom;
     [HideInInspector] public int shotsLeft;
@@ -190,11 +190,6 @@ public class Gun : Weapon
         HandleScopeZoom();
         HandleSwitchingLerps();
         HandleSprinting();
-    }
-
-    private void OnGUI()
-    {
-        // GUI.Label(new Rect(0, 0, 80, 20), shotCounter.ToString());
     }
 
     public void HandleAiming()
@@ -311,6 +306,7 @@ public class Gun : Weapon
     public void HandleShooting()
     {
         shotCounter -= Time.deltaTime;
+        if (!equipped) return;
         // Can't shoot when running
         if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
         {
@@ -953,17 +949,17 @@ public class Gun : Weapon
         weaponCam.fieldOfView = fov;
     }
 
-    public override void EquipWeapon()
-    {
-        base.EquipWeapon();
-        shotCounter = equipTime;
-    }
-
-    public override void UnequipWeapon()
-    {
-        base.UnequipWeapon();
-        shotCounter = unequipTime + 0.01f;
-    }
+    // public override void EquipWeapon()
+    // {
+    //     base.EquipWeapon();
+    //     shotCounter = equipTime;
+    // }
+    //
+    // public override void UnequipWeapon()
+    // {
+    //     base.UnequipWeapon();
+    //     shotCounter = unequipTime + 0.01f;
+    // }
 
     public void UpdateFirerate()
     {

@@ -45,6 +45,7 @@ public class MeleeWeapon : Weapon
         base.OnEnable();
         magazineText.text = magString;
         totalAmmoText.text = totalAmmoString;
+        EquipWeapon();
     }
 
     protected override void Update()
@@ -53,18 +54,23 @@ public class MeleeWeapon : Weapon
 
         HandleInputs();
 
-        if (canAttack == true && attacking == true)
+        if (canAttack == true && attacking == true && equipped)
         {
             int randomSwingClip = Random.Range(0, swingSounds.Length);
             audioSource.PlayOneShot(swingSounds[randomSwingClip]);
             StartCoroutine(Attack(false));
         }
 
-        if (canAttack == true && attackingSecondary == true)
+        if (canAttack == true && attackingSecondary == true && equipped)
         {
             int randomSwingClip = Random.Range(0, swingSounds.Length);
             audioSource.PlayOneShot(swingSounds[randomSwingClip]);
             StartCoroutine(Attack(true));
+        }
+
+        if (equipped && !unequipping)
+        {
+            transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, 1f * Time.deltaTime);
         }
     }
 

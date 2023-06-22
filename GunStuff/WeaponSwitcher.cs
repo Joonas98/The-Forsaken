@@ -10,7 +10,7 @@ public class WeaponSwitcher : MonoBehaviour
     public Weapon currentWeapon;
     public GameObject weaponsPanel;
 
-    public static WeaponSwitcher instance;
+    public static WeaponSwitcher instance; // Singleton reference
 
     private WeaponPanel handledPanel;
     private float unequipTime;
@@ -27,7 +27,6 @@ public class WeaponSwitcher : MonoBehaviour
         {
             Destroy(gameObject);
         }
-
     }
 
     void Update()
@@ -123,15 +122,17 @@ public class WeaponSwitcher : MonoBehaviour
 
     private void OnGUI()
     {
-        GUI.Label(new Rect(0, 0, 80, 20), currentWeapon.name);
+        GUIStyle myStyle = new GUIStyle();
+        myStyle.fontSize = 12;
+        GUI.Label(new Rect(0, 0, 80, 20), currentWeapon.name, myStyle);
 
         if (currentGun != null)
         {
-            GUI.Label(new Rect(0, 20, 80, 20), currentGun.name);
+            GUI.Label(new Rect(0, 20, 80, 20), currentGun.name, myStyle);
         }
         else
         {
-            GUI.Label(new Rect(0, 20, 80, 20), "No gun found");
+            GUI.Label(new Rect(0, 20, 80, 20), "No gun found", myStyle);
         }
     }
 
@@ -181,7 +182,7 @@ public class WeaponSwitcher : MonoBehaviour
     IEnumerator UnequipTimer()
     {
         currentWeapon.UnequipWeapon();
-        yield return new WaitForSeconds(unequipTime - 0.01f);
+        yield return new WaitForSeconds(unequipTime + 0.01f);
         SelectWeapon();
         canSwitchWeapon = true;
     }

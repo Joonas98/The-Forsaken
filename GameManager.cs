@@ -65,15 +65,15 @@ public class GameManager : MonoBehaviour
 
     public void HandleKeybinds()
     {
-        // if (Input.GetKey(KeyCode.N))
-        // {
-        //     Time.timeScale = 0.25f;
-        // }
-        //
-        // if (Input.GetKey(KeyCode.M))
-        // {
-        //     Time.timeScale = 1f;
-        // }
+        if (Input.GetKey(KeyCode.N))
+        {
+            Time.timeScale = 0.1f;
+        }
+
+        if (Input.GetKey(KeyCode.M))
+        {
+            Time.timeScale = 1f;
+        }
 
         if (Input.GetKeyDown(KeyCode.P))
         {
@@ -83,16 +83,6 @@ public class GameManager : MonoBehaviour
             {
                 enemy.GetComponent<Enemy>().Die();
             }
-        }
-
-        if (Input.GetKeyDown(KeyCode.N))
-        {
-            Time.timeScale = 0f;
-        }
-
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            Time.timeScale = 1f;
         }
 
         // if (Input.GetKeyDown(KeyCode.N))

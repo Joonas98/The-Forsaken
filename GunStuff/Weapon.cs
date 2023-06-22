@@ -7,6 +7,7 @@ public class Weapon : MonoBehaviour
     // 18.6.23 Class created to be inherited by Gun.cs and MeleeWeapon.cs
     [Header("Weapon class")]
     [HideInInspector] public bool equipped; // Set true when equip lerp is done
+    [HideInInspector] public bool unequipping; // Set true when unequip is in process
     public float equipTime, unequipTime;
 
     [Header("Weapon class audio")]
@@ -31,6 +32,14 @@ public class Weapon : MonoBehaviour
         HandleSwitchingLerps();
     }
 
+    // private void OnGUI()
+    // {
+    //     GUIStyle myStyle = new GUIStyle();
+    //     myStyle.fontSize = 12;
+    //     GUI.Label(new Rect(500, 0, 80, 20), equipLerp.ToString() + " = equip", myStyle);
+    //     GUI.Label(new Rect(500, 20, 80, 20), unequipLerp.ToString() + " = unequip", myStyle);
+    // }
+
     protected virtual void OnEnable()
     {
         // Random rotation when pulling out weapon
@@ -41,46 +50,63 @@ public class Weapon : MonoBehaviour
 
     public virtual void EquipWeapon()
     {
-        equipLerp = 0f;
-        unequipLerp = 0f;
-        WeaponSwitcher.CanSwitch(false);
-        equipped = false;
-
-        StartCoroutine(WaitEquipTime());
+        StartCoroutine(WaitEquipTime(true));
     }
 
     public virtual void UnequipWeapon()
     {
-        equipLerp = 0f;
-        unequipLerp = 0f;
-        equipped = false;
-        WeaponSwitcher.CanSwitch(false);
-        audioSource.PlayOneShot(unequipSound);
+        StartCoroutine(WaitEquipTime(false));
     }
 
     // Handle lerps for switching weapons
     public void HandleSwitchingLerps()
     {
         // Take gun out
-        if (equipped == false && equipLerp <= equipTime)
+        if (!unequipping && equipLerp <= equipTime)
         {
             equipLerp += Time.deltaTime;
             transform.SetPositionAndRotation(Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime), Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime));
         }
 
         // Put gun away
-        if (equipped == false && unequipLerp <= unequipTime)
+        if (unequipping && unequipLerp <= unequipTime)
         {
             unequipLerp += Time.deltaTime;
             transform.SetPositionAndRotation(Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime), Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime));
         }
     }
 
-    IEnumerator WaitEquipTime()
+    // Delay when switching weapons, true = equip, false = unequip
+    IEnumerator WaitEquipTime(bool equip)
     {
-        audioSource.PlayOneShot(equipSound);
-        yield return new WaitForSeconds(equipTime);
-        equipped = true;
-        WeaponSwitcher.CanSwitch(true);
+        if (equip) // Equip weapon
+        {
+            equipLerp = 0f;
+            // unequipLerp = 0f;
+            WeaponSwitcher.CanSwitch(false);
+            equipped = false;
+            unequipping = false;
+            audioSource.PlayOneShot(equipSound);
+
+            yield return new WaitForSeconds(equipTime);
+
+            equipped = true;
+            WeaponSwitcher.CanSwitch(true);
+        }
+        else // Unequip weapon
+        {
+            // equipLerp = 0f;
+            unequipLerp = 0f;
+            WeaponSwitcher.CanSwitch(false);
+            equipped = false;
+            unequipping = true;
+            audioSource.PlayOneShot(unequipSound);
+
+            yield return new WaitForSeconds(unequipTime);
+
+            equipped = false;
+            unequipping = false;
+            WeaponSwitcher.CanSwitch(true);
+        }
     }
 }
