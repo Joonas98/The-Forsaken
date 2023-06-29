@@ -22,16 +22,16 @@ public class PlayerMovement : MonoBehaviour
     public GameObject fallingSymbol;
 
     [HideInInspector] public bool isStationary;
+    [HideInInspector] public bool canRun = true;
+    [HideInInspector] public bool isGrounded, isRunning;
+    [HideInInspector] public bool isSlowed;
     [HideInInspector] public float ogSpeed;
 
     // Private stuff
     private GameObject runningSymbol;
     private Vector3 velocity;
     private Vector3 moveDirection;
-    [HideInInspector] public bool isGrounded, isRunning;
     private Vector3 lastPosition = new Vector3(0, 0, 0);
-
-    [HideInInspector] public bool canRun = true;
 
     // Important for cystom sliding system
     private Vector3 hitPointNormal;
@@ -79,6 +79,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
+        if (speed >= ogSpeed) isSlowed = false;
         HandleRunning();
         HandleJump();
         HandleMovement();
@@ -94,6 +95,7 @@ public class PlayerMovement : MonoBehaviour
             isStationary = true;
         }
         lastPosition = transform.position;
+        Debug.Log("Is running: " + isRunning);
     }
 
     private void HandleMovement()
@@ -156,17 +158,17 @@ public class PlayerMovement : MonoBehaviour
 
     public void Run(bool run)
     {
-        if (run)
+        if (!run || !canRun)
+        {
+            isRunning = false;
+            if (!isSlowed) speed = ogSpeed;
+            runningSymbol.SetActive(false);
+        }
+        else
         {
             isRunning = true;
             speed = runningSpeed;
             runningSymbol.SetActive(true);
-        }
-        else
-        {
-            isRunning = false;
-            speed = ogSpeed;
-            runningSymbol.SetActive(false);
         }
     }
 
@@ -203,6 +205,15 @@ public class PlayerMovement : MonoBehaviour
         {
             fallingSymbol.SetActive(false);
         }
+    }
+
+    public IEnumerator TemporarySpeedChange(float multiplier, float duration)
+    {
+        if (multiplier < 1f) canRun = false;
+        speed = speed * multiplier;
+        yield return new WaitForSeconds(duration);
+        if (!isSlowed) canRun = true;
+        // Movement speed is returned to normal in Run()
     }
 
 }

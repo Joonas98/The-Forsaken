@@ -80,6 +80,7 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F) && kickTimeStamp <= Time.time)
         {
             kickTimeStamp = Time.time + kickCooldown;
+            playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
             Invoke("Kick", 0.15f);
         }
         if (kickTimeStamp <= Time.time) kickSymbol.SetActive(true);
@@ -143,7 +144,7 @@ public class Player : MonoBehaviour
         if (currentHealth - amount <= 0) currentHealth = 0;
         else currentHealth -= amount;
 
-        StartCoroutine(regenerate());
+        StartCoroutine(Regenerate());
         currentHPPercentage = currentHealth * 1.0f / maxHealth * 1.0f * 100f; // 80 / 100 = 0.8
 
         float currentHPPercentagePP = 1f - (currentHPPercentage / 100f); // 1 - 0.8 = 0.2
@@ -198,7 +199,7 @@ public class Player : MonoBehaviour
         if (regenerating)
         {
             regenerating = false;
-            StartCoroutine(regenerationDelay());
+            StartCoroutine(RegenerationDelay());
         }
 
         if (currentHealth >= maxHealth)
@@ -208,14 +209,14 @@ public class Player : MonoBehaviour
 
     }
 
-    IEnumerator regenerationDelay()
+    IEnumerator RegenerationDelay()
     {
         yield return new WaitForSeconds(regenationDelay);
         Heal(regenationAmount);
         regenerating = true;
     }
 
-    IEnumerator regenerate()
+    IEnumerator Regenerate()
     {
         yield return new WaitForSeconds(regenationDelayAfterDamage);
         if (currentHPPercentage < 100f)

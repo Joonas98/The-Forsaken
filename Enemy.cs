@@ -329,6 +329,8 @@ public class Enemy : MonoBehaviour
         {
             playerScript.TakeDamage(damage);
             canAttack = false;
+            PlayerMovement playerMovement = playerScript.GetComponent<PlayerMovement>();
+            playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
             StartCoroutine(AttackCooldown());
         }
     }
