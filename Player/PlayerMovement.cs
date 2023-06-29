@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-
     [Tooltip("Variables")]
     public float speed, runningSpeed, slopeSpeed, gravity, jumpHeight;
     public AudioClip[] jumpSounds;
@@ -15,6 +14,8 @@ public class PlayerMovement : MonoBehaviour
     public CharacterController controller;
     public LayerMask groundmask;
 
+    public Transform legHud; // The HUD elements at the legs need to be moved with headbob
+    public float initialYOffset; // Variable for removing leg HUD bouncing
     public Transform groundCheck;
     public float groundDistance; // Radius of sphere that checks if player is grounded
     public GameObject mainCamera;
@@ -73,6 +74,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         canRun = true;
+        initialYOffset = legHud.position.y - mainCamera.transform.position.y;
     }
 
     void Update()
@@ -168,7 +170,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void HandleHeadbob() // Original from video: https://www.youtube.com/watch?v=_c5IoF1op4E
+    private void HandleHeadbob() // Base from video: https://www.youtube.com/watch?v=_c5IoF1op4E
     {
         if (!isGrounded || isStationary) // Disable sway, return to original position if stationary or mid-air
         {
@@ -184,6 +186,11 @@ public class PlayerMovement : MonoBehaviour
                 defaultYPos + Mathf.Sin(bobTimer) * (isRunning ? sprintBobAmount : walkBobAmount),
                 mainCamera.transform.localPosition.z);
         }
+
+        // Leg HUD needs to be adjusted too, or it's bouncing annoyingly
+        float newY = mainCamera.transform.position.y + initialYOffset;
+        Vector3 newPosition = new Vector3(legHud.position.x, newY, legHud.position.z);
+        legHud.position = newPosition;
     }
 
     private void FallingSymbol()

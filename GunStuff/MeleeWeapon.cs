@@ -5,30 +5,28 @@ using TMPro;
 
 public class MeleeWeapon : Weapon
 {
-    public AudioClip[] stabSounds;
-    public AudioClip[] swingSounds;
-    public AudioClip hitFloorSound;
+    [Header("Melee Weapon Settings")]
+    public AnimationClip[] attackAnimations;
 
-    [SerializeField] private float attackCooldown, secondaryAttackCooldown;
+    [SerializeField] private float attackDuration;
+    [SerializeField] private float secondaryAttackDuration;
     [SerializeField] private int damage, damageSecondary;
-    [SerializeField] private string[] attackAnimations;
-
     [SerializeField] private ParticleSystem bloodFX;
-    [SerializeField] private GameObject trailFX;
-    [SerializeField] private GameObject trailParticleFX;
-
     private bool attacking = false;
     private bool attackingSecondary = false;
     private bool canAttack = true;
-
-    private Animator animator;
-    private Enemy enemyScript;
-
-    private TextMeshProUGUI magazineText, totalAmmoText;
+    private bool mirroredNext = false; // Alternate with normal and mirrored slash
     private string magString = "Melee";
     private string totalAmmoString = "Unlimited ammo";
-
+    private Animator animator;
+    private Enemy enemyScript;
+    private TextMeshProUGUI magazineText, totalAmmoText;
     private List<Enemy> attackedEnemies = new List<Enemy>();
+
+    [Header("Audio")]
+    public AudioClip[] stabSounds;
+    public AudioClip[] swingSounds;
+    public AudioClip hitFloorSound;
 
     protected override void Awake()
     {
@@ -51,7 +49,6 @@ public class MeleeWeapon : Weapon
     protected override void Update()
     {
         base.Update();
-
         HandleInputs();
 
         if (canAttack == true && attacking == true && equipped)
@@ -98,6 +95,8 @@ public class MeleeWeapon : Weapon
     public override void EquipWeapon()
     {
         base.EquipWeapon();
+        animator.SetFloat("StabSpeedMultiplier", attackAnimations[0].length / attackDuration);
+        animator.SetFloat("SlashSpeedMultiplier", attackAnimations[1].length / secondaryAttackDuration);
     }
 
     public override void UnequipWeapon()
@@ -109,17 +108,27 @@ public class MeleeWeapon : Weapon
     {
         if (!secondaryAttack)
         {
-            animator.Play(attackAnimations[0]);
+            animator.Play(attackAnimations[0].name);
             canAttack = false;
-            yield return new WaitForSeconds(attackCooldown);
+            yield return new WaitForSeconds(attackDuration);
             attackedEnemies.Clear();
             canAttack = true;
         }
         else
         {
-            animator.Play(attackAnimations[1]);
+            if (!mirroredNext)
+            {
+                animator.Play(attackAnimations[1].name);
+                mirroredNext = true;
+            }
+            else
+            {
+                animator.Play(attackAnimations[2].name);
+                mirroredNext = false;
+            }
+
             canAttack = false;
-            yield return new WaitForSeconds(secondaryAttackCooldown);
+            yield return new WaitForSeconds(secondaryAttackDuration);
             attackedEnemies.Clear();
             canAttack = true;
         }
@@ -127,7 +136,8 @@ public class MeleeWeapon : Weapon
 
     private void OnTriggerEnter(Collider other)
     {
-        if (IsAnimationPlaying(attackAnimations[0]))
+        // Stab
+        if (IsAnimationPlaying(attackAnimations[0].name))
         {
             enemyScript = other.GetComponentInParent<Enemy>();
             if (enemyScript == null) return;
@@ -144,7 +154,25 @@ public class MeleeWeapon : Weapon
             }
         }
 
-        if (IsAnimationPlaying(attackAnimations[1]))
+        // Slashes
+        if (IsAnimationPlaying(attackAnimations[1].name))
+        {
+            enemyScript = other.GetComponentInParent<Enemy>();
+            if (enemyScript == null) return;
+
+            if (!attackedEnemies.Contains(enemyScript))
+            {
+                enemyScript.TakeDamage(damageSecondary);
+                ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
+                audioSource.PlayOneShot(stabSounds[1]);
+                Destroy(bloodFXGO.gameObject, 2f);
+
+                if (!attackedEnemies.Contains(enemyScript))
+                    attackedEnemies.Add(enemyScript);
+            }
+        }
+
+        if (IsAnimationPlaying(attackAnimations[2].name))
         {
             enemyScript = other.GetComponentInParent<Enemy>();
             if (enemyScript == null) return;

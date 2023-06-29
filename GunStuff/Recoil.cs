@@ -11,6 +11,8 @@ public class Recoil : MonoBehaviour
     [Tooltip("Left and right")] public float recoilY;
     [Tooltip("Tilt")] public float recoilZ;
 
+    public float flinchX, flinchY, flinchZ; // Flinch = take damage
+
     public float rec1, rec2, rec3, rec4, rec5, rec6;
     public float snappiness;
     public float returnSpeed;
@@ -52,7 +54,8 @@ public class Recoil : MonoBehaviour
 
     private void LateUpdate()
     {
-        playerTrans.rotation = new Quaternion(playerTrans.rotation.x, transform.localRotation.y + playerTrans.rotation.y, playerTrans.rotation.z, playerTrans.rotation.w);
+        // 29.6.2023 To be honest, not sure what this was here for?!?
+        // playerTrans.rotation = new Quaternion(playerTrans.rotation.x, transform.localRotation.y + playerTrans.rotation.y, playerTrans.rotation.z, playerTrans.rotation.w);
     }
 
     public void RecoilFire()
@@ -87,9 +90,9 @@ public class Recoil : MonoBehaviour
 
     // Recoil from taking damage
     // Some variables like return speed is still determined by the held weapon
-    public void DamageFlinch(float flinchY, float flinchX, float flinchMultiplier)
+    public void DamageFlinch(float flinchMultiplier)
     {
-        targetRotation += new Vector3(recoilX, Random.Range(-flinchY, flinchY), Random.Range(-flinchX, flinchX)) * flinchMultiplier;
+        targetRotation += new Vector3(Random.Range(-flinchX, flinchX), Random.Range(-flinchY, flinchY), Random.Range(-flinchZ, flinchZ)) * flinchMultiplier;
     }
 
     #region Setters

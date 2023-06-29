@@ -6,31 +6,46 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
-    public bool useGunDebug, useRecoilDebug, useVireDebug, useSpawnDebug, useEnemyDebug;
-    public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
+    [Header("UI Stuff")]
+    public Color roundTextColorEnemies;
+    public Color roundTextColorClear;
     public TextMeshProUGUI[] gunDebugTexts, recoilDebugTexts, vireDebugTexts; // Textfields for debug information
+    public TextMeshProUGUI enemiesText, roundsText, moneyText; // Info texts
 
-    public static GameManager GM;
+    [SerializeField] private TextMeshProUGUI timerTexts;
 
-    public Transform equipTrans, weaponSpot; // Optimization: weapon.cs Awake() gets these variables from here
-
+    [Header("References")]
+    // GameObjects
+    public GameObject playerGO;
     public GameObject weaponHolster, aimingSymbol;
-    public TextMeshProUGUI enemiesText, roundsText, moneyText;
-
-    public int enemyCount = 0;
-    public int currentWave = 0;
-    public int money;
-
+    public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
+    // Scripts
     public Gun currentGun;
     public Recoil recoil;
     public VisualRecoil vire;
+    public static GameManager GM;
 
+    [Header("Various Lists / Arrays")]
     public List<Enemy> enemiesAlive = new List<Enemy>();
     public List<GameObject> enemiesAliveGos = new List<GameObject>();
 
-    public GameObject playerGO;
-    public AudioSource playerAS, GMAS;
+    [Header("Settings")]
+    public bool useGunDebug;
+    public bool useRecoilDebug, useVireDebug, useSpawnDebug, useEnemyDebug;
+
+    [Header("Audio")]
+    public AudioSource playerAS;
+    public AudioSource GMAS;
     public AudioClip[] confirmKillSFX;
+
+    [Header("Other things")]
+    public int money;
+    public int enemyCount = 0;
+    public int currentWave = 0;
+    public Transform equipTrans, weaponSpot; // Optimization: weapon.cs Awake() gets these variables from here
+    public float gameTime; // Time elapsed since start of the game
+
+    private float startTime;
 
     private void Awake()
     {
@@ -44,14 +59,15 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        weaponHolster = GameObject.Find("WeaponHolster"); // 6.5.23 WeaponSwitcher can be now referenced as WeaponSwitcher.instance
 
+        weaponHolster = GameObject.Find("WeaponHolster"); // 6.5.23 WeaponSwitcher can be now referenced as WeaponSwitcher.instance
         if (!useVireDebug) Destroy(vireDebugObjects.gameObject);
         if (!useGunDebug) Destroy(gunDebugObjects.gameObject);
     }
 
     private void Start()
     {
+        startTime = Time.realtimeSinceStartup;
         if (enemiesText == null) enemiesText = GameObject.Find("EnemiesNumber").GetComponent<TextMeshProUGUI>();
         if (roundsText == null) roundsText = GameObject.Find("WaveNumber").GetComponent<TextMeshProUGUI>();
     }
@@ -61,6 +77,12 @@ public class GameManager : MonoBehaviour
         HandleKeybinds();
         HandleDebugs();
         HandleAbilities();
+    }
+
+    private void FixedUpdate()
+    {
+        gameTime = Time.realtimeSinceStartup - startTime;
+        timerTexts.text = gameTime.ToString("F2");
     }
 
     public void HandleKeybinds()
@@ -173,6 +195,11 @@ public class GameManager : MonoBehaviour
     public void UpdateEnemyCount()
     {
         enemiesText.text = enemyCount.ToString();
+
+        if (enemyCount > 0)
+            roundsText.color = roundTextColorEnemies;
+        else
+            roundsText.color = roundTextColorClear;
     }
 
     public void UpdateWaveNumber(int wave)

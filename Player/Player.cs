@@ -13,9 +13,10 @@ public class Player : MonoBehaviour
     public float regenationDelay, regenationDelayAfterDamage;
     public float sensitivity;
     public float maxBloom, maxVignette, maxChromaticAberration, maxGrain;
-    public float flinchY, flinchX;
 
     [Header("Other Stuff")]
+    public Camera mainCamera;
+    public Camera weaponCamera;
     public Gradient healthGradient;
     public GameObject runningSymbol, fallingSymbol, regenSymbol, kickSymbol;
     public TextMeshProUGUI healthText, healthTextRaw;
@@ -28,6 +29,14 @@ public class Player : MonoBehaviour
     private Vector3 spawnLocation;
     private bool regenerating = true;
     private float currentHPPercentage = 100f;
+    private PlayerMovement playerMovement;
+
+    [Header("FOV Settings")]
+    public float normalFov;
+    public float runningFov;
+    public float fovTransitionSpeed; // How fast fov changes from normal to running etc.
+
+    private float targetFov;
 
     [Header("Audio")]
     public AudioSource playerAS;
@@ -48,22 +57,22 @@ public class Player : MonoBehaviour
         spawnLocation = transform.position;
         currentHealth = maxHealth;
         UpdateHealthUI();
-    }
 
-    private void Start()
-    {
-        runningSymbol = GameObject.Find("RunningSymbol");
-
-        if (runningSymbol != null)
-            runningSymbol.SetActive(false);
-
+        if (runningSymbol != null) runningSymbol.SetActive(false);
         kickTimeStamp = Time.time + kickCooldown;
+
+        playerMovement = GetComponent<PlayerMovement>();
+
+        targetFov = normalFov;
+        mainCamera.fieldOfView = normalFov;
+        weaponCamera.fieldOfView = normalFov;
     }
 
     void Update()
     {
         CalculateRegen();
         HandleInputs();
+        HandleFOV();
     }
 
     private void HandleInputs()
@@ -74,6 +83,26 @@ public class Player : MonoBehaviour
             Invoke("Kick", 0.15f);
         }
         if (kickTimeStamp <= Time.time) kickSymbol.SetActive(true);
+    }
+
+    private void HandleFOV()
+    {
+        if (playerMovement.isRunning)
+        {
+            targetFov = runningFov;
+        }
+        else
+        {
+            targetFov = normalFov;
+        }
+
+        // If we are aiming, two updates fight over the FOV -> shaky FOV bug
+        if (GameManager.GM.currentGun != null && !GameManager.GM.currentGun.isAiming) mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, targetFov, fovTransitionSpeed * Time.deltaTime);
+    }
+
+    private void OnGUI()
+    {
+        // GUI.Label(new Rect(500, 500, 80, 20), targetFov.ToString());
     }
 
     public void Kick()
@@ -128,7 +157,7 @@ public class Player : MonoBehaviour
             playerAS.PlayOneShot(damageGrunts[rindex]);
         }
         regenSymbol.SetActive(false);
-        Recoil.Instance.DamageFlinch(flinchY, flinchX, flinchMultiplier);
+        Recoil.Instance.DamageFlinch(flinchMultiplier);
     }
 
     public void Heal(int amount)

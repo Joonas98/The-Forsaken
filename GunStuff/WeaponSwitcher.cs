@@ -122,18 +122,18 @@ public class WeaponSwitcher : MonoBehaviour
 
     private void OnGUI()
     {
-        GUIStyle myStyle = new GUIStyle();
-        myStyle.fontSize = 12;
-        GUI.Label(new Rect(0, 0, 80, 20), currentWeapon.name, myStyle);
-
-        if (currentGun != null)
-        {
-            GUI.Label(new Rect(0, 20, 80, 20), currentGun.name, myStyle);
-        }
-        else
-        {
-            GUI.Label(new Rect(0, 20, 80, 20), "No gun found", myStyle);
-        }
+        // GUIStyle myStyle = new GUIStyle();
+        // myStyle.fontSize = 12;
+        // GUI.Label(new Rect(0, 0, 80, 20), currentWeapon.name, myStyle);
+        //
+        // if (currentGun != null)
+        // {
+        //     GUI.Label(new Rect(0, 20, 80, 20), currentGun.name, myStyle);
+        // }
+        // else
+        // {
+        //     GUI.Label(new Rect(0, 20, 80, 20), "No gun found", myStyle);
+        // }
     }
 
     public void SelectWeapon()

@@ -16,7 +16,8 @@ public class Gun : Weapon
     public float hipSpread, spread, headshotMultiplier, RPM, reloadTime, knockbackPower, range;
     [Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
     [Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
-    public int ammoType; //0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
+    //0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
+    public int ammoType; // Todo: change ammotype to enum?
 
     [Header("Recoil Settings")]
     [Tooltip("Up and down")] [SerializeField] public float recoilX;
@@ -42,76 +43,67 @@ public class Gun : Weapon
     public ParticleSystem muzzleFlash;
     public ParticleSystem bloodFX, hitFX, groundFX;
     public LineRenderer LR;
-
     public bool dropCasings;
     public GameObject casingGO;
+
     private float casingDespawnTime = 15f;
     private float laserTime = 0.05f;
-
     private string reloadAnimationName, shootAnimationName;
     private bool playedAimSound = false;
     private bool playedUnaimSound = true;
 
     [Header("Audio")]
+    public AudioMixer audioMixer;
     public AudioClip shootSound;
     public AudioClip reloadSound, aimSound, unaimSound;
     public AudioClip zoomScopeInSound, zoomScopeOutSound;
     public AudioClip actionSound, dryFireSound; // Pump shotgun, bolt action etc.
     public float actionDelay = 0f; // Seconds to wait before playing action sound
 
-    public AudioMixer audioMixer;
-
     [Header("Other Things")]
     [Tooltip("What layers the gun can hit")] public LayerMask targetLayers;
-    public GameObject gunTip;
+    public GameObject gunTip, aimingSpot;
     public Transform casingTransform;
     public AnimationClip reloadAnimation;
     public string overrideReloadName;
+    [HideInInspector] public Camera scopeCam = null;
+    [HideInInspector] public GameObject ImpactEffect;
+    [HideInInspector] public ParticleSystem PS;
+    [HideInInspector] public Vector3 equipVector;
+    [HideInInspector] public Camera mainCamera, weaponCam;
+    [HideInInspector] public BulletHoles bulletHoleScript;
+    [HideInInspector] public bool isFiring = false;
+    [HideInInspector] public bool isReloading = false, isAiming = false;
+    [HideInInspector] public bool canAim; // True in update unless mid air etc.
+    [HideInInspector] public float maxZoom, minZoom;
+    [HideInInspector] public int shotsLeft;
+    [HideInInspector] public string magString, totalAmmoString;
+    // public GameObject damagePopupText;
 
     [SerializeField] private Animator animator;
-    public GameObject aimingSpot;
     [SerializeField] private bool hasShootAnimation;
-
     private GameObject reloadSymbol;
     private Recoil recoilScript;
     private CanvasManager canvasManagerScript;
     private TextMeshProUGUI magazineText;
     private float shotCounter, fireRate;
     private int CurrentMagazine;
-    [HideInInspector] public bool isFiring = false;
     private bool hasFired = false;
     private float defaultFov = 60f;
-
-    [HideInInspector] public GameObject ImpactEffect;
-    [HideInInspector] public ParticleSystem PS;
-    [HideInInspector] public Vector3 equipVector;
-    [HideInInspector] public Camera mainCamera, weaponCam;
-    [HideInInspector] public string magString, totalAmmoString;
-    [HideInInspector] public bool isReloading = false, isAiming = false;
-    [HideInInspector] public bool canAim; // True in update unless mid air etc.
-    [HideInInspector] public float maxZoom, minZoom;
-    [HideInInspector] public int shotsLeft;
-
-    [HideInInspector] public BulletHoles bulletHoleScript;
-    // public GameObject damagePopupText;
-
     private GameObject CrosshairContents;
     private Crosshair crosshairScript;
     private PlayerMovement playerMovementScript;
     private PlayerInventory inventoryScript;
-
-    [HideInInspector] public Camera scopeCam = null;
     private float sprintLerp, unsprintLerp; // Timers to handle lerping
 
-    //OG THINGS
+    // Original variables
     [HideInInspector] public float RPMOG;
+    [HideInInspector] public GameObject aimingSpotOG;
 
     private AudioClip shootSoundOG;
     private GameObject gunTipOG;
-    [HideInInspector] public GameObject aimingSpotOG;
     private ParticleSystem muzzleFlashOG;
     private float aimSpeedOG;
-
     private float recoilXOG, recoilYOG, recoilZOG;
     private VisualRecoil vire;
 
