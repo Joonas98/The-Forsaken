@@ -95,7 +95,6 @@ public class PlayerMovement : MonoBehaviour
             isStationary = true;
         }
         lastPosition = transform.position;
-        Debug.Log("Is running: " + isRunning);
     }
 
     private void HandleMovement()

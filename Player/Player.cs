@@ -72,7 +72,6 @@ public class Player : MonoBehaviour
     {
         CalculateRegen();
         HandleInputs();
-        HandleFOV();
     }
 
     private void HandleInputs()
@@ -84,21 +83,6 @@ public class Player : MonoBehaviour
             Invoke("Kick", 0.15f);
         }
         if (kickTimeStamp <= Time.time) kickSymbol.SetActive(true);
-    }
-
-    private void HandleFOV()
-    {
-        if (playerMovement.isRunning)
-        {
-            targetFov = runningFov;
-        }
-        else
-        {
-            targetFov = normalFov;
-        }
-
-        // If we are aiming, two updates fight over the FOV -> shaky FOV bug
-        if (GameManager.GM.currentGun != null && !GameManager.GM.currentGun.isAiming) mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, targetFov, fovTransitionSpeed * Time.deltaTime);
     }
 
     private void OnGUI()

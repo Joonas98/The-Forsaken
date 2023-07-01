@@ -14,7 +14,7 @@ public class VisualRecoil : MonoBehaviour
     public float snappiness; // Speed for recoil
     public float returnAmount; // Speed for return
 
-    public bool aiming;
+    private bool aiming;
 
     private void Start()
     {
@@ -23,6 +23,7 @@ public class VisualRecoil : MonoBehaviour
 
     private void Update()
     {
+        aiming = GameManager.GM.currentGunAiming;
         targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, Time.deltaTime * returnAmount);
         currentRotation = Vector3.Slerp(currentRotation, targetRotation, Time.fixedDeltaTime * snappiness);
         transform.localRotation = Quaternion.Euler(currentRotation);

@@ -20,9 +20,11 @@ public class GameManager : MonoBehaviour
     public GameObject weaponHolster, aimingSymbol;
     public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
     // Scripts
+    public Weapon currentWeapon;
     public Gun currentGun;
     public Recoil recoil;
     public VisualRecoil vire;
+    public Player playerScript;
     public static GameManager GM;
 
     [Header("Various Lists / Arrays")]
@@ -44,6 +46,7 @@ public class GameManager : MonoBehaviour
     public int currentWave = 0;
     public Transform equipTrans, weaponSpot; // Optimization: weapon.cs Awake() gets these variables from here
     public float gameTime; // Time elapsed since start of the game
+    public bool currentGunAiming = false; // 1.7.2023 far better to get aiming info from here to other scripts
 
     private float startTime;
 
@@ -77,6 +80,7 @@ public class GameManager : MonoBehaviour
         HandleKeybinds();
         HandleDebugs();
         HandleAbilities();
+        if (currentGun != null) currentGunAiming = currentGun.isAiming;
     }
 
     private void FixedUpdate()
@@ -133,7 +137,7 @@ public class GameManager : MonoBehaviour
         if (useGunDebug)
         {
             if (currentGun == null) return;
-            gunDebugTexts[0].text = "Name: " + currentGun.gunName;
+            gunDebugTexts[0].text = "Name: " + currentGun.weaponName;
             gunDebugTexts[1].text = "Dmg: " + currentGun.damage.ToString();
             gunDebugTexts[2].text = "Pellets: " + currentGun.pelletCount.ToString();
             gunDebugTexts[3].text = "Penetr: " + currentGun.penetration.ToString();
@@ -163,7 +167,7 @@ public class GameManager : MonoBehaviour
 
     public void HandleAbilities()
     {
-        if (GetCurrentGun() != null && GetCurrentGun().isAiming)
+        if (GetCurrentGun() != null && currentGunAiming)
         {
             aimingSymbol.SetActive(true);
         }
@@ -185,6 +189,11 @@ public class GameManager : MonoBehaviour
     public Gun GetCurrentGun() // Easy way to get reference to current gun script from anywhere
     {
         return currentGun;
+    }
+
+    public Weapon GetCurrentWeapon()
+    {
+        return currentWeapon;
     }
 
     public void ConfirmKillFX() // Extra effects for kills

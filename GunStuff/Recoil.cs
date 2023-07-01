@@ -39,6 +39,7 @@ public class Recoil : MonoBehaviour
 
     void Update()
     {
+        aiming = GameManager.GM.currentGunAiming;
         if (useReturningRecoil)
         {
             targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);

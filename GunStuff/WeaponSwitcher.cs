@@ -154,6 +154,7 @@ public class WeaponSwitcher : MonoBehaviour
         if (currentWeapon != null)
         {
             unequipTime = currentWeapon.unequipTime;
+            GameManager.GM.currentWeapon = currentWeapon;
         }
 
         if (currentGun != null)

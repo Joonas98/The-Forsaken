@@ -44,7 +44,7 @@ public class WeaponSway : MonoBehaviour
             //     smoothAmount = ogSmoothAmount;
             // }
 
-            // Aseen k‰‰nt‰minen kun ei t‰hd‰t‰
+            // Weapon rotation when not aiming
             transform.localRotation = Quaternion.Slerp(transform.localRotation, new Quaternion(finalRotation.x + initialRotation.x, finalRotation.y + initialRotation.y, finalRotation.z + initialRotation.z, finalRotation.w + initialRotation.w), Time.deltaTime * smoothAmount * 3);
 
         }
@@ -61,7 +61,7 @@ public class WeaponSway : MonoBehaviour
             //     smoothAmount = ogSmoothAmount;
             // }
 
-            // Aseen k‰‰nt‰minen kun t‰hd‰t‰‰n
+            // Weapon rotation when aiming
             transform.localRotation = Quaternion.Slerp(transform.localRotation, new Quaternion(finalRotation.x + initialRotation.x, finalRotation.y + initialRotation.y, finalRotation.z + initialRotation.z, finalRotation.w + initialRotation.w), Time.deltaTime * smoothAmount * 3);
         }
         else

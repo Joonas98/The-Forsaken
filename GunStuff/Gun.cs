@@ -9,8 +9,6 @@ using UnityEngine.Audio;
 public class Gun : Weapon
 {
     [Header("Gun Settings")]
-    public Sprite gunSprite;
-    public string gunName;
     public bool semiAutomatic;
     public int pelletCount, penetration, damage, magazineSize;
     public float hipSpread, spread, headshotMultiplier, RPM, reloadTime, knockbackPower, range;
@@ -89,7 +87,6 @@ public class Gun : Weapon
     private float shotCounter, fireRate;
     private int CurrentMagazine;
     private bool hasFired = false;
-    private float defaultFov = 60f;
     private GameObject CrosshairContents;
     private Crosshair crosshairScript;
     private PlayerMovement playerMovementScript;
@@ -105,6 +102,7 @@ public class Gun : Weapon
     private ParticleSystem muzzleFlashOG;
     private float aimSpeedOG;
     private float recoilXOG, recoilYOG, recoilZOG;
+    private float defaultFov;
     private VisualRecoil vire;
 
     protected override void Awake()
@@ -115,7 +113,7 @@ public class Gun : Weapon
         if (bulletHoleScript == null)
             bulletHoleScript = GetComponent<BulletHoles>();
 
-        defaultFov = Camera.main.fieldOfView;
+        defaultFov = GameManager.GM.playerScript.normalFov;
         recoilScript = GetComponentInParent<Recoil>();
         mainCamera = Camera.main;
         weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
@@ -168,6 +166,9 @@ public class Gun : Weapon
         magazineText.text = magString;
         inventoryScript.UpdateTotalAmmoText(ammoType);
 
+        // Update desired aiming fov to FovController
+        FovController.Instance.fovAim = zoomAmount * FovController.Instance.fovDefault;
+
         UpdateRecoil(); // Recoil is a singleton, update when taking weapon out
         EquipWeapon(); // Animations etc. when equpping weapon
     }
@@ -210,11 +211,8 @@ public class Gun : Weapon
             CrosshairContents.SetActive(false);
             WeaponSwitcher.CanSwitch(false);
 
-            transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), (aimSpeed * 2f) * Time.deltaTime);
-            transform.localRotation = Quaternion.Euler(0, 180, 0);
-
-            SetFOV(Mathf.Lerp(Camera.main.fieldOfView, zoomAmount * defaultFov, aimSpeed * Time.deltaTime));
-            SetFOV(Mathf.Lerp(weaponCam.fieldOfView, zoomAmount * defaultFov, aimSpeed * Time.deltaTime));
+            transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), aimSpeed * Time.deltaTime);
+            transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(0, 180, 0), aimSpeed * Time.deltaTime);
         }
         else
         {
@@ -224,30 +222,22 @@ public class Gun : Weapon
                 playedUnaimSound = true;
                 audioSource.PlayOneShot(unaimSound);
             }
-
             playedAimSound = false;
             WeaponSwayAndBob.instance.disableSwayBob = false;
+            CrosshairContents.SetActive(true);
 
             if (equipped == true && unequipping == false)
                 transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, (aimSpeed * 2f) * Time.deltaTime);
 
-            SetFOV(Mathf.Lerp(Camera.main.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
-            SetFOV(Mathf.Lerp(weaponCam.fieldOfView, defaultFov, aimSpeed * Time.deltaTime));
-            CrosshairContents.SetActive(true);
-
             if (Time.timeScale > 0 && equipped && !isReloading)
                 WeaponSwitcher.CanSwitch(true);
         }
-
-        // Update the aiming value for other scripts
-        recoilScript.aiming = isAiming;
-        vire.aiming = isAiming;
     }
 
     private void HandleAnimationStrings()
     {
-        shootAnimationName = hasShootAnimation ? "Shoot " + gunName : "";
-        reloadAnimationName = (overrideReloadName == "") ? "Reload " + gunName : overrideReloadName;
+        shootAnimationName = hasShootAnimation ? "Shoot " + weaponName : "";
+        reloadAnimationName = (overrideReloadName == "") ? "Reload " + weaponName : overrideReloadName;
     }
 
     public void HandleReloading()

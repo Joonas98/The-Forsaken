@@ -6,9 +6,10 @@ public class Weapon : MonoBehaviour
 {
     // 18.6.23 Class created to be inherited by Gun.cs and MeleeWeapon.cs
     [Header("Weapon class")]
-    [HideInInspector] public bool equipped; // Set true when equip lerp is done
-    [HideInInspector] public bool unequipping; // Set true when unequip is in process
+    public string weaponName;
+    public Sprite weaponSprite;
     public float equipTime, unequipTime;
+    [HideInInspector] public bool equipped, unequipping;
 
     [Header("Weapon class audio")]
     public AudioSource audioSource;

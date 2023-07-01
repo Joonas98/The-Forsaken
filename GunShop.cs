@@ -62,7 +62,7 @@ public class GunShop : MonoBehaviour
         selectedWeapon = weaponPrefabs[GunNumber];
         selectedGunScript = selectedWeapon.GetComponentInChildren<Gun>(true);
 
-        gunNameText.text = selectedGunScript.gunName.ToString();
+        gunNameText.text = selectedGunScript.weaponName.ToString();
         if (selectedGunScript.semiAutomatic == true)
         {
             firemodeText.text = "Semi-automatic";
@@ -85,9 +85,8 @@ public class GunShop : MonoBehaviour
             selectedGunScript.snappiness.ToString() + ", Return " + selectedGunScript.returnSpeed.ToString();
         // stationaryAccuracyText.text = selectedGunScript.stationaryAccuracy.ToString();
 
-        selectedGunName = selectedGunScript.gunName;
-        selectedGunSprite = selectedGunScript.gunSprite;
-
+        selectedGunName = selectedGunScript.weaponName;
+        selectedGunSprite = selectedGunScript.weaponSprite;
     }
 
     public void BuyGunButton()

@@ -65,10 +65,12 @@ public class MeleeWeapon : Weapon
             StartCoroutine(Attack(true));
         }
 
-        if (equipped && !unequipping)
+        if (equipped && !unequipping && !attacking && !attackingSecondary)
         {
             transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, 1f * Time.deltaTime);
+            // transform.rotation = Quaternion.Lerp(transform.rotation, weaponSpot.transform.rotation, 5f * Time.deltaTime);
         }
+
     }
 
     public void HandleInputs()

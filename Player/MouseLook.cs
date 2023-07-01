@@ -29,7 +29,7 @@ public class MouseLook : MonoBehaviour
     {
         if (!canRotate) return;
 
-        if (GameManager.GM.GetCurrentGun() != null && GameManager.GM.GetCurrentGun().isAiming)
+        if (GameManager.GM.currentGun != null && GameManager.GM.currentGunAiming)
         {
             mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * aimSensMultiplier;
             mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * aimSensMultiplier;
@@ -46,5 +46,4 @@ public class MouseLook : MonoBehaviour
         playerBody.Rotate(Vector3.up * mouseX);
         transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
     }
-
 }

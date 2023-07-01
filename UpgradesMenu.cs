@@ -5,12 +5,10 @@ using TMPro;
 
 public class UpgradesMenu : MonoBehaviour
 {
+    public TextMeshProUGUI selectedWeaponText;
 
     private Gun chosenGun;
     private AttachmentsScript attchiesScript;
-
-    public TextMeshProUGUI selectedGunText;
-
 
     private void OnEnable()
     {
@@ -19,11 +17,11 @@ public class UpgradesMenu : MonoBehaviour
 
         if (chosenGun != null)
         {
-            selectedGunText.text = chosenGun.gunName;
+            selectedWeaponText.text = chosenGun.weaponName;
         }
         else
         {
-            selectedGunText.text = "No equipped guns!";
+            selectedWeaponText.text = "No equipped guns!";
         }
     }
 
