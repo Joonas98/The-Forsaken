@@ -17,14 +17,15 @@ public class FovController : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        // Singleton
+        if (Instance == null)
         {
-            Destroy(gameObject);
-        }
-        else
-        {
+            // DontDestroyOnLoad(gameObject); Persistance has to be in a root object, but it isn't needed for this script
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+        }
+        else if (Instance != this)
+        {
+            Destroy(Instance);
         }
     }
 

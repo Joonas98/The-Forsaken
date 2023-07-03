@@ -43,8 +43,8 @@ public class Gun : Weapon
     public LineRenderer LR;
     public bool dropCasings;
     public GameObject casingGO;
+    public float casingDespawnTime = 1f;
 
-    private float casingDespawnTime = 15f;
     private float laserTime = 0.05f;
     private string reloadAnimationName, shootAnimationName;
     private bool playedAimSound = false;
@@ -207,7 +207,7 @@ public class Gun : Weapon
         {
             isAiming = true;
             playedUnaimSound = false;
-            WeaponSwayAndBob.instance.disableSwayBob = true;
+            // WeaponSwayAndBob.instance.disableSwayBob = true;
             CrosshairContents.SetActive(false);
             WeaponSwitcher.CanSwitch(false);
 
@@ -223,7 +223,7 @@ public class Gun : Weapon
                 audioSource.PlayOneShot(unaimSound);
             }
             playedAimSound = false;
-            WeaponSwayAndBob.instance.disableSwayBob = false;
+            // WeaponSwayAndBob.instance.disableSwayBob = false;
             CrosshairContents.SetActive(true);
 
             if (equipped == true && unequipping == false)
@@ -639,202 +639,27 @@ public class Gun : Weapon
         recoilScript.RecoilFire();
         audioSource.PlayOneShot(shootSound);
         Invoke("PlayActionSound", actionDelay);
-
-        // Casing creation
-        if (dropCasings)
-        {
-            GameObject newCasing = Instantiate(casingGO, casingTransform.position, transform.rotation * Quaternion.Euler(-90f, 0f, 0f));
-            Rigidbody newCasingRB = null;
-
-            if (newCasing.GetComponent<Rigidbody>() != null)
-            {
-                newCasingRB = newCasing.GetComponent<Rigidbody>();
-            }
-            else
-            {
-                newCasingRB = newCasing.GetComponentInChildren<Rigidbody>();
-            }
-            newCasingRB.AddForce(transform.up * 1f + transform.right * -1f);
-            Destroy(newCasing.gameObject, casingDespawnTime);
-        }
-
-        if (animator != null && shootAnimationName != "")
-        {
-            animator.Play(shootAnimationName);
-            // animator.SetTrigger("Shoot");
-        }
-
-        #region vanha systeemi
-        /* if (pelletCount == 1)
-         {
-             Vector3 forwardVector = Vector3.forward;
-             float deviation = UnityEngine.Random.Range(0f, spread);
-             float angle = UnityEngine.Random.Range(0f, 360f);
-             forwardVector = Quaternion.AngleAxis(deviation, Vector3.up) * forwardVector;
-             forwardVector = Quaternion.AngleAxis(angle, Vector3.forward) * forwardVector;
-
-             if (!shootFromBarrel) forwardVector = mainCamera.transform.rotation * forwardVector;
-             else forwardVector = gunTip.transform.rotation * forwardVector;
-
-             RaycastHit[] hitPointsList;
-
-             if (!isAiming) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity);
-             else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, -aimingSpot.transform.forward + forwardVector, Mathf.Infinity);
-
-             System.Array.Sort(hitPointsList, (x, y) => x.distance.CompareTo(y.distance));
-
-             if (hitPointsList.Length == 0)
-             {
-                 DrawLaser(gunTip.transform.position, forwardVector * 5000);
-             }
-             else
-             {
-                 DrawLaser(gunTip.transform.position, hitPointsList[0].point);
-             }
-
-             List<Enemy> hitEnemies = new List<Enemy>();
-             List<RaycastHit> hitpointsInEnemies = new List<RaycastHit>();
-             foreach (RaycastHit hitPoint in hitPointsList)
-             {
-                 // Debug.Log(hitPoint.collider.gameObject.name);
-                 Enemy enemyInstance = hitPoint.collider.gameObject.GetComponentInParent<Enemy>();
-
-                 if (enemyInstance != null && !hitEnemies.Contains(enemyInstance))
-                 {
-                     hitEnemies.Add(enemyInstance);
-                     hitpointsInEnemies.Add(hitPoint);
-                 }
-                 else if (enemyInstance == null)
-                 {
-                     HandleImpact(hitPoint);
-                 }
-             }
-
-             if (penetration == 0 && hitpointsInEnemies.Count > 0)
-             {
-                 HandleImpact(hitpointsInEnemies[0]);
-             }
-             else if (penetration > 0)
-             {
-                 int penLeft = penetration + 1;
-
-                 foreach (RaycastHit hit in hitpointsInEnemies)
-                 {
-                     if (penLeft > 0) HandleImpact(hit);
-                     --penLeft;
-                 }
-             }
-
-             // hitEnemies.Clear();
-             // hitpointsInEnemies.Clear();
-             // Array.Clear(hitPointsList, 0, hitPointsList.Length);
-         }
-         else if (pelletCount > 1) // Shotguns or multiple bullets otherwise
-         {
-             int pelletsLeft = pelletCount;
-
-             for (int i = pelletsLeft; i > 0; i--)
-             {
-                 Vector3 forwardVector = Vector3.forward;
-                 float deviation = UnityEngine.Random.Range(0f, spread);
-                 float angle = UnityEngine.Random.Range(0f, 360f);
-                 forwardVector = Quaternion.AngleAxis(deviation, Vector3.up) * forwardVector;
-                 forwardVector = Quaternion.AngleAxis(angle, Vector3.forward) * forwardVector;
-
-                 if (!shootFromBarrel) forwardVector = mainCamera.transform.rotation * forwardVector;
-                 else forwardVector = gunTip.transform.rotation * forwardVector;
-
-                 Vector3 forwardVectorAim = -aimingSpot.transform.forward;
-                 float deviationAim = UnityEngine.Random.Range(0f, spread);
-                 float angleAim = UnityEngine.Random.Range(0f, 360f);
-                 forwardVectorAim = Quaternion.AngleAxis(deviationAim, Vector3.up) * forwardVectorAim;
-                 forwardVectorAim = Quaternion.AngleAxis(angleAim, Vector3.forward) * forwardVectorAim;
-
-                 if (!shootFromBarrel) forwardVectorAim = mainCamera.transform.rotation * forwardVectorAim;
-                 else forwardVectorAim = gunTip.transform.rotation * forwardVectorAim;
-
-                 RaycastHit[] hitPointsList;
-                 // if (!shootFromBarrel) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity);
-                 // else hitPointsList = Physics.RaycastAll(gunTip.transform.position, forwardVector, Mathf.Infinity);
-
-                 if (!isAiming) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity);
-                 // else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, forwardVector, Mathf.Infinity);
-                 else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, forwardVectorAim, Mathf.Infinity);
-
-                 System.Array.Sort(hitPointsList, (x, y) => x.distance.CompareTo(y.distance));
-
-                 if (hitPointsList.Length == 0)
-                 {
-                     DrawLaser(gunTip.transform.position, forwardVector * 5000);
-                 }
-                 else
-                 {
-                     DrawLaser(gunTip.transform.position, hitPointsList[0].point);
-                 }
-
-                 List<Enemy> hitEnemies = new List<Enemy>();
-                 List<RaycastHit> hitpointsInEnemies = new List<RaycastHit>();
-                 foreach (RaycastHit hitPoint in hitPointsList)
-                 {
-                     // Debug.Log(hitPoint.collider.gameObject.name);
-                     Enemy enemyInstance = hitPoint.collider.gameObject.GetComponentInParent<Enemy>();
-
-                     if (enemyInstance != null && !hitEnemies.Contains(enemyInstance))
-                     {
-                         hitEnemies.Add(enemyInstance);
-                         hitpointsInEnemies.Add(hitPoint);
-                     }
-                     else if (enemyInstance == null)
-                     {
-                         HandleImpact(hitPoint);
-                     }
-                 }
-
-                 if (penetration == 0 && hitpointsInEnemies.Count > 0)
-                 {
-                     HandleImpact(hitpointsInEnemies[0]);
-                 }
-                 else if (penetration > 0)
-                 {
-                     int penLeft = penetration + 1;
-
-                     foreach (RaycastHit hit in hitpointsInEnemies)
-                     {
-                         if (penLeft > 0) HandleImpact(hit);
-                         --penLeft;
-                     }
-                 }
-             }
-
-         } */
-        #endregion
+        if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
+        DropCasing();
 
         int pelletsLeft = pelletCount;
-
         for (int i = pelletsLeft; i > 0; i--)
         {
             float deviation;
             if (isAiming)
-            {
                 deviation = UnityEngine.Random.Range(0f, spread);
-            }
             else
-            {
                 deviation = UnityEngine.Random.Range(0f, hipSpread);
-            }
 
             Vector3 forwardVector = Vector3.forward;
             float angle = UnityEngine.Random.Range(0f, 360f);
             forwardVector = Quaternion.AngleAxis(deviation, Vector3.up) * forwardVector;
             forwardVector = Quaternion.AngleAxis(angle, Vector3.forward) * forwardVector;
-
             forwardVector = mainCamera.transform.rotation * forwardVector;
 
             RaycastHit[] hitPointsList;
-
             if (!isAiming) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity, targetLayers);
             else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, forwardVector, Mathf.Infinity, targetLayers);
-
             System.Array.Sort(hitPointsList, (x, y) => x.distance.CompareTo(y.distance));
 
             if (hitPointsList.Length == 0)
@@ -850,9 +675,7 @@ public class Gun : Weapon
             List<RaycastHit> hitpointsInEnemies = new List<RaycastHit>();
             foreach (RaycastHit hitPoint in hitPointsList)
             {
-                // Debug.Log(hitPoint.collider.gameObject.name);
                 Enemy enemyInstance = hitPoint.collider.gameObject.GetComponentInParent<Enemy>();
-
                 if (enemyInstance != null && !hitEnemies.Contains(enemyInstance))
                 {
                     hitEnemies.Add(enemyInstance);
@@ -871,7 +694,6 @@ public class Gun : Weapon
             else if (penetration > 0)
             {
                 int penLeft = penetration + 1;
-
                 foreach (RaycastHit hit in hitpointsInEnemies)
                 {
                     if (penLeft > 0) HandleImpact(hit);
@@ -990,6 +812,25 @@ public class Gun : Weapon
     {
         if (actionSound == null) return;
         audioSource.PlayOneShot(actionSound);
+    }
+
+    private void DropCasing()
+    {
+        if (!dropCasings) return;
+
+        GameObject newCasing = Instantiate(casingGO, casingTransform.position, transform.rotation * Quaternion.Euler(-90f, 0f, 0f));
+        Rigidbody newCasingRB = null;
+
+        if (newCasing.GetComponent<Rigidbody>() != null)
+        {
+            newCasingRB = newCasing.GetComponent<Rigidbody>();
+        }
+        else
+        {
+            newCasingRB = newCasing.GetComponentInChildren<Rigidbody>();
+        }
+        newCasingRB.AddForce(transform.up * 1f + transform.right * -1f);
+        Destroy(newCasing.gameObject, casingDespawnTime);
     }
 
     // Adjust values from other scripts
