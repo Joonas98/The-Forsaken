@@ -45,10 +45,8 @@ public class Enemy : MonoBehaviour
     private float countdown = 0f;
     private bool standCountdowActive = false;
 
-    public GameObject damagePopupText;
     public Transform popupTransform;
-
-    public DamageNumber numberPrefab;
+    public DamageNumber damagePopupPrefab;
 
     [Header("Effects")]
     public Color newEyeColor;
@@ -81,13 +79,12 @@ public class Enemy : MonoBehaviour
         GameManager.GM.enemiesAliveGos.Add(gameObject);
 
         RandomizeSkins();
+        damagePopupPrefab = GetComponentInChildren<DamageNumber>();
 
         player = GameObject.Find("Player");
-
         RigidBodies = GetComponentsInChildren<Rigidbody>();
         animator = GetComponent<Animator>();
         SetRagdollParts();
-
         bodyRB = modelRoot.GetComponent<Rigidbody>();
 
         float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
@@ -133,12 +130,6 @@ public class Enemy : MonoBehaviour
         HandleSwinging();
         CheckRagdollMagnitude();
         DebugUpdate();
-    }
-
-    private void FixedUpdate()
-    {
-        // Partial fix to make the enemy GO follow the ragdolling body
-        // if (isDead) transform.position = transform.GetChild(0).position;
     }
 
     private void CheckRagdollMagnitude()
@@ -198,21 +189,46 @@ public class Enemy : MonoBehaviour
         Destroy(gameObject, 0f);
     }
 
-    public void TakeDamage(int damage)
+    public void HandlePopup(int number)
     {
+        // if (isDead) return;
+        // if (damage == 0) return;
+        Debug.Log(damagePopupPrefab);
+
+        if (damagePopupPrefab == null) return;
+        DamageNumber damageNumber = damagePopupPrefab.Spawn(popupTransform.position, number.ToString());
+
+        // if (!headshot)
+        // {
+        //     DamageNumber damageNumberInstance = dPopNormal.Spawn(dPopNormal.transform.position, number);
+        // }
+        // else
+        // {
+        //     DamageNumber damageNumberInstance = dPopHead.Spawn(dPopHead.transform.position, number);
+        // }
+
+        //  Rigidbody popRB = dmgPopupText.GetComponent<Rigidbody>();
+        //  popRB.AddForce(new Vector3(UnityEngine.Random.Range(-1f, 1f), 1, UnityEngine.Random.Range(-1f, 1f)) * 150f);
+        //  TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
+        //  popText.text = number.ToString();
+        //  if (damage < 0) damageNumber.SetColor(Color.green); // Healing
+        // Destroy(dmgPopupText.gameObject, 2f);
+    }
+
+    // The actual damage processing, should be always called via TakeDamage() functions
+    public void TakeDamage(int damage, int percentageAmount = 0, bool headshot = false)
+    {
+        // If optional percentageAmount was given, add % based damage to the actual damage
+        if (percentageAmount > 0)
+        {
+            var hpPercentage = (100 / maxHealth) * percentageAmount;
+            damage = damage + hpPercentage;
+        }
+        HandlePopup(damage);
         currentHealth -= damage;
         healthPercentage = (100 / maxHealth) * currentHealth;
-
         newMaterial.SetFloat("_BloodAmount", 1f);
-
         UpdateEyeColor(); // Enemy health can be seen from eyes
-
-        if (!isDead) // Damage popups
-        {
-            if (damage == 0) return;
-            DamageNumber damageNumber = numberPrefab.Spawn(popupTransform.position, damage);
-            if (damage < 0) damageNumber.SetColor(Color.green); // Healing
-        }
 
         if (!isDead && Random.Range(0, 3) == 1)
         {
@@ -220,19 +236,11 @@ public class Enemy : MonoBehaviour
             audioSource.PlayOneShot(takeDamageSounds[rindex]);
         }
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && !isDead)
         {
-            if (isDead == false)
-            {
-                Die();
-            }
+            // Todo: add death sound?
+            Die();
         }
-    }
-
-    public void TakeDamagePercentage(int flatAmount, int percentageAmount)
-    {
-        var hpPercentage = (100 / maxHealth) * percentageAmount;
-        TakeDamage(hpPercentage + flatAmount);
     }
 
     public int GetHealth()
@@ -444,15 +452,16 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void DamagePopup(int number)
-    {
-        GameObject dmgPopupText = Instantiate(damagePopupText, popupTransform.position, Quaternion.identity);
-        Rigidbody popRB = dmgPopupText.GetComponent<Rigidbody>();
-        popRB.AddForce(new Vector3(UnityEngine.Random.Range(-1f, 1f), 1, UnityEngine.Random.Range(-1f, 1f)) * 150f);
-        TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
-        popText.text = number.ToString();
-        Destroy(dmgPopupText.gameObject, 2f);
-    }
+    // Obsolete
+    // public void DamagePopup(int number)
+    // {
+    //     GameObject dmgPopupText = Instantiate(damagePopupText, popupTransform.position, Quaternion.identity);
+    //     Rigidbody popRB = dmgPopupText.GetComponent<Rigidbody>();
+    //     popRB.AddForce(new Vector3(UnityEngine.Random.Range(-1f, 1f), 1, UnityEngine.Random.Range(-1f, 1f)) * 150f);
+    //     TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
+    //     popText.text = number.ToString();
+    //     Destroy(dmgPopupText.gameObject, 2f);
+    // }
 
     private void RandomizeSkins()
     {

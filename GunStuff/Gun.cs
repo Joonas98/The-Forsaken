@@ -16,6 +16,7 @@ public class Gun : Weapon
     [Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
     //0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
     public int ammoType; // Todo: change ammotype to enum?
+    [HideInInspector] public int percentageDamage;
 
     [Header("Recoil Settings")]
     [Tooltip("Up and down")] [SerializeField] public float recoilX;
@@ -55,7 +56,7 @@ public class Gun : Weapon
     public AudioClip shootSound;
     public AudioClip reloadSound, aimSound, unaimSound;
     public AudioClip zoomScopeInSound, zoomScopeOutSound;
-    public AudioClip actionSound, dryFireSound; // Pump shotgun, bolt action etc.
+    public AudioClip actionSound, dryFireSound; // Action sound is pump shotgun, bolt action etc.
     public float actionDelay = 0f; // Seconds to wait before playing action sound
 
     [Header("Other Things")]
@@ -104,6 +105,8 @@ public class Gun : Weapon
     private float recoilXOG, recoilYOG, recoilZOG;
     private float defaultFov;
     private VisualRecoil vire;
+    private const float unsprintLerpThreshold = 30f; // We don't want to be able to shoot right away after sprinting
+    private const float sprintLerpMultiplier = 15f; // Weapon sprint lerp and readiness: aimSpeed * this
 
     protected override void Awake()
     {
@@ -171,6 +174,12 @@ public class Gun : Weapon
 
         UpdateRecoil(); // Recoil is a singleton, update when taking weapon out
         EquipWeapon(); // Animations etc. when equpping weapon
+
+        // If we own the viper venom ability, adjust percentage damage
+        if (AbilityMaster.abilities.Contains(2))
+        {
+            percentageDamage = 5;
+        }
     }
 
     protected override void Update()
@@ -183,6 +192,7 @@ public class Gun : Weapon
         HandleScopeZoom();
         HandleSwitchingLerps();
         HandleSprinting();
+        // Debug.Log(unsprintLerp * sprintLerpMultiplier * aimSpeed);
     }
 
     public void HandleAiming()
@@ -289,7 +299,7 @@ public class Gun : Weapon
     {
         shotCounter -= Time.deltaTime;
         if (!equipped) return;
-        // Can't shoot when running
+        // Can't shoot when running (unless got Bullet Ballet ability)
         if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
         {
             isFiring = false;
@@ -297,7 +307,7 @@ public class Gun : Weapon
         }
 
         // Shooting
-        if (Input.GetButtonDown("Fire1") && Time.timeScale > 0)
+        if (Input.GetButton("Fire1") && Time.timeScale > 0 && (unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold)
         {
             isFiring = true;
         }
@@ -310,7 +320,6 @@ public class Gun : Weapon
         // Fully automatic weapons
         if (isFiring == true && semiAutomatic == false)
         {
-
             if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
             {
                 shotCounter = fireRate;
@@ -320,8 +329,10 @@ public class Gun : Weapon
                 magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
             }
-            else if (shotCounter <= 0 && CurrentMagazine <= 0)
+            else if (shotCounter <= 0 && CurrentMagazine <= 0) // Dry fire automatic
             {
+                shotCounter = fireRate * 3; // Longer shotCounter so dryfire does not spam fast
+                if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
                 audioSource.PlayOneShot(dryFireSound);
                 isFiring = false;
             }
@@ -341,8 +352,10 @@ public class Gun : Weapon
                 magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
             }
-            else if (shotCounter <= 0 && CurrentMagazine <= 0)
+            else if (shotCounter <= 0 && CurrentMagazine <= 0) // Dry fire semi auto
             {
+                shotCounter = fireRate;
+                if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
                 audioSource.PlayOneShot(dryFireSound);
                 isFiring = false;
             }
@@ -352,21 +365,21 @@ public class Gun : Weapon
     // Mostly to lerp weapons
     public void HandleSprinting()
     {
-        // No rotating if reloading or we have bullet ballet ability
+        // No rotating if reloading or we have Bullet Ballet ability
         if (isReloading || AbilityMaster.abilities.Contains(7)) return;
 
         if (!playerMovementScript.isRunning || !equipped)
         {
             // Return to default gun rotation
             unsprintLerp += Time.deltaTime;
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, 180, 0), unsprintLerp * 50f * Time.deltaTime);
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, 180, 0), unsprintLerp * sprintLerpMultiplier * aimSpeed * Time.deltaTime);
             sprintLerp = 0f;
         }
         else
         {
             // Move to running rotation
             sprintLerp += Time.deltaTime;
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(50, 180, 0), sprintLerp * 50f * Time.deltaTime);
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(50, 180, 0), sprintLerp * sprintLerpMultiplier * aimSpeed * Time.deltaTime);
             unsprintLerp = 0f;
         }
     }
@@ -439,192 +452,79 @@ public class Gun : Weapon
             if (enemy.GetHealth() > 0) // Hitmarker
             {
                 if (hit.collider.tag == "Head")
-                {
                     canvasManagerScript.Hitmarker(hit.point, true);
-                }
                 else
-                {
                     canvasManagerScript.Hitmarker(hit.point, false);
-                }
             }
 
-            if (hit.collider.tag == "Head")
+            switch (hit.collider.tag)
             {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(Mathf.RoundToInt(damage * headshotMultiplier), 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(Mathf.RoundToInt(damage * headshotMultiplier));
-                }
+                // HEAD
+                case "Head":
+                    enemy.TakeDamage(Mathf.RoundToInt(damage * headshotMultiplier), percentageDamage, true);
+                    if (limbScript != null && enemy.GetHealth() <= 0) limbScript.RemoveLimb(0); // Beheading
+                    break;
 
-                if (limbScript != null && enemy.GetHealth() <= 0) limbScript.RemoveLimb(0);
-            }
+                // LEGS
+                case "UpperLegL":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(2);
+                    break;
 
-            // LEGS
-            else if (hit.collider.tag == "UpperLegL")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
+                case "UpperLegR":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(4);
+                    break;
 
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(2);
-                }
+                case "LowerLegL":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(1);
+                    break;
 
-            }
+                case "LowerLegR":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(3);
+                    break;
 
-            else if (hit.collider.tag == "LowerLegL")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
+                // ARMS
+                case "ArmL":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(7);
+                    break;
 
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(1);
-                }
-            }
+                case "ArmR":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(5);
+                    break;
 
-            else if (hit.collider.tag == "UpperLegR")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
+                case "ShoulderL":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(8);
+                    break;
 
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(4);
-                }
-            }
+                case "ShoulderR":
+                    enemy.TakeDamage(damage, percentageDamage);
+                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(6);
+                    break;
 
-            else if (hit.collider.tag == "LowerLegR")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
+                // TORSO
+                case "Torso":
+                    enemy.TakeDamage(damage, percentageDamage);
 
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(3);
-                }
-            }
-
-            else if (hit.collider.tag == "ArmL")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
-
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(7);
-                }
-            }
-
-            else if (hit.collider.tag == "ShoulderL")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
-
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(8);
-                }
-            }
-
-            else if (hit.collider.tag == "ArmR")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
-
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(5);
-                }
-            }
-
-            else if (hit.collider.tag == "ShoulderR")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
-
-                if (limbScript != null && enemy.GetHealth() <= 50)
-                {
-                    limbScript.RemoveLimb(6);
-                }
-            }
-
-            // OTHERS
-            else if (hit.collider.tag == "Torso")
-            {
-                if (AbilityMaster.abilities.Contains(2))
-                {
-                    enemy.TakeDamagePercentage(damage, 5);
-                }
-                else
-                {
-                    enemy.TakeDamage(damage);
-                }
-
-                if (AbilityMaster.abilities.Contains(6))
-                {
-                    if (UnityEngine.Random.value < 0.25f) // 25% chance
+                    // Torso Punch ability
+                    if (AbilityMaster.abilities.Contains(6))
                     {
-                        enemy.TurnOnRagdoll();
-                        audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
-                        enemy.Invoke("TurnOffRagdoll", 1f);
+                        if (UnityEngine.Random.value < 0.25f) // 25% chance
+                        {
+                            enemy.TurnOnRagdoll();
+                            audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
+                            enemy.Invoke("TurnOffRagdoll", 1f);
+                        }
                     }
-                }
+                    break;
             }
-
         }
-        else
+        else // Hit something like ground
         {
             GroundImpactFX(hit);
             bulletHoleScript.AddBulletHole(hit);
