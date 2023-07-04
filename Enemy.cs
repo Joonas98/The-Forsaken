@@ -45,13 +45,15 @@ public class Enemy : MonoBehaviour
     private float countdown = 0f;
     private bool standCountdowActive = false;
 
+    [Header("Damage Popup")]
     public Transform popupTransform;
-    public DamageNumber damagePopupPrefab;
+    public DamageNumber dpopNormalPrefab;
+    public Color normalColor, headshotColor, healingColor;
 
     [Header("Effects")]
-    public Color newEyeColor;
     public Gradient eyeGradient;
     public GameObject[] effectList;
+
     public enum debuffs
     {
         Arcane, Crimson, Dark, Fairy, Fire, Frost, Holy, Light, Mist, Nature, ShockBlue, ShockYellow,
@@ -79,7 +81,6 @@ public class Enemy : MonoBehaviour
         GameManager.GM.enemiesAliveGos.Add(gameObject);
 
         RandomizeSkins();
-        damagePopupPrefab = GetComponentInChildren<DamageNumber>();
 
         player = GameObject.Find("Player");
         RigidBodies = GetComponentsInChildren<Rigidbody>();
@@ -189,30 +190,18 @@ public class Enemy : MonoBehaviour
         Destroy(gameObject, 0f);
     }
 
-    public void HandlePopup(int number)
+    public void HandlePopup(int number, bool headshot)
     {
-        // if (isDead) return;
-        // if (damage == 0) return;
-        Debug.Log(damagePopupPrefab);
+        if (isDead) return;
+        if (number == 0) return;
 
-        if (damagePopupPrefab == null) return;
-        DamageNumber damageNumber = damagePopupPrefab.Spawn(popupTransform.position, number.ToString());
+        if (dpopNormalPrefab == null) return;
+        DamageNumber damageNumber = dpopNormalPrefab.Spawn(popupTransform.position, number);
+        // damageNumber.SetFollowedTarget(popupTransform);
 
-        // if (!headshot)
-        // {
-        //     DamageNumber damageNumberInstance = dPopNormal.Spawn(dPopNormal.transform.position, number);
-        // }
-        // else
-        // {
-        //     DamageNumber damageNumberInstance = dPopHead.Spawn(dPopHead.transform.position, number);
-        // }
-
-        //  Rigidbody popRB = dmgPopupText.GetComponent<Rigidbody>();
-        //  popRB.AddForce(new Vector3(UnityEngine.Random.Range(-1f, 1f), 1, UnityEngine.Random.Range(-1f, 1f)) * 150f);
-        //  TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
-        //  popText.text = number.ToString();
-        //  if (damage < 0) damageNumber.SetColor(Color.green); // Healing
-        // Destroy(dmgPopupText.gameObject, 2f);
+        if (number < 0) damageNumber.SetColor(healingColor);
+        else if (headshot) damageNumber.SetColor(headshotColor);
+        else damageNumber.SetColor(normalColor);
     }
 
     // The actual damage processing, should be always called via TakeDamage() functions
@@ -224,7 +213,7 @@ public class Enemy : MonoBehaviour
             var hpPercentage = (100 / maxHealth) * percentageAmount;
             damage = damage + hpPercentage;
         }
-        HandlePopup(damage);
+        HandlePopup(damage, headshot);
         currentHealth -= damage;
         healthPercentage = (100 / maxHealth) * currentHealth;
         newMaterial.SetFloat("_BloodAmount", 1f);

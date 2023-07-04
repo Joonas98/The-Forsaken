@@ -162,7 +162,7 @@ public class Gun : Weapon
     protected override void OnEnable()
     {
         base.OnEnable();
-        SetFOV(defaultFov); // Avoid bugs
+        // SetFOV(defaultFov); // Avoid bugs
 
         // Handle ammo UI 
         magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
@@ -172,14 +172,8 @@ public class Gun : Weapon
         // Update desired aiming fov to FovController
         FovController.Instance.fovAim = zoomAmount * FovController.Instance.fovDefault;
 
-        UpdateRecoil(); // Recoil is a singleton, update when taking weapon out
+        RefreshGun();
         EquipWeapon(); // Animations etc. when equpping weapon
-
-        // If we own the viper venom ability, adjust percentage damage
-        if (AbilityMaster.abilities.Contains(2))
-        {
-            percentageDamage = 5;
-        }
     }
 
     protected override void Update()
@@ -731,6 +725,16 @@ public class Gun : Weapon
         }
         newCasingRB.AddForce(transform.up * 1f + transform.right * -1f);
         Destroy(newCasing.gameObject, casingDespawnTime);
+    }
+
+    // Update values and stuff
+    public void RefreshGun()
+    {
+        UpdateFirerate();
+        UpdateRecoil();
+
+        // If we own the viper venom ability, adjust percentage damage
+        if (AbilityMaster.abilities.Contains(2)) percentageDamage = 5;
     }
 
     // Adjust values from other scripts

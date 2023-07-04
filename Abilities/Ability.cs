@@ -19,6 +19,11 @@ public class Ability : ScriptableObject
 
     }
 
+    public virtual void InitializeAbility()
+    {
+
+    }
+
     public virtual void Activate(GameObject parent) // Call base.Activate(parent) in all abilities
     {
         if (audioSource == null && GameManager.GM.playerAS != null) // First activation sets audioSource

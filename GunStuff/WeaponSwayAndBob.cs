@@ -169,13 +169,13 @@ public class WeaponSwayAndBob : MonoBehaviour
         {
             transform.localPosition = Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth);
             transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
-            Debug.Log("Not aiming");
+            // Debug.Log("Not aiming");
         }
         else // Return to original spot
         {
             transform.localPosition = Vector3.Lerp(transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * currentGun.aimSpeed);
             transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(new Vector3(0, 0, 0)), Time.deltaTime * currentGun.aimSpeed);
-            Debug.Log("Aiming");
+            //  Debug.Log("Aiming");
         }
     }
 }

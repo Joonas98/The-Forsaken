@@ -9,10 +9,12 @@ public class AbilityMaster : MonoBehaviour
 {
     // Statics
     public static AbilityMaster instance = null;
-    public static List<int> abilities = new List<int>();
+    public static List<int> abilities = new List<int>(); // IDs of owned abilities
 
     // Monos
     public GameObject player;
+
+    [Tooltip("This original instances of abilities")]
     public List<Ability> abilitiesList = new List<Ability>();
     public List<KeyCode> keycodesList = new List<KeyCode>();
 
@@ -33,23 +35,26 @@ public class AbilityMaster : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
 
-        keycodesList.Add(KeyCode.Z);
-        keycodesList.Add(KeyCode.X);
-        keycodesList.Add(KeyCode.C);
-        keycodesList.Add(KeyCode.V);
+    private void Start()
+    {
+        abilities.Clear();
     }
 
     public void AddAbility(int abilityNumber)
     {
-        if (ownedAbilities.Contains(abilityNumber)) return;
-        ownedAbilities.Add(abilityNumber);
+        if (abilities.Contains(abilityNumber)) return;
+        //  ownedAbilities.Add(abilityNumber);
         abilities.Add(abilityNumber);
 
         AbilityHolder abilityHolder = player.AddComponent<AbilityHolder>();
         abilityHolder.ability = abilitiesList[abilityNumber];
         GameObject newAbility = Instantiate(abilityPrefab);
         newAbility.transform.SetParent(abilitiesParent);
+
+        // Some abilities need to do something right away
+        //  newAbility.GetComponent<Ability>().InitializeAbility();
 
         Image[] abilityImages = newAbility.GetComponentsInChildren<Image>();
         foreach (Image img in abilityImages)
