@@ -27,6 +27,7 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] private Pathfinding.AIDestinationSetter destSetter;
     [SerializeField] private Pathfinding.RichAI richAI;
+    // [SerializeField] private Pathfinding.AIPath richAI;
     [SerializeField] private Pathfinding.RVO.RVOController rvoController;
 
     public List<Collider> RagdollParts = new List<Collider>();

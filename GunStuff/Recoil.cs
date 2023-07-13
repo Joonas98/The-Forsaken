@@ -40,12 +40,16 @@ public class Recoil : MonoBehaviour
     void Update()
     {
         aiming = GameManager.GM.currentGunAiming;
-        if (useReturningRecoil)
+
+        // When shooting, don't return recoil to 0
+        if (GameManager.GM.currentGun != null && (!GameManager.GM.currentGun.isFiring || GameManager.GM.currentGun.currentMagazine == 0))
         {
+            // Return recoil to zero
             targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);
         }
         else
         {
+            // Apply recoil
             targetRotation = Vector3.Lerp(targetRotation, new Vector3(targetRotation.x, 0, 0), returnSpeed * Time.deltaTime);
         }
 

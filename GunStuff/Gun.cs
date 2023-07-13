@@ -75,6 +75,7 @@ public class Gun : Weapon
     [HideInInspector] public bool isReloading = false, isAiming = false;
     [HideInInspector] public bool canAim; // True in update unless mid air etc.
     [HideInInspector] public float maxZoom, minZoom;
+    [HideInInspector] public int currentMagazine;
     [HideInInspector] public int shotsLeft;
     [HideInInspector] public string magString, totalAmmoString;
     // public GameObject damagePopupText;
@@ -86,7 +87,6 @@ public class Gun : Weapon
     private CanvasManager canvasManagerScript;
     private TextMeshProUGUI magazineText;
     private float shotCounter, fireRate;
-    private int CurrentMagazine;
     private bool hasFired = false;
     private GameObject CrosshairContents;
     private Crosshair crosshairScript;
@@ -150,8 +150,8 @@ public class Gun : Weapon
         animator = GetComponent<Animator>();
 
         shotsLeft = pelletCount;
-        CurrentMagazine = magazineSize;
-        magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
+        currentMagazine = magazineSize;
+        magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
 
         UpdateFirerate();
@@ -165,7 +165,7 @@ public class Gun : Weapon
         // SetFOV(defaultFov); // Avoid bugs
 
         // Handle ammo UI 
-        magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
+        magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
         inventoryScript.UpdateTotalAmmoText(ammoType);
 
@@ -247,7 +247,7 @@ public class Gun : Weapon
     public void HandleReloading()
     {
         // Reloading
-        if (Input.GetKeyDown(KeyCode.R) && !isReloading && CurrentMagazine != magazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
+        if (Input.GetKeyDown(KeyCode.R) && !isReloading && currentMagazine != magazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
         {
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
             isReloading = true;
@@ -272,18 +272,18 @@ public class Gun : Weapon
             {
                 // Debug.Log("Full reload");
                 StartCoroutine(WaitReloadTime(reloadTime, magazineSize));
-                inventoryScript.HandleAmmo(ammoType, CurrentMagazine - magazineSize);
+                inventoryScript.HandleAmmo(ammoType, currentMagazine - magazineSize);
             }
-            else if (inventoryScript.GetAmmoCount(ammoType) + CurrentMagazine >= magazineSize)
+            else if (inventoryScript.GetAmmoCount(ammoType) + currentMagazine >= magazineSize)
             {
                 // Debug.Log("Stock + clip >= full mag");
                 StartCoroutine(WaitReloadTime(reloadTime, magazineSize));
-                inventoryScript.HandleAmmo(ammoType, CurrentMagazine - magazineSize);
+                inventoryScript.HandleAmmo(ammoType, currentMagazine - magazineSize);
             }
             else if (inventoryScript.GetAmmoCount(ammoType) < magazineSize)
             {
                 // Debug.Log("Stock + clip < full mag");
-                StartCoroutine(WaitReloadTime(reloadTime, inventoryScript.GetAmmoCount(ammoType) + CurrentMagazine));
+                StartCoroutine(WaitReloadTime(reloadTime, inventoryScript.GetAmmoCount(ammoType) + currentMagazine));
                 inventoryScript.HandleAmmo(ammoType, inventoryScript.GetAmmoCount(ammoType) * -1);
             }
         }
@@ -314,16 +314,16 @@ public class Gun : Weapon
         // Fully automatic weapons
         if (isFiring == true && semiAutomatic == false)
         {
-            if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
+            if (shotCounter <= 0 && currentMagazine > 0) //Shooting
             {
                 shotCounter = fireRate;
                 Shoot(pelletCount);
                 vire.Recoil();
-                --CurrentMagazine;
-                magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
+                --currentMagazine;
+                magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
             }
-            else if (shotCounter <= 0 && CurrentMagazine <= 0) // Dry fire automatic
+            else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire automatic
             {
                 shotCounter = fireRate * 3; // Longer shotCounter so dryfire does not spam fast
                 if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
@@ -337,16 +337,16 @@ public class Gun : Weapon
         {
             hasFired = true;
 
-            if (shotCounter <= 0 && CurrentMagazine > 0) //Shooting
+            if (shotCounter <= 0 && currentMagazine > 0) //Shooting
             {
                 shotCounter = fireRate;
                 Shoot(pelletCount);
                 vire.Recoil();
-                --CurrentMagazine;
-                magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
+                --currentMagazine;
+                magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
             }
-            else if (shotCounter <= 0 && CurrentMagazine <= 0) // Dry fire semi auto
+            else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire semi auto
             {
                 shotCounter = fireRate;
                 if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
@@ -692,8 +692,8 @@ public class Gun : Weapon
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {
         yield return new WaitForSeconds(r + 0.05f);
-        CurrentMagazine = ammoAmount;
-        magString = CurrentMagazine.ToString() + " / " + magazineSize.ToString();
+        currentMagazine = ammoAmount;
+        magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
         WeaponSwitcher.CanSwitch(true);
         audioMixer.SetFloat("WeaponsPitch", 1f);
