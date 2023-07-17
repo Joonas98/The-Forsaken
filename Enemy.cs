@@ -7,44 +7,38 @@ using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
-    public GameObject[] zombieSkins;
     public int maxHealth;
     public int damage;
-    public float speedType1, speedType2, speedType3;
-    [Tooltip("Attack CD when hit")] [SerializeField] private float attackCooldown;
-    [Tooltip("Attack CD when missed")] [SerializeField] private float swingCooldown;
-    [SerializeField] private float despawnTime, despawnDistance;
-    [SerializeField] private float runDistance, attackDistance;
-    [SerializeField] private int moneyReward;
-    [SerializeField] private float crawlingSpeedMultiplier;
+    public int moneyReward;
+    [Tooltip("Attack CD when hit")] public float attackCooldown;
+    [Tooltip("Attack CD when missed")] public float swingCooldown;
+    [Tooltip("Delay after dying to removal")] public float despawnTime;
+    [Tooltip("How close to player to start swinging")] public float attackDistance;
 
-    public int currentHealth, healthPercentage;
+    [HideInInspector] public int currentHealth, healthPercentage;
     [HideInInspector] public bool isDead = false;
     private GameObject player;
     private float distanceToPlayer;
     private Animator animator;
-    private float ogMovementSpeed;
-
-    [SerializeField] private Pathfinding.AIDestinationSetter destSetter;
-    [SerializeField] private Pathfinding.RichAI richAI;
-    // [SerializeField] private Pathfinding.AIPath richAI;
-    [SerializeField] private Pathfinding.RVO.RVOController rvoController;
 
     public List<Collider> RagdollParts = new List<Collider>();
-    public Rigidbody[] RigidBodies;
     public Collider[] Damagers;
     public Collider enemyCollider;
-
-    private bool canAttack = true, canSwing = true, ragdolling = false;
-    // private bool stoppedRunning = false;
-    public bool isCrawling = false;
-
+    public GameObject[] zombieSkins;
     public GameObject eyeRight, eyeLeft;
     public GameObject modelRoot; // Hips
+    public Rigidbody[] RigidBodies;
     public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
+
+    [Header("Navigation and movement")]
+    public EnemyNav enemyNavScript;
+    public NavMeshAgent navAgent;
     public float standUpMagnitude, standUpDelay;
-    private float countdown = 0f;
-    private bool standCountdowActive = false;
+    public float movementSpeed;
+    [HideInInspector] public bool isCrawling = false;
+
+    [SerializeField] private float crawlingSpeedMultiplier;
+    private float ogMovementSpeed;
 
     [Header("Damage Popup")]
     public Transform popupTransform;
@@ -54,14 +48,13 @@ public class Enemy : MonoBehaviour
     [Header("Effects")]
     public Gradient eyeGradient;
     public GameObject[] effectList;
-
     public enum debuffs
     {
         Arcane, Crimson, Dark, Fairy, Fire, Frost, Holy, Light, Mist, Nature, ShockBlue, ShockYellow,
         Universe, Void, Water, Wind
     }
-
     public Material originalMaterial;
+
     private Material eyeMaterialR, eyeMaterialL;
     private SkinnedMeshRenderer smr;
     private Material newMaterial;
@@ -75,6 +68,11 @@ public class Enemy : MonoBehaviour
     [Header("Debug information")]
     public TextMeshProUGUI debugVelocityTextfield;
     public TextMeshProUGUI debugAnimatorVelocity;
+
+    // Various privates
+    private bool canAttack = true, canSwing = true, ragdolling = false;
+    private bool standCountdownActive = false;
+    private float countdown = 0f;
 
     private void Awake()
     {
@@ -92,24 +90,8 @@ public class Enemy : MonoBehaviour
         float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
 
-        float animationFloat = UnityEngine.Random.value;
-        if (animationFloat < 0.33f)
-        {
-            animator.Play("Base Blend Tree");
-            richAI.maxSpeed = speedType1;
-        }
-        else if (animationFloat < 0.66f && animationFloat > 0.33f)
-        {
-            animator.Play("Blend Tree v2");
-            richAI.maxSpeed = speedType2;
-        }
-        else
-        {
-            animator.Play("Blend Tree v3");
-            richAI.maxSpeed = speedType3;
-        }
-
-        ogMovementSpeed = richAI.maxSpeed;
+        navAgent.speed = movementSpeed;
+        ogMovementSpeed = navAgent.speed;
 
         if (!GameManager.GM.useEnemyDebug)
         {
@@ -121,14 +103,12 @@ public class Enemy : MonoBehaviour
     {
         SetRagdollParts();
         currentHealth = maxHealth;
-
-        destSetter.target = player.transform;
     }
 
     private void Update()
     {
         distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
-        animator.SetFloat("Velocity", richAI.velocity.magnitude / richAI.maxSpeed);
+        animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
         HandleSwinging();
         CheckRagdollMagnitude();
         DebugUpdate();
@@ -137,14 +117,14 @@ public class Enemy : MonoBehaviour
     private void CheckRagdollMagnitude()
     {
         // When magnitude has been low enough for certain time, stand up
-        if (bodyRB.velocity.magnitude < standUpMagnitude && ragdolling && !isDead && !standCountdowActive)
+        if (bodyRB.velocity.magnitude < standUpMagnitude && ragdolling && !isDead && !standCountdownActive)
         {
             countdown = Time.time;
-            standCountdowActive = true;
+            standCountdownActive = true;
         }
         else if (bodyRB.velocity.magnitude > standUpMagnitude && ragdolling && !isDead)
         {
-            standCountdowActive = false;
+            standCountdownActive = false;
         }
 
         if (Time.time > countdown + standUpDelay && ragdolling && !isDead && bodyRB.velocity.magnitude < standUpMagnitude)
@@ -159,12 +139,8 @@ public class Enemy : MonoBehaviour
 
         isDead = true;
         enemyCollider.enabled = false;
-        destSetter.target = null;
-        rvoController.enabled = false;
-        richAI.maxSpeed = 0;
-        richAI.canMove = false;
-        richAI.enabled = false;
-        destSetter.enabled = false;
+
+        navAgent.isStopped = true;
 
         TurnOnRagdoll();
         Destroy(gameObject, despawnTime);
@@ -277,8 +253,8 @@ public class Enemy : MonoBehaviour
         {
             rb.isKinematic = false;
         }
-        standCountdowActive = false;
-        richAI.canMove = false;
+        standCountdownActive = false;
+        navAgent.isStopped = true;
         animator.enabled = false;
         foreach (Collider c in RagdollParts)
         {
@@ -317,7 +293,7 @@ public class Enemy : MonoBehaviour
 
     private void ContinueAfterRagdoll()
     {
-        richAI.canMove = true;
+        navAgent.isStopped = false;
     }
 
     public void Attack(Player playerScript)
@@ -418,27 +394,18 @@ public class Enemy : MonoBehaviour
 
     public void SlowDown(float slowMultiplier)
     {
-        richAI.maxSpeed = richAI.maxSpeed * slowMultiplier;
+        navAgent.speed = navAgent.speed * slowMultiplier;
     }
 
     public void RestoreMovementSpeed()
     {
-        // if (!isCrawling)
-        // {
-        //     navAgent.speed = ogMovementSpeed;
-        // }
-        // else
-        // {
-        //     navAgent.speed = ogMovementSpeed * crawlingSpeedMultiplier;
-        // }
-
         if (!isCrawling)
         {
-            richAI.maxSpeed = ogMovementSpeed;
+            navAgent.speed = ogMovementSpeed;
         }
         else
         {
-            richAI.maxSpeed = ogMovementSpeed * crawlingSpeedMultiplier;
+            navAgent.speed = ogMovementSpeed * crawlingSpeedMultiplier;
         }
     }
 
@@ -476,7 +443,7 @@ public class Enemy : MonoBehaviour
 
     public void DebugUpdate()
     {
-        debugVelocityTextfield.text = richAI.velocity.magnitude.ToString("F2");
+        debugVelocityTextfield.text = navAgent.velocity.magnitude.ToString("F2");
         debugAnimatorVelocity.text = animator.GetFloat("Velocity").ToString();
     }
 

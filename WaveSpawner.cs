@@ -19,6 +19,7 @@ public class WaveSpawner : MonoBehaviour
     public float spawnRate;
     public float waveLenght;
     public float spawnRadius, spawnProtection;
+    public float floatingHeight = 500f;
 
     public Transform[] spawnPoints;
     public ParticleSystem[] spawnParticleSystems;
@@ -33,7 +34,6 @@ public class WaveSpawner : MonoBehaviour
     // Privates
     private int waveNumber = 0;
     private GameObject playerGO;
-    private float floatingHeight = 500f;
 
     private void Awake()
     {
