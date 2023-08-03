@@ -5,13 +5,11 @@ using UnityEngine.AI;
 
 public class EnemyNav : MonoBehaviour
 {
+    public Transform targetLocation;
 
-
-    [SerializeField] private Transform targetLocation;
     [SerializeField] private float onMeshThreshold;
     private NavMeshAgent navMeshAgent;
     private GameObject Player;
-
     private Enemy enemyScript;
 
     private void Awake()

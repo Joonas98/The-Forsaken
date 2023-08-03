@@ -9,8 +9,9 @@ public class BulletBalletAbility : Ability
 
     private void Awake()
     {
-        Debug.Log("Added bullet ballet");
-        // If we have a gun, reset the rotation
-        if (GameManager.GM.GetCurrentGun() != null) GameManager.GM.GetCurrentGun().ResetRotation();
+        // ScritableObject Awake is called when editor is launched rather than runtime
+        //  Debug.Log("Added bullet ballet");
+        //  // If we have a gun, reset the rotation
+        //  if (GameManager.GM.GetCurrentGun() != null) GameManager.GM.GetCurrentGun().ResetRotation();
     }
 }

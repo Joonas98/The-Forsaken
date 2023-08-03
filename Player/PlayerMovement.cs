@@ -4,20 +4,30 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Tooltip("Variables")]
-    public float speed, runningSpeed, slopeSpeed, gravity, jumpHeight;
-    public AudioClip[] jumpSounds;
+    [Header("Variables")]
+    public float speed;
+    public float runningSpeed, slopeSpeed, gravity, jumpHeight;
     private float runThreshold = 5f; // If controller.velocity.magnitude is less than this, can't be running
 
-    [Tooltip("Other stuff")]
+    [Header("Audio")]
     public AudioSource audioSource;
-    public CharacterController controller;
-    public LayerMask groundmask;
+    public AudioClip[] jumpSounds;
 
+    [Header("Headbob")]
+    [SerializeField] private float walkBobSpeed = 14f;
+    [SerializeField] private float walkBobAmount = 0.05f;
+    [SerializeField] private float sprintBobSpeed = 18f;
+    [SerializeField] private float sprintBobAmount = 0.1f;
+    [SerializeField] private float bobReturnSpeed = 0.25f; // How fast to return -> 0, 0, 0 when not bobbing
+    private float defaultYPos = 0;
+    private float bobTimer;
+
+    [Header("Other stuff")]
+    public CharacterController controller;
     public Transform legHud; // The HUD elements at the legs need to be moved with headbob
-    public float initialYOffset; // Variable for removing leg HUD bouncing
+    public LayerMask groundmask;
     public Transform groundCheck;
-    public float groundDistance; // Radius of sphere that checks if player is grounded
+    [Tooltip("Radius of ground check sphere")] public float groundDistance;
     public GameObject mainCamera;
     public GameObject fallingSymbol;
 
@@ -29,21 +39,13 @@ public class PlayerMovement : MonoBehaviour
 
     // Private stuff
     private GameObject runningSymbol;
+    private float initialYOffset; // Variable for removing leg HUD bouncing
     private Vector3 velocity;
     private Vector3 moveDirection;
     private Vector3 lastPosition = new Vector3(0, 0, 0);
 
-    // Important for cystom sliding system
+    // Important for custom sliding system
     private Vector3 hitPointNormal;
-
-    // Headbob
-    [SerializeField] private float walkBobSpeed = 14f;
-    [SerializeField] private float walkBobAmount = 0.05f;
-    [SerializeField] private float sprintBobSpeed = 18f;
-    [SerializeField] private float sprintBobAmount = 0.1f;
-    [SerializeField] private float bobReturnSpeed = 0.25f; // How fast to return -> 0, 0, 0 when not bobbing
-    private float defaultYPos = 0;
-    private float bobTimer;
 
     // Custom slope sliding system
     private bool isSliding
@@ -127,9 +129,9 @@ public class PlayerMovement : MonoBehaviour
             audioSource.PlayOneShot(jumpSounds[raIndex]);
         }
 
-        if (isGrounded && velocity.y < 0)
+        if (isGrounded && velocity.y < 0 && !isSliding)
         {
-            velocity.y = -2f;
+            velocity.y = -50f;
         }
 
         velocity.y += gravity * Time.deltaTime;

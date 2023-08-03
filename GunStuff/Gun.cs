@@ -215,8 +215,8 @@ public class Gun : Weapon
             CrosshairContents.SetActive(false);
             WeaponSwitcher.CanSwitch(false);
 
-            transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), aimSpeed * Time.deltaTime);
-            transform.localRotation = Quaternion.Lerp(transform.localRotation, Quaternion.Euler(0, 180, 0), aimSpeed * Time.deltaTime);
+            transform.position = Vector3.Slerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), aimSpeed * Time.deltaTime);
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, 180, 0), aimSpeed * Time.deltaTime);
         }
         else
         {
@@ -231,7 +231,7 @@ public class Gun : Weapon
             CrosshairContents.SetActive(true);
 
             if (equipped == true && unequipping == false)
-                transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, (aimSpeed * 2f) * Time.deltaTime);
+                transform.position = Vector3.Slerp(transform.position, weaponSpot.transform.position, aimSpeed * Time.deltaTime);
 
             if (Time.timeScale > 0 && equipped && !isReloading)
                 WeaponSwitcher.CanSwitch(true);
@@ -297,6 +297,7 @@ public class Gun : Weapon
         if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
         {
             isFiring = false;
+            hasFired = false; // This fixes a bug where semiauto guns break with Bullet Ballet ability
             return;
         }
 

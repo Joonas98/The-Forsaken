@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class CanvasManager : MonoBehaviour
 {
     public GameObject[] hudPieces; // Elemetit jotka laitetaan pois p‰‰lt‰ menut avatessa
-    public GameObject crosshairCanvas, inventoryCanvas, shopCanvas, upgradesPanel, shopPanel, abilitiesCanvas, pauseCanvas, roundPopup;
+    public GameObject crosshairCanvas, inventoryCanvas, shopCanvas, upgradesPanel, shopPanel, abilitiesCanvas, pauseCanvas, roundPopup, grenadesSelection;
 
     public GameObject weaponsPanel;
     public WeaponPanel[] weaponPanelScripts;
@@ -159,6 +159,9 @@ public class CanvasManager : MonoBehaviour
         upgradesPanel.SetActive(false);
         shopPanel.SetActive(false);
         abilitiesCanvas.SetActive(false);
+
+        // Selection canvas children
+        grenadesSelection.SetActive(false);
     }
 
     public void InventoryPause()
@@ -252,7 +255,7 @@ public class CanvasManager : MonoBehaviour
         //  }
         #endregion
 
-        // Object poolatut hitmarkerit
+        // Object pooled hitmarkers
         GameObject hitmark = ObjectPool.SharedInstance.GetPooledObject();
         if (hitmark != null)
         {

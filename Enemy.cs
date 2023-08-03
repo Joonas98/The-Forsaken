@@ -86,6 +86,7 @@ public class Enemy : MonoBehaviour
         animator = GetComponent<Animator>();
         SetRagdollParts();
         bodyRB = modelRoot.GetComponent<Rigidbody>();
+        currentHealth = maxHealth;
 
         float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
@@ -97,12 +98,6 @@ public class Enemy : MonoBehaviour
         {
             Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
         }
-    }
-
-    private void Start()
-    {
-        SetRagdollParts();
-        currentHealth = maxHealth;
     }
 
     private void Update()
@@ -136,14 +131,16 @@ public class Enemy : MonoBehaviour
     public void Die()
     {
         if (isDead) return;
-
         isDead = true;
         enemyCollider.enabled = false;
 
-        navAgent.isStopped = true;
-
         TurnOnRagdoll();
         Destroy(gameObject, despawnTime);
+
+        navAgent.speed = 0;
+        navAgent.isStopped = true;
+        enemyNavScript.enabled = false;
+        navAgent.enabled = false;
 
         bodyRB.velocity = new Vector3(0, 0, 0);
         foreach (Rigidbody rb in RigidBodies) // Otherwise gameobjects keep moving forever
@@ -228,7 +225,7 @@ public class Enemy : MonoBehaviour
 
     private void SetRagdollParts()
     {
-        Collider[] colliders = this.gameObject.GetComponentsInChildren<Collider>();
+        Collider[] colliders = gameObject.GetComponentsInChildren<Collider>();
 
         foreach (Collider c in colliders)
         {
@@ -239,9 +236,6 @@ public class Enemy : MonoBehaviour
             }
 
         }
-
-        enemyCollider.isTrigger = false;
-
     }
 
     public void TurnOnRagdoll()
@@ -253,9 +247,11 @@ public class Enemy : MonoBehaviour
         {
             rb.isKinematic = false;
         }
-        standCountdownActive = false;
+
         navAgent.isStopped = true;
+        standCountdownActive = false;
         animator.enabled = false;
+
         foreach (Collider c in RagdollParts)
         {
             c.isTrigger = false;
