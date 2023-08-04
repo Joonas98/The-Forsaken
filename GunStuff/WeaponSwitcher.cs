@@ -161,12 +161,10 @@ public class WeaponSwitcher : MonoBehaviour
         {
             currentGun.ResetFOV();
             GameManager.GM.currentGun = currentGun;
-            WeaponSwayAndBob.instance.currentGun = currentGun;
         }
         else
         {
             GameManager.GM.currentGun = null;
-            WeaponSwayAndBob.instance.currentGun = null;
         }
 
         // Handle highlight for HUD

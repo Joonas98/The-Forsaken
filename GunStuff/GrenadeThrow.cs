@@ -1,32 +1,45 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GrenadeThrow : MonoBehaviour
 {
     // Variables
     public float throwForce;
     public float throwForceImpact;
-    public int selectedGrenade = 0; // 0 = normal, 1 = impact, 2 = incendiary
+    public float grenadeSelectionTimeSlow; // Slow time down when selecting grenade
+    [HideInInspector] public int selectedGrenade = 0; // 0 = normal, 1 = impact, 2 = incendiary
 
     public GameObject normalGrenadePrefab, impactGrenadePrefab, incendiaryGrenadePrefab;
+    public Image[] grenadePanels;
+    public Color defaultColor, highlightColor;
     public GameObject selectionMenu;
     public PlayerInventory inventoryScript;
+    public static GrenadeThrow instance;
+    public bool selectingGrenade = false;
 
-    private bool selectingGrenade = false;
+    private void Awake()
+    {
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else if (instance != this)
+        {
+            Destroy(instance);
+        }
+        SelectGrenade(0);
+    }
 
     private void Update()
     {
-        //  if (Input.GetKeyDown(KeyCode.G) && Time.timeScale > 0)
-        //  {
-        //      ThrowGrenade();
-        //  }
         HandleInputs();
     }
 
     private void HandleInputs()
     {
-        if (Time.timeScale < 0) return; // Game paused
+        if (Time.timeScale <= 0) return; // Game paused
 
         if (Input.GetKey(KeyCode.H))
         {
@@ -36,6 +49,7 @@ public class GrenadeThrow : MonoBehaviour
                 selectingGrenade = true;
                 MouseLook.instance.canRotate = false;
                 Cursor.lockState = CursorLockMode.None;
+                Time.timeScale = grenadeSelectionTimeSlow;
             }
         }
         else
@@ -46,6 +60,7 @@ public class GrenadeThrow : MonoBehaviour
                 selectingGrenade = false;
                 MouseLook.instance.canRotate = true;
                 Cursor.lockState = CursorLockMode.Locked;
+                Time.timeScale = 1f;
             }
         }
 
@@ -88,47 +103,10 @@ public class GrenadeThrow : MonoBehaviour
         inventoryScript.HandleGrenades(selectedGrenade, -1);
     }
 
-    // DEFAULT GRENADE
-    // public void ThrowGrenade()
-    // {
-    //     if (inventoryScript.GetGrenadeCount(0) <= 0) return;
-    //     GameObject grenade = Instantiate(grenadePrefab, transform.position, transform.rotation);
-    //
-    //     Rigidbody rb = grenade.GetComponent<Rigidbody>();
-    //     rb.AddForce(transform.forward * throwForce);
-    //
-    //     inventoryScript.HandleGrenades(0, -1);
-    // }
-
-    // IMPACT GRENADE
-    //  public void ThrowGrenade2()
-    //  {
-    //      if (inventoryScript.GetGrenadeCount(1) <= 0) return;
-    //      GameObject grenade = Instantiate(grenadePrefab2, transform.position, transform.rotation);
-    //
-    //      Rigidbody rb = grenade.GetComponent<Rigidbody>();
-    //      rb.AddForce(transform.forward * throwForceImpact);
-    //
-    //      inventoryScript.HandleGrenades(1, -1);
-    //  }
-    //
-    //  // INCENDIARY GRENADE
-    //  public void ThrowGrenade3()
-    //  {
-    //      if (inventoryScript.GetGrenadeCount(2) <= 0) return;
-    //      GameObject grenade = Instantiate(grenadePrefab3, transform.position, transform.rotation);
-    //
-    //      Rigidbody rb = grenade.GetComponent<Rigidbody>();
-    //      rb.AddForce(transform.forward * throwForceImpact);
-    //
-    //      inventoryScript.HandleGrenades(2, -1);
-    //  }
-
     public void SelectGrenade(int index)
     {
-        selectedGrenade = index;
-
-        // Later add UI indicator of selected grenade from here
+        grenadePanels[selectedGrenade].color = defaultColor; // Previous selection to default color
+        grenadePanels[index].color = highlightColor; // Highlight new selection
+        selectedGrenade = index; // Update selectedGrenade variable for other uses
     }
-
 }

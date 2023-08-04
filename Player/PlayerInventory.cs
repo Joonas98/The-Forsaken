@@ -31,15 +31,15 @@ public class PlayerInventory : MonoBehaviour
     public int ammo762, maxAmmo762;
     public int ammo50BMG, maxAmmo50BMG;
 
-
-    public int grenadeM67, maxGrenadeM67;
-    public int grenadeRGD5, maxGrenadeRGD5;
-    public int grenadeIncendiary, maxGrenadeIncendiary;
+    public int normalGrenadeCount, maxNormalGrenade;
+    public int impactGrenadeCount, maxImpactGrenade;
+    public int incendiaryGrenadeCount, maxIncendiaryGrenade;
+    public int stunGrenadeCount, maxStunGrenade;
 
     [SerializeField] private TextMeshProUGUI totalAmmoText;
     private string totalAmmoString;
 
-    // Ammusten lis‰‰miseen tai v‰hent‰miseen
+    // Add or reduce ammo
     public void HandleAmmo(int ammoTypeIndex, int ammoDelta)
     {
         if (ammoTypeIndex == 0) // .22 LR
@@ -131,39 +131,51 @@ public class PlayerInventory : MonoBehaviour
         else return "";
     }
 
-
     public void HandleGrenades(int grenadeIndex, int grenadeDelta)
     {
-        if (grenadeIndex == 0)
+        switch (grenadeIndex)
         {
-            grenadeM67 += grenadeDelta;
+            case 0:
+                normalGrenadeCount += grenadeDelta;
+                break;
+
+            case 1:
+                impactGrenadeCount += grenadeDelta;
+                break;
+
+            case 2:
+                incendiaryGrenadeCount += grenadeDelta;
+                break;
+
+            case 3:
+                stunGrenadeCount += grenadeDelta;
+                break;
         }
 
-        if (grenadeIndex == 1)
-        {
-            grenadeRGD5 += grenadeDelta;
-        }
-
-        if (grenadeIndex == 2)
-        {
-            grenadeIncendiary += grenadeDelta;
-        }
     }
 
     public int GetGrenadeCount(int grenadeTypeIndex)
     {
-        if (grenadeTypeIndex == 0) return grenadeM67;
-        else if (grenadeTypeIndex == 1) return grenadeRGD5;
-        else if (grenadeTypeIndex == 2) return grenadeIncendiary;
-        else return 0;
+        switch (grenadeTypeIndex)
+        {
+            case 0: return normalGrenadeCount;
+            case 1: return impactGrenadeCount;
+            case 2: return incendiaryGrenadeCount;
+            case 3: return stunGrenadeCount;
+            default: return 0;
+        }
     }
 
     public int GetMaxGrenadeCount(int grenadeTypeIndex)
     {
-        if (grenadeTypeIndex == 0) return maxGrenadeM67;
-        else if (grenadeTypeIndex == 1) return maxGrenadeRGD5;
-        else if (grenadeTypeIndex == 2) return maxGrenadeIncendiary;
-        else return 0;
+        switch (grenadeTypeIndex)
+        {
+            case 0: return maxNormalGrenade;
+            case 1: return maxImpactGrenade;
+            case 2: return maxIncendiaryGrenade;
+            case 3: return maxStunGrenade;
+            default: return 0;
+        }
     }
 
     public void UpdateTotalAmmoText(int ammoType)

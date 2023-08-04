@@ -168,7 +168,8 @@ public class Player : MonoBehaviour
 
     public void UpdateHealthUI()
     {
-        healthString = Mathf.Round(currentHPPercentage).ToString() + "%";
+        float clampedValue = Mathf.Clamp(Mathf.Round(currentHPPercentage), 0f, 100f);
+        healthString = clampedValue.ToString() + "%";
         healthText.text = healthString;
 
         healthStringRaw = currentHealth.ToString() + " / " + maxHealth.ToString();

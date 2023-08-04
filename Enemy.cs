@@ -74,6 +74,13 @@ public class Enemy : MonoBehaviour
     private bool standCountdownActive = false;
     private float countdown = 0f;
 
+    // This struct will be implemented later to handle multiple movement speed changes easily
+    private struct MovementSpeedEffect
+    {
+        public float movementSpeedMultiplier;
+        public float duration;
+    }
+
     private void Awake()
     {
         GameManager.GM.enemiesAlive.Add(this);
@@ -377,33 +384,29 @@ public class Enemy : MonoBehaviour
 
     public void StartCrawling()
     {
+        // When any of part of the leg is destroyed, the zombie becomes a crawler
         isCrawling = true;
         animator.Play("Start Crawling");
-        SlowDown(crawlingSpeedMultiplier);
-    }
 
-    public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
-    {
-        eyeMaterialR.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
-        eyeMaterialL.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
+        // Crawlers never can restore legs, so the ogMovementSpeed can be adjusted to avoid problems
+        ogMovementSpeed *= crawlingSpeedMultiplier;
+        navAgent.speed = ogMovementSpeed;
+
+        // Prevent clipping through the ground
+        navAgent.baseOffset = 0.05f;
     }
 
     public void SlowDown(float slowMultiplier)
     {
-        navAgent.speed = navAgent.speed * slowMultiplier;
+        Debug.Log("Slowing enemy from: " + navAgent.speed + " to: " + (navAgent.speed *= slowMultiplier).ToString());
+        navAgent.speed = ogMovementSpeed * slowMultiplier;
     }
 
     public void RestoreMovementSpeed()
     {
-        if (!isCrawling)
-        {
-            navAgent.speed = ogMovementSpeed;
-        }
-        else
-        {
-            navAgent.speed = ogMovementSpeed * crawlingSpeedMultiplier;
-        }
+        navAgent.speed = ogMovementSpeed;
     }
+
 
     // Obsolete
     // public void DamagePopup(int number)
@@ -415,6 +418,12 @@ public class Enemy : MonoBehaviour
     //     popText.text = number.ToString();
     //     Destroy(dmgPopupText.gameObject, 2f);
     // }
+
+    public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
+    {
+        eyeMaterialR.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
+        eyeMaterialL.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
+    }
 
     private void RandomizeSkins()
     {

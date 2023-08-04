@@ -5,7 +5,6 @@ using UnityEngine.AI;
 
 public class Barbedwire : MonoBehaviour
 {
-
     public float slowMultiplier;
 
     private Enemy enemyScript;

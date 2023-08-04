@@ -4,13 +4,12 @@ using UnityEngine;
 
 // New universal sway and weapon bob system 8.5.2023
 // Meant to replace WeaponSway and IdleSway scripts / systems.
-// Basics are from video: https://www.youtube.com/watch?v=DR4fTllQnXg
+// Original base for this system from this video: https://www.youtube.com/watch?v=DR4fTllQnXg
 public class WeaponSwayAndBob : MonoBehaviour
 {
     [Header("Important")]
     public static WeaponSwayAndBob instance;
     public PlayerMovement mover;
-    public Gun currentGun;
     public float returnSpeed;
 
     [Header("Enable Components")]
@@ -68,17 +67,12 @@ public class WeaponSwayAndBob : MonoBehaviour
     void Update()
     {
         GetInput();
-        if (disableSwayBob) return;
-        //  {
-        //    //  ReturnToOriginal();
-        //  }
-        //  else
-        //  {
+        if (disableSwayBob || GrenadeThrow.instance.selectingGrenade) return;
+
         if (sway && !disableSwayBob) Sway();
         if (swayRotation && !disableSwayBob) SwayRotation();
         if (bobOffset && !disableSwayBob) BobOffset();
         if (bobRotation && !disableSwayBob) BobRotation();
-        //  }
 
         if (mover.isRunning)
             multiplier = runningMultiplier;
@@ -173,8 +167,8 @@ public class WeaponSwayAndBob : MonoBehaviour
         }
         else // Return to original spot
         {
-            transform.localPosition = Vector3.Lerp(transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * currentGun.aimSpeed);
-            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(new Vector3(0, 0, 0)), Time.deltaTime * currentGun.aimSpeed);
+            transform.localPosition = Vector3.Lerp(transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(new Vector3(0, 0, 0)), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
             //  Debug.Log("Aiming");
         }
     }

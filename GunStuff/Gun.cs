@@ -178,6 +178,7 @@ public class Gun : Weapon
 
     protected override void Update()
     {
+        if (Time.timeScale <= 0) return; // Game paused
         base.Update();
         HandleShooting();
         HandleAiming();
@@ -207,7 +208,7 @@ public class Gun : Weapon
         }
 
         // Actual aiming
-        if (Input.GetButton("Fire2") && canAim && equipped && !isReloading && Time.timeScale > 0)
+        if (Input.GetButton("Fire2") && canAim && equipped && !isReloading)
         {
             isAiming = true;
             playedUnaimSound = false;
@@ -233,7 +234,7 @@ public class Gun : Weapon
             if (equipped == true && unequipping == false)
                 transform.position = Vector3.Slerp(transform.position, weaponSpot.transform.position, aimSpeed * Time.deltaTime);
 
-            if (Time.timeScale > 0 && equipped && !isReloading)
+            if (equipped && !isReloading)
                 WeaponSwitcher.CanSwitch(true);
         }
     }
@@ -292,7 +293,7 @@ public class Gun : Weapon
     public void HandleShooting()
     {
         shotCounter -= Time.deltaTime;
-        if (!equipped) return;
+        if (!equipped || GrenadeThrow.instance.selectingGrenade) return;
         // Can't shoot when running (unless got Bullet Ballet ability)
         if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
         {
@@ -302,7 +303,7 @@ public class Gun : Weapon
         }
 
         // Shooting
-        if (Input.GetButton("Fire1") && Time.timeScale > 0 && (unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold)
+        if (Input.GetButton("Fire1") && (unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold)
         {
             isFiring = true;
         }
@@ -389,7 +390,7 @@ public class Gun : Weapon
     {
         if (scopeCam != null)
         {
-            if (isAiming && Input.GetAxis("Mouse ScrollWheel") < 0f && Time.timeScale > 0)
+            if (isAiming && Input.GetAxis("Mouse ScrollWheel") < 0f)
             {
                 scopeCam.fieldOfView += 1;
                 scopeCam.fieldOfView = scopeCam.fieldOfView * 1.1f;
@@ -404,7 +405,7 @@ public class Gun : Weapon
                 }
             }
 
-            if (isAiming && Input.GetAxis("Mouse ScrollWheel") > 0f && Time.timeScale > 0)
+            if (isAiming && Input.GetAxis("Mouse ScrollWheel") > 0f)
             {
                 scopeCam.fieldOfView -= 1;
                 scopeCam.fieldOfView = scopeCam.fieldOfView * 0.9f;

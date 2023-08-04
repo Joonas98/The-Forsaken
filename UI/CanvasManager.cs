@@ -5,21 +5,19 @@ using UnityEngine.UI;
 
 public class CanvasManager : MonoBehaviour
 {
-    public GameObject[] hudPieces; // Elemetit jotka laitetaan pois p‰‰lt‰ menut avatessa
+    public GameObject[] hudPieces; // Elements to disable when opening menus
     public GameObject crosshairCanvas, inventoryCanvas, shopCanvas, upgradesPanel, shopPanel, abilitiesCanvas, pauseCanvas, roundPopup, grenadesSelection;
-
     public GameObject weaponsPanel;
     public WeaponPanel[] weaponPanelScripts;
+    public WeaponList weaponListScript;
+    public WeaponSwitcher weaponSwitcherScript;
+    public string selectedGunName = "Knife";
+    public Sprite defaultGunSprite;
+    public GameObject abilitiesTooltip;
+    public InventoryCanvas inventoryCanvasScript;
 
     private Player playerScript;
     private MouseLook lookScript;
-    public WeaponList weaponListScript;
-    public WeaponSwitcher weaponSwitcherScript;
-
-    public string selectedGunName = "Knife";
-    public Sprite defaultGunSprite;
-
-    public GameObject abilitiesTooltip;
 
     private void Start()
     {
@@ -29,11 +27,15 @@ public class CanvasManager : MonoBehaviour
         if (lookScript == null) lookScript = GameObject.Find("Player").GetComponentInChildren<MouseLook>();
 
         weaponSwitcherScript.SelectWeapon();
+        inventoryCanvasScript.UpdateTexts();
     }
 
     void Update()
     {
         HandleInputs();
+
+        // Update grenade count texts when selecting grenade
+        if (GrenadeThrow.instance.selectingGrenade) inventoryCanvasScript.UpdateTexts();
     }
 
     public void HandleInputs()
@@ -66,6 +68,7 @@ public class CanvasManager : MonoBehaviour
         {
             if (!inventoryCanvas.activeInHierarchy)
             {
+                inventoryCanvasScript.UpdateTexts();
                 OpenInventory();
             }
             else

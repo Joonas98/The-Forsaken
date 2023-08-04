@@ -5,14 +5,11 @@ using TMPro;
 
 public class InventoryCanvas : MonoBehaviour
 {
-
     public TextMeshProUGUI ammo22LRText, ammoHK46Text, ammo357MagnumText, ammo45ACPText, ammo12GaugeText, ammo545Text, ammo556Text, ammo762Text, ammo50BMGText;
-    public TextMeshProUGUI grenade1Text, grenade2Text, grenade3Text;
-
+    public TextMeshProUGUI grenade1Text, grenade2Text, grenade3Text, grenade4Text, grenade1TextSelectionMenu, grenade2TextSelectionMenu, grenade3TextSelectionMenu, grenade4TextSelectionMenu;
     public PlayerInventory inventoryScript;
 
-
-    private void OnEnable()
+    public void UpdateTexts()
     {
         UpdateAmmoTexts();
         UpdateSuppliesTexts();
@@ -36,6 +33,12 @@ public class InventoryCanvas : MonoBehaviour
         grenade1Text.text = inventoryScript.GetGrenadeCount(0).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(0).ToString();
         grenade2Text.text = inventoryScript.GetGrenadeCount(1).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(1).ToString();
         grenade3Text.text = inventoryScript.GetGrenadeCount(2).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(2).ToString();
+        grenade4Text.text = inventoryScript.GetGrenadeCount(3).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(3).ToString();
+
+        grenade1TextSelectionMenu.text = inventoryScript.GetGrenadeCount(0).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(0).ToString();
+        grenade2TextSelectionMenu.text = inventoryScript.GetGrenadeCount(1).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(1).ToString();
+        grenade3TextSelectionMenu.text = inventoryScript.GetGrenadeCount(2).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(2).ToString();
+        grenade4TextSelectionMenu.text = inventoryScript.GetGrenadeCount(3).ToString() + " / " + inventoryScript.GetMaxGrenadeCount(3).ToString();
     }
 
     public void Add22LR(int amount)
@@ -93,21 +96,27 @@ public class InventoryCanvas : MonoBehaviour
     }
 
 
-    public void AddM67(int amount)
+    public void AddNormalGrenade(int amount)
     {
         inventoryScript.HandleGrenades(0, amount);
         UpdateSuppliesTexts();
     }
 
-    public void AddRGD5(int amount)
+    public void AddImpactGrenade(int amount)
     {
         inventoryScript.HandleGrenades(1, amount);
         UpdateSuppliesTexts();
     }
 
-    public void AddIncGrenade(int amount)
+    public void AddIncendiaryGrenade(int amount)
     {
         inventoryScript.HandleGrenades(2, amount);
+        UpdateSuppliesTexts();
+    }
+
+    public void AddStunGrenade(int amount)
+    {
+        inventoryScript.HandleGrenades(3, amount);
         UpdateSuppliesTexts();
     }
 
