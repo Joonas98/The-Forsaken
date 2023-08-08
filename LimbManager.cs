@@ -14,12 +14,12 @@ public class LimbManager : MonoBehaviour
     [Header("Arms")]
     public GameObject RightArm;       // 5
     public GameObject RightShoulder;  // 6
-    public GameObject LeftArm;        // 7
-    public GameObject LeftShoulder;   // 8
+    public GameObject LeftArm;           // 7
+    public GameObject LeftShoulder;    // 8
 
     [Header("Others")]
+    public GameObject Neck;              // 0
     public Enemy enemyScript;
-    public GameObject Neck;           // 0
 
     public ParticleSystem headshotFX;
     public ParticleSystem normalHitFX;

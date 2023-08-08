@@ -458,49 +458,58 @@ public class Gun : Weapon
                 // HEAD
                 case "Head":
                     enemy.TakeDamage(Mathf.RoundToInt(damage * headshotMultiplier), percentageDamage, true);
-                    if (limbScript != null && enemy.GetHealth() <= 0) limbScript.RemoveLimb(0); // Beheading
+                    enemy.DamageLimb(0, damage);
+                    if (limbScript != null && enemy.GetHealth(0) < 0) limbScript.RemoveLimb(0);
                     break;
 
                 // LEGS
                 case "UpperLegL":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(2);
+                    enemy.DamageLimb(2, damage);
+                    if (limbScript != null && enemy.GetHealth(2) < 0) limbScript.RemoveLimb(2);
                     break;
 
                 case "UpperLegR":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(4);
+                    enemy.DamageLimb(4, damage);
+                    if (limbScript != null && enemy.GetHealth(4) < 0) limbScript.RemoveLimb(4);
                     break;
 
                 case "LowerLegL":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(1);
+                    enemy.DamageLimb(1, damage);
+                    if (limbScript != null && enemy.GetHealth(1) < 0) limbScript.RemoveLimb(1);
                     break;
 
                 case "LowerLegR":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(3);
+                    enemy.DamageLimb(3, damage);
+                    if (limbScript != null && enemy.GetHealth(3) < 0) limbScript.RemoveLimb(3);
                     break;
 
                 // ARMS
                 case "ArmL":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(7);
+                    enemy.DamageLimb(7, damage);
+                    if (limbScript != null && enemy.GetHealth(7) < 0) limbScript.RemoveLimb(7);
                     break;
 
                 case "ArmR":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(5);
+                    enemy.DamageLimb(5, damage);
+                    if (limbScript != null && enemy.GetHealth(5) < 0) limbScript.RemoveLimb(5);
                     break;
 
                 case "ShoulderL":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(8);
+                    enemy.DamageLimb(8, damage);
+                    if (limbScript != null && enemy.GetHealth(8) < 0) limbScript.RemoveLimb(8);
                     break;
 
                 case "ShoulderR":
                     enemy.TakeDamage(damage, percentageDamage);
-                    if (limbScript != null && enemy.GetHealth() <= 50) limbScript.RemoveLimb(6);
+                    enemy.DamageLimb(6, damage);
+                    if (limbScript != null && enemy.GetHealth(6) < 0) limbScript.RemoveLimb(6);
                     break;
 
                 // TORSO

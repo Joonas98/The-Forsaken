@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class Grenade : MonoBehaviour
 {
-
     [SerializeField] private bool isIncendiary, isImpact, isMine, activateRagdoll;
 
     public GameObject firePrefab;
@@ -65,73 +64,58 @@ public class Grenade : MonoBehaviour
 
     public void Explode()
     {
-        if (!hasExploded)
-        {
-            audioSource.PlayOneShot(explosionSound);
-            hasExploded = true;
-            Instantiate(explosionEffect, transform.position, Quaternion.LookRotation(Vector3.down));
-            if (explosionEffect2 != null) Instantiate(explosionEffect2, transform.position, Quaternion.LookRotation(Vector3.up));
+        if (hasExploded) return;
 
-            Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius);
-
-            foreach (Collider nearbyObject in colliders)
-            {
-                Rigidbody rb = nearbyObject.GetComponent<Rigidbody>();
-                if (rb != null)
-                {
-                    rb.AddExplosionForce(explosionForce, transform.position - upVector, explosionRadius);
-                }
-
-                Enemy enemy = nearbyObject.GetComponentInParent<Enemy>();
-                if (enemy != null && !enemy.isDead)
-                {
-                    if (!damagedEnemies.Contains(enemy))
-                    {
-                        float distance = Vector3.Distance(enemy.GetComponentInParent<Transform>().position, transform.position);
-                        float locationalPercentage = 1f - (distance / explosionRadius); // eg. distance 2 and radius 8 = deal 75% damage: 1 - (2 / 8) = 0,75
-                        float calculatedDamage = explosionDamage * locationalPercentage;
-                        int roundedDamage = (int)calculatedDamage;
-                        if (roundedDamage < 0) roundedDamage = 0;
-                        enemy.TakeDamage(roundedDamage);
-                        damagedEnemies.Add(enemy);
-
-                        if (activateRagdoll) enemy.TurnOnRagdoll();
-
-                        if (enemy.GetHealth() > 50)
-                        {
-                            LimbManager limbScript = enemy.GetComponent<LimbManager>();
-
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(1); // LeftLowerLeg
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(2); // LeftUpperLeg
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(3); // RightLowerLeg
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(4); // RightUpperLeg
-
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(5); // RightArm     
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(6); // RightShoulder
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(7); // LeftArm     
-                            if (UnityEngine.Random.Range(0, 4) == 1) limbScript.RemoveLimb(8); // LeftShoulder
-                        }
-                    }
-                }
-
-                // Grenades blow up other grenades
-                Grenade grenade = nearbyObject.GetComponentInParent<Grenade>();
-                if (grenade != null)
-                {
-                    if (!grenade.isIncendiary)
-                    {
-                        grenade.Explode();
-                    }
-                    else
-                    {
-                        grenade.ExplodeIncendiary();
-                    }
-
-                }
-            }
-        }
         meshRenderer.enabled = false;
         Destroy(gameObject, 3f);
+
+        audioSource.PlayOneShot(explosionSound);
+        hasExploded = true;
+        Instantiate(explosionEffect, transform.position, Quaternion.LookRotation(Vector3.down));
+        if (explosionEffect2 != null) Instantiate(explosionEffect2, transform.position, Quaternion.LookRotation(Vector3.up));
+
+        Collider[] colliders = Physics.OverlapSphere(transform.position, explosionRadius);
+
+        foreach (Collider nearbyObject in colliders)
+        {
+            Rigidbody rb = nearbyObject.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.AddExplosionForce(explosionForce, transform.position - upVector, explosionRadius);
+            }
+
+            Enemy enemy = nearbyObject.GetComponentInParent<Enemy>();
+            if (enemy != null)
+            {
+                if (!damagedEnemies.Contains(enemy))
+                {
+                    float distance = Vector3.Distance(enemy.GetComponentInParent<Transform>().position, transform.position);
+                    float locationalPercentage = 1f - (distance / explosionRadius); // eg. distance 2 and radius 8 = deal 75% damage: 1 - (2 / 8) = 0,75
+                    float calculatedDamage = explosionDamage * locationalPercentage;
+                    int roundedDamage = (int)calculatedDamage;
+                    if (roundedDamage < 0) roundedDamage = 0;
+                    enemy.TakeDamage(roundedDamage);
+                    damagedEnemies.Add(enemy);
+
+                    if (activateRagdoll) enemy.TurnOnRagdoll();
+
+                    LimbManager limbScript = enemy.GetComponent<LimbManager>();
+                    for (int i = 0; i < 9; i++)
+                    {
+                        enemy.DamageLimb(i, roundedDamage);
+                        if (enemy.GetHealth(i) < 0) limbScript.RemoveLimb(i);
+                    }
+                }
+            }
+
+            // Grenades blow up other grenades
+            Grenade grenade = nearbyObject.GetComponentInParent<Grenade>();
+            if (grenade != null)
+            {
+                if (!grenade.isIncendiary) grenade.Explode();
+                else grenade.ExplodeIncendiary();
+            }
+        }
     }
 
     void ExplodeIncendiary()

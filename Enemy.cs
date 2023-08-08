@@ -7,28 +7,37 @@ using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
-    public int maxHealth;
-    public int damage;
+    [Header("Basic variables")]
     public int moneyReward;
+
+    [Header("Health variables")]
+    public int maxHealth;
+    [HideInInspector] public int currentHealth, healthPercentage;
+    [HideInInspector] public bool isDead = false;
+
+    private int[] limbHealths = new int[9];
+    private float limbMinHealthPercentage = 0.2f;
+    private float limbMaxHealthPercentage = 0.5f;
+
+    [Header("Attack variables")]
+    public int damage;
     [Tooltip("Attack CD when hit")] public float attackCooldown;
     [Tooltip("Attack CD when missed")] public float swingCooldown;
     [Tooltip("Delay after dying to removal")] public float despawnTime;
     [Tooltip("How close to player to start swinging")] public float attackDistance;
 
-    [HideInInspector] public int currentHealth, healthPercentage;
-    [HideInInspector] public bool isDead = false;
-    private GameObject player;
-    private float distanceToPlayer;
-    private Animator animator;
-
-    public List<Collider> RagdollParts = new List<Collider>();
-    public Collider[] Damagers;
+    [Header("References")]
+    public List<Collider> ragdollParts = new List<Collider>();
+    public Collider[] damagers;
     public Collider enemyCollider;
     public GameObject[] zombieSkins;
     public GameObject eyeRight, eyeLeft;
     public GameObject modelRoot; // Hips
-    public Rigidbody[] RigidBodies;
+    public Rigidbody[] rigidbodies;
     public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
+    public Animator animator;
+
+    private GameObject player;
 
     [Header("Navigation and movement")]
     public EnemyNav enemyNavScript;
@@ -73,6 +82,7 @@ public class Enemy : MonoBehaviour
     private bool canAttack = true, canSwing = true, ragdolling = false;
     private bool standCountdownActive = false;
     private float countdown = 0f;
+    private float distanceToPlayer;
 
     // This struct will be implemented later to handle multiple movement speed changes easily
     private struct MovementSpeedEffect
@@ -86,18 +96,16 @@ public class Enemy : MonoBehaviour
         GameManager.GM.enemiesAlive.Add(this);
         GameManager.GM.enemiesAliveGos.Add(gameObject);
 
-        RandomizeSkins();
-
         player = GameObject.Find("Player");
-        RigidBodies = GetComponentsInChildren<Rigidbody>();
-        animator = GetComponent<Animator>();
+        rigidbodies = GetComponentsInChildren<Rigidbody>();
+
         SetRagdollParts();
-        bodyRB = modelRoot.GetComponent<Rigidbody>();
-        currentHealth = maxHealth;
+        RandomizeSkins();
+        SetLimbHealth();
 
-        float randomScaling = Random.Range(0.95f, 1.25f); // Default scale is 1.1
+        float randomScaling = Random.Range(1.0f, 1.2f); // Default scale is 1.1
         transform.localScale = new Vector3(randomScaling, randomScaling, randomScaling);
-
+        currentHealth = maxHealth;
         navAgent.speed = movementSpeed;
         ogMovementSpeed = navAgent.speed;
 
@@ -114,6 +122,23 @@ public class Enemy : MonoBehaviour
         HandleSwinging();
         CheckRagdollMagnitude();
         DebugUpdate();
+    }
+
+    private void SetLimbHealth()
+    {
+        for (int i = 0; i < limbHealths.Length; i++)
+        {
+            if (i == 0)
+            {
+                limbHealths[i] = maxHealth;
+            }
+            else
+            {
+                float healthPercentage = Random.Range(limbMinHealthPercentage, limbMaxHealthPercentage);
+                int finalLimbHealth = Mathf.RoundToInt(maxHealth * healthPercentage);
+                limbHealths[i] = finalLimbHealth;
+            }
+        }
     }
 
     private void CheckRagdollMagnitude()
@@ -150,7 +175,7 @@ public class Enemy : MonoBehaviour
         navAgent.enabled = false;
 
         bodyRB.velocity = new Vector3(0, 0, 0);
-        foreach (Rigidbody rb in RigidBodies) // Otherwise gameobjects keep moving forever
+        foreach (Rigidbody rb in rigidbodies) // Otherwise gameobjects keep moving forever
         {
             rb.velocity = new Vector3(0, 0, 0);
         }
@@ -213,9 +238,19 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    public void DamageLimb(int limbIndex, int damage)
+    {
+        limbHealths[limbIndex] -= damage;
+    }
+
     public int GetHealth()
     {
         return currentHealth;
+    }
+
+    public int GetHealth(int limbIndex)
+    {
+        return limbHealths[limbIndex];
     }
 
     public IEnumerator ApplyDebuff(debuffs debuffenum, float duration)
@@ -239,7 +274,7 @@ public class Enemy : MonoBehaviour
             if (c.gameObject != this.gameObject)
             {
                 c.isTrigger = true;
-                RagdollParts.Add(c);
+                ragdollParts.Add(c);
             }
 
         }
@@ -250,7 +285,7 @@ public class Enemy : MonoBehaviour
         if (ragdolling) return;
         ragdolling = true;
 
-        foreach (Rigidbody rb in RigidBodies)
+        foreach (Rigidbody rb in rigidbodies)
         {
             rb.isKinematic = false;
         }
@@ -259,7 +294,7 @@ public class Enemy : MonoBehaviour
         standCountdownActive = false;
         animator.enabled = false;
 
-        foreach (Collider c in RagdollParts)
+        foreach (Collider c in ragdollParts)
         {
             c.isTrigger = false;
         }
@@ -269,7 +304,7 @@ public class Enemy : MonoBehaviour
     {
         if (isDead) return;
 
-        foreach (Rigidbody rb in RigidBodies)
+        foreach (Rigidbody rb in rigidbodies)
         {
             rb.isKinematic = true;
         }
@@ -288,7 +323,7 @@ public class Enemy : MonoBehaviour
             Invoke("ContinueAfterRagdoll", 1f);
         }
 
-        foreach (Collider c in RagdollParts)
+        foreach (Collider c in ragdollParts)
         {
             c.isTrigger = true;
         }
@@ -406,18 +441,6 @@ public class Enemy : MonoBehaviour
     {
         navAgent.speed = ogMovementSpeed;
     }
-
-
-    // Obsolete
-    // public void DamagePopup(int number)
-    // {
-    //     GameObject dmgPopupText = Instantiate(damagePopupText, popupTransform.position, Quaternion.identity);
-    //     Rigidbody popRB = dmgPopupText.GetComponent<Rigidbody>();
-    //     popRB.AddForce(new Vector3(UnityEngine.Random.Range(-1f, 1f), 1, UnityEngine.Random.Range(-1f, 1f)) * 150f);
-    //     TextMeshPro popText = dmgPopupText.GetComponent<TextMeshPro>();
-    //     popText.text = number.ToString();
-    //     Destroy(dmgPopupText.gameObject, 2f);
-    // }
 
     public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
     {
