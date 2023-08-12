@@ -75,7 +75,7 @@ public class MeleeWeapon : Weapon
 
     public void HandleInputs()
     {
-        if (GrenadeThrow.instance.selectingGrenade) return;
+        if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) return;
 
         if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack == true)
         {

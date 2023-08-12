@@ -44,6 +44,7 @@ public class GameManager : MonoBehaviour
     public int money;
     public int enemyCount = 0;
     public int currentWave = 0;
+    public int currentWeaponIndex = 0;
     public Transform equipTrans, weaponSpot; // Optimization: weapon.cs Awake() gets these variables from here
     public float gameTime; // Time elapsed since start of the game
     public bool currentGunAiming = false; // 1.7.2023 far better to get aiming info from here to other scripts

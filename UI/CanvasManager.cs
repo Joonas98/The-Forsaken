@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class CanvasManager : MonoBehaviour
 {
     public GameObject[] hudPieces; // Elements to disable when opening menus
-    public GameObject crosshairCanvas, inventoryCanvas, shopCanvas, upgradesPanel, shopPanel, abilitiesCanvas, pauseCanvas, roundPopup, grenadesSelection;
+    public GameObject crosshairCanvas, inventoryCanvas, shopCanvas, upgradesPanel, shopPanel, abilitiesCanvas, pauseCanvas, roundPopup, grenadesSelection, objectsSelection;
     public GameObject weaponsPanel;
     public WeaponPanel[] weaponPanelScripts;
     public WeaponList weaponListScript;
@@ -34,8 +34,8 @@ public class CanvasManager : MonoBehaviour
     {
         HandleInputs();
 
-        // Update grenade count texts when selecting grenade
-        if (GrenadeThrow.instance.selectingGrenade) inventoryCanvasScript.UpdateTexts();
+        // Update menus when selecting grenades or objects
+        if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isChoosingObject) inventoryCanvasScript.UpdateTexts();
     }
 
     public void HandleInputs()
@@ -165,6 +165,7 @@ public class CanvasManager : MonoBehaviour
 
         // Selection canvas children
         grenadesSelection.SetActive(false);
+        objectsSelection.SetActive(false);
     }
 
     public void InventoryPause()

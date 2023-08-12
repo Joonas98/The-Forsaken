@@ -21,7 +21,6 @@ public class Player : MonoBehaviour
     public GameObject runningSymbol, fallingSymbol, regenSymbol, kickSymbol;
     public TextMeshProUGUI healthText, healthTextRaw;
     public Image healthSlider;
-    public IdleSway idleSwayScript;
     public DamagePP damagePPScript;
     public Animator animator;
 

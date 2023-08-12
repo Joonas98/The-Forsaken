@@ -42,6 +42,13 @@ public class WeaponPanel : MonoBehaviour
         handledGun = weaponHolster.transform.GetChild(currentIndex).gameObject;
         Destroy(handledGun);
         Destroy(gameObject);
+
+        // If the weapon to be sold is currently equippped, equip knife
+        if (GameManager.GM.currentWeaponIndex == currentIndex)
+        {
+            WeaponSwitcher.instance.selectedWeapon = 0;
+            WeaponSwitcher.instance.SelectWeapon();
+        }
     }
 
     public void EnableButtons()

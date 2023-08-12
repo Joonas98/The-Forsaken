@@ -167,6 +167,8 @@ public class WeaponSwitcher : MonoBehaviour
             GameManager.GM.currentGun = null;
         }
 
+        GameManager.GM.currentWeaponIndex = selectedWeapon;
+
         // Handle highlight for HUD
         if (handledPanel != null) handledPanel.highlightObject.SetActive(false);
         handledPanel = weaponsPanel.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();

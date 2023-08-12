@@ -67,7 +67,8 @@ public class WeaponSwayAndBob : MonoBehaviour
     void Update()
     {
         GetInput();
-        if (disableSwayBob || GrenadeThrow.instance.selectingGrenade) return;
+        // When choosing grenades or objects, mouse is used for selection -> sway during selection is annoying bug
+        if (disableSwayBob || GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) return;
 
         if (sway && !disableSwayBob) Sway();
         if (swayRotation && !disableSwayBob) SwayRotation();

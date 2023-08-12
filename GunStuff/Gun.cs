@@ -179,9 +179,16 @@ public class Gun : Weapon
     protected override void Update()
     {
         if (Time.timeScale <= 0) return; // Game paused
+
+        shotCounter -= Time.deltaTime;
+
         base.Update();
+
+        // Player can't shoot when selecting grenades or objects
+        if (!equipped || GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) goto selectionsSkip;
         HandleShooting();
         HandleAiming();
+    selectionsSkip:
         HandleReloading();
         HandleCrosshair();
         HandleScopeZoom();
@@ -248,7 +255,7 @@ public class Gun : Weapon
     public void HandleReloading()
     {
         // Reloading
-        if (Input.GetKeyDown(KeyCode.R) && !isReloading && currentMagazine != magazineSize && Time.timeScale > 0 && inventoryScript.GetAmmoCount(ammoType) > 0)
+        if (Input.GetKeyDown(KeyCode.R) && !isReloading && currentMagazine != magazineSize && inventoryScript.GetAmmoCount(ammoType) > 0)
         {
             if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
             isReloading = true;
@@ -292,8 +299,6 @@ public class Gun : Weapon
 
     public void HandleShooting()
     {
-        shotCounter -= Time.deltaTime;
-        if (!equipped || GrenadeThrow.instance.selectingGrenade) return;
         // Can't shoot when running (unless got Bullet Ballet ability)
         if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
         {

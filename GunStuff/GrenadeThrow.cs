@@ -41,7 +41,7 @@ public class GrenadeThrow : MonoBehaviour
     {
         if (Time.timeScale <= 0) return; // Game paused
 
-        if (Input.GetKey(KeyCode.H))
+        if (Input.GetKey(KeyCode.H) && !ObjectPlacing.instance.isChoosingObject)
         {
             if (!selectingGrenade)
             {
