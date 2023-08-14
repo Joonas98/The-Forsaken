@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Grip : MonoBehaviour
 {
-
     public Gun gunScript;
     public float reloadTimeChange, adsTimeChange, equipTimeChange;
     public float xRecoilChange, yRecoilChange, zRecoilChange;

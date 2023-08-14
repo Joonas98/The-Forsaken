@@ -18,7 +18,8 @@ public class Barbedwire : MonoBehaviour
             enemyScript = other.GetComponentInParent<Enemy>();
             if (!collidedEnemies.Contains(enemyScript) && enemyScript != null)
             {
-                enemyScript.SlowDown(slowMultiplier);
+                //  enemyScript.SlowDown(slowMultiplier);
+                enemyScript.EnterBarricade();
 
                 if (!collidedEnemies.Contains(enemyScript))
                     collidedEnemies.Add(enemyScript);
@@ -35,7 +36,8 @@ public class Barbedwire : MonoBehaviour
 
             if (collidedEnemies.Contains(enemyScriptExit))
             {
-                enemyScriptExit.RestoreMovementSpeed();
+                // enemyScriptExit.RestoreMovementSpeed();
+                enemyScript.ExitBarricade();
                 collidedEnemies.Remove(enemyScriptExit);
             }
         }

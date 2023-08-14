@@ -35,7 +35,7 @@ public class PlayerMovement : MonoBehaviour
     [HideInInspector] public bool canRun = true;
     [HideInInspector] public bool isGrounded, isRunning;
     [HideInInspector] public bool isSlowed;
-    [HideInInspector] public float ogSpeed;
+    [HideInInspector] public float ogSpeed, ogRunningspeed;
 
     // Private stuff
     private GameObject runningSymbol;
@@ -43,6 +43,14 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 velocity;
     private Vector3 moveDirection;
     private Vector3 lastPosition = new Vector3(0, 0, 0);
+
+    private struct SlowEffect
+    {
+        public float slowPercentage;    // Percentage of slow (e.g., 0.25 for 25%)
+        public float duration;              // Remaining duration of the slow effect
+    }
+
+    private SlowEffect[] slowEffects;
 
     // Important for custom sliding system
     private Vector3 hitPointNormal;
@@ -67,6 +75,7 @@ public class PlayerMovement : MonoBehaviour
     private void Awake()
     {
         ogSpeed = speed;
+        ogRunningspeed = runningSpeed;
         runningSymbol = GameObject.Find("RunningSymbol");
         if (runningSymbol != null) runningSymbol.SetActive(false);
         defaultYPos = mainCamera.transform.localPosition.y;
@@ -74,14 +83,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
         canRun = true;
         initialYOffset = legHud.position.y - mainCamera.transform.position.y;
+        slowEffects = new SlowEffect[9]; // Maximum of 9 slow effects should be enough 
     }
 
     void Update()
     {
-        if (speed >= ogSpeed) isSlowed = false;
+        CalculateSlows();
         HandleRunning();
         HandleJump();
         HandleMovement();
@@ -99,6 +108,11 @@ public class PlayerMovement : MonoBehaviour
         lastPosition = transform.position;
     }
 
+    private void OnGUI()
+    {
+        // GUI.Label(new Rect(300, 300, 80, 20), speed.ToString());
+    }
+
     private void HandleMovement()
     {
         float x, z;
@@ -113,9 +127,19 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             moveDirection += new Vector3(hitPointNormal.x, -hitPointNormal.y, hitPointNormal.z) * slopeSpeed;
+            controller.Move(slopeSpeed * Time.deltaTime * moveDirection);
+            goto skipMovement;
         }
 
-        controller.Move(moveDirection * speed * Time.deltaTime);
+        if (!isRunning)
+        {
+            controller.Move(speed * Time.deltaTime * moveDirection);
+        }
+        else
+        {
+            controller.Move(runningSpeed * Time.deltaTime * moveDirection);
+        }
+    skipMovement:;
     }
 
     private void HandleJump()
@@ -157,18 +181,40 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    private void CalculateSlows()
+    {
+        float cumulativeSlowPercentage = 1.0f;
+
+        for (int i = 0; i < slowEffects.Length; i++)
+        {
+            if (slowEffects[i].duration > 0.0f)
+            {
+                // Reduce the duration of the slow effect
+                slowEffects[i].duration -= Time.deltaTime;
+
+                // Apply the slow percentage to the cumulativeSlowPercentage
+                cumulativeSlowPercentage *= (1.0f - slowEffects[i].slowPercentage);
+            }
+        }
+
+        // Calculate the effective movement speed
+        speed = ogSpeed * cumulativeSlowPercentage;
+        runningSpeed = ogRunningspeed * cumulativeSlowPercentage;
+
+        if (speed < 0f) speed = 0f;
+        if (runningSpeed < 0f) runningSpeed = 0f;
+    }
+
     public void Run(bool run)
     {
         if (!run || !canRun)
         {
             isRunning = false;
-            if (!isSlowed) speed = ogSpeed;
             runningSymbol.SetActive(false);
         }
         else
         {
             isRunning = true;
-            speed = runningSpeed;
             runningSymbol.SetActive(true);
         }
     }
@@ -208,13 +254,21 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public IEnumerator TemporarySpeedChange(float multiplier, float duration)
+    public void ApplySlowEffect(float slowPercentage, float duration)
     {
-        if (multiplier < 1f) canRun = false;
-        speed = speed * multiplier;
-        yield return new WaitForSeconds(duration);
-        if (!isSlowed) canRun = true;
-        // Movement speed is returned to normal in Run()
+        // Find an available slot in the slow sources array
+        for (int i = 0; i < slowEffects.Length; i++)
+        {
+            if (slowEffects[i].duration <= 0.0f)
+            {
+                // Set the slow source information
+                slowEffects[i].slowPercentage = slowPercentage;
+                slowEffects[i].duration = duration;
+
+                // Exit the loop
+                break;
+            }
+        }
     }
 
 }

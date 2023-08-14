@@ -84,12 +84,15 @@ public class Enemy : MonoBehaviour
     private float countdown = 0f;
     private float distanceToPlayer;
 
-    // This struct will be implemented later to handle multiple movement speed changes easily
-    private struct MovementSpeedEffect
+    // System to handle slows
+    private struct SlowEffect
     {
-        public float movementSpeedMultiplier;
+        public float slowPercentage;
         public float duration;
     }
+
+    private SlowEffect[] slowEffects;
+    private int barricadeCount = 0; // Count if we are inside one or more barricades (to apply slow while inside 1 or more)
 
     private void Awake()
     {
@@ -115,10 +118,16 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        slowEffects = new SlowEffect[5]; // Maximum of 5 slow effects should be enough 
+    }
+
     private void Update()
     {
         distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
         animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
+        CalculateSlows();
         HandleSwinging();
         CheckRagdollMagnitude();
         DebugUpdate();
@@ -342,7 +351,8 @@ public class Enemy : MonoBehaviour
             playerScript.TakeDamage(damage);
             canAttack = false;
             PlayerMovement playerMovement = playerScript.GetComponent<PlayerMovement>();
-            playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
+            // playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
+            playerMovement.ApplySlowEffect(0.50f, 0.5f);
             StartCoroutine(AttackCooldown());
         }
     }
@@ -431,15 +441,62 @@ public class Enemy : MonoBehaviour
         navAgent.baseOffset = 0.05f;
     }
 
-    public void SlowDown(float slowMultiplier)
+    private void CalculateSlows()
     {
-        Debug.Log("Slowing enemy from: " + navAgent.speed + " to: " + (navAgent.speed *= slowMultiplier).ToString());
-        navAgent.speed = ogMovementSpeed * slowMultiplier;
+        float cumulativeSlowPercentage = 1.0f;
+        float barricadeSlow = barricadeCount >= 1 ? 0.8f : 0.0f; // Apply barricade slow if in at least 1 barricade
+
+        for (int i = 0; i < slowEffects.Length; i++)
+        {
+            if (slowEffects[i].duration > 0.0f)
+            {
+                // Reduce the duration of the slow effect
+                slowEffects[i].duration -= Time.deltaTime;
+
+                // Apply the slow percentage to the cumulativeSlowPercentage
+                cumulativeSlowPercentage *= (1.0f - slowEffects[i].slowPercentage);
+            }
+        }
+
+        // Apply barricade slow to the cumulativeSlowPercentage
+        cumulativeSlowPercentage *= (1.0f - barricadeSlow);
+
+        // Calculate the effective movement speed
+        movementSpeed = ogMovementSpeed * cumulativeSlowPercentage;
+        if (movementSpeed < 0f) movementSpeed = 0f;
+
+        navAgent.speed = movementSpeed;
     }
 
-    public void RestoreMovementSpeed()
+    public void ApplySlowEffect(float slowPercentage, float duration)
     {
-        navAgent.speed = ogMovementSpeed;
+        // Find an available slot in the slow sources array
+        for (int i = 0; i < slowEffects.Length; i++)
+        {
+            if (slowEffects[i].duration <= 0.0f)
+            {
+                // Set the slow source information
+                slowEffects[i].slowPercentage = slowPercentage;
+                slowEffects[i].duration = duration;
+
+                // Exit the loop
+                break;
+            }
+        }
+    }
+
+    public void EnterBarricade()
+    {
+        barricadeCount++;
+    }
+
+    public void ExitBarricade()
+    {
+        barricadeCount--;
+        if (barricadeCount < 0)
+        {
+            barricadeCount = 0;
+        }
     }
 
     public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
