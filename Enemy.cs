@@ -340,6 +340,7 @@ public class Enemy : MonoBehaviour
 
     private void ContinueAfterRagdoll()
     {
+        if (enemyNavScript.IsAgentOnNavMesh(gameObject) == false) enemyNavScript.MoveToNavMesh();
         navAgent.isStopped = false;
     }
 

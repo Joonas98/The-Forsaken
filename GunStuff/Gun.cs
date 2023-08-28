@@ -39,7 +39,9 @@ public class Gun : Weapon
     public float vireReturn = 8;
 
     [Header("Effects")]
-    public ParticleSystem muzzleFlash;
+    public bool useMuzzleLight = true; // When using suppressor don't emit light
+    [HideInInspector] public Light muzzleFlashLight;
+    [HideInInspector] public ParticleSystem muzzleFlash;
     public ParticleSystem bloodFX, hitFX, groundFX;
     public LineRenderer LR;
     public bool dropCasings;
@@ -74,7 +76,8 @@ public class Gun : Weapon
     [HideInInspector] public bool isFiring = false;
     [HideInInspector] public bool isReloading = false, isAiming = false;
     [HideInInspector] public bool canAim; // True in update unless mid air etc.
-    [HideInInspector] public float maxZoom, minZoom;
+    [HideInInspector] public float maxZoom = 0.25f; // Scope zoom default value for guns such as AUG that has integrated scope
+    [HideInInspector] public float minZoom = 45f;
     [HideInInspector] public int currentMagazine;
     [HideInInspector] public int shotsLeft;
     [HideInInspector] public string magString, totalAmmoString;
@@ -103,7 +106,6 @@ public class Gun : Weapon
     private ParticleSystem muzzleFlashOG;
     private float aimSpeedOG;
     private float recoilXOG, recoilYOG, recoilZOG;
-    private float defaultFov;
     private VisualRecoil vire;
     private const float unsprintLerpThreshold = 30f; // We don't want to be able to shoot right away after sprinting
     private const float sprintLerpMultiplier = 15f; // Weapon sprint lerp and readiness: aimSpeed * this
@@ -116,7 +118,6 @@ public class Gun : Weapon
         if (bulletHoleScript == null)
             bulletHoleScript = GetComponent<BulletHoles>();
 
-        defaultFov = GameManager.GM.playerScript.normalFov;
         recoilScript = GetComponentInParent<Recoil>();
         mainCamera = Camera.main;
         weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
@@ -139,6 +140,9 @@ public class Gun : Weapon
         recoilYOG = recoilY;
         recoilZOG = recoilZ;
         RPMOG = RPM;
+
+        muzzleFlash = gunTip.GetComponentInChildren<ParticleSystem>();
+        muzzleFlashLight = gunTip.GetComponent<Light>();
 
         equipTrans = GameObject.Find("EquipTrans").transform;
     }
@@ -195,6 +199,11 @@ public class Gun : Weapon
         HandleSwitchingLerps();
         HandleSprinting();
         // Debug.Log(unsprintLerp * sprintLerpMultiplier * aimSpeed);
+
+        // Light from muzzle flash that is not too expensive and looks nice enough
+        if (muzzleFlashLight == null || !useMuzzleLight) return;
+        bool isEmitting = muzzleFlash.isEmitting;
+        muzzleFlashLight.enabled = isEmitting;
     }
 
     public void HandleAiming()
@@ -393,37 +402,28 @@ public class Gun : Weapon
     // Mouse wheel changes scope zoom
     private void HandleScopeZoom()
     {
-        if (scopeCam != null)
+        if (scopeCam == null) return;
+
+        // Zoom out
+        if (isAiming && Input.GetAxis("Mouse ScrollWheel") < 0f)
         {
-            if (isAiming && Input.GetAxis("Mouse ScrollWheel") < 0f)
-            {
-                scopeCam.fieldOfView += 1;
-                scopeCam.fieldOfView = scopeCam.fieldOfView * 1.1f;
+            scopeCam.fieldOfView += 1;
+            scopeCam.fieldOfView *= 1.1f;
 
-                if (scopeCam.fieldOfView > minZoom)
-                {
-                    scopeCam.fieldOfView = minZoom;
-                }
-                else
-                {
-                    audioSource.PlayOneShot(zoomScopeInSound);
-                }
-            }
+            // Clamp zoom and play audio if not at limit
+            if (scopeCam.fieldOfView > minZoom) scopeCam.fieldOfView = minZoom;
+            else audioSource.PlayOneShot(zoomScopeInSound);
+        }
 
-            if (isAiming && Input.GetAxis("Mouse ScrollWheel") > 0f)
-            {
-                scopeCam.fieldOfView -= 1;
-                scopeCam.fieldOfView = scopeCam.fieldOfView * 0.9f;
+        // Zoom in
+        if (isAiming && Input.GetAxis("Mouse ScrollWheel") > 0f)
+        {
+            scopeCam.fieldOfView -= 1;
+            scopeCam.fieldOfView *= 0.9f;
 
-                if (scopeCam.fieldOfView < maxZoom)
-                {
-                    scopeCam.fieldOfView = maxZoom;
-                }
-                else
-                {
-                    audioSource.PlayOneShot(zoomScopeOutSound);
-                }
-            }
+            // Clamp zoom and play audio if not at limit
+            if (scopeCam.fieldOfView < maxZoom) scopeCam.fieldOfView = maxZoom;
+            else audioSource.PlayOneShot(zoomScopeOutSound);
         }
     }
 
@@ -464,57 +464,57 @@ public class Gun : Weapon
                 case "Head":
                     enemy.TakeDamage(Mathf.RoundToInt(damage * headshotMultiplier), percentageDamage, true);
                     enemy.DamageLimb(0, damage);
-                    if (limbScript != null && enemy.GetHealth(0) < 0) limbScript.RemoveLimb(0);
+                    if (limbScript != null && enemy.GetHealth(0) <= 0) limbScript.RemoveLimb(0);
                     break;
 
                 // LEGS
                 case "UpperLegL":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(2, damage);
-                    if (limbScript != null && enemy.GetHealth(2) < 0) limbScript.RemoveLimb(2);
+                    if (limbScript != null && enemy.GetHealth(2) <= 0) limbScript.RemoveLimb(2);
                     break;
 
                 case "UpperLegR":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(4, damage);
-                    if (limbScript != null && enemy.GetHealth(4) < 0) limbScript.RemoveLimb(4);
+                    if (limbScript != null && enemy.GetHealth(4) <= 0) limbScript.RemoveLimb(4);
                     break;
 
                 case "LowerLegL":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(1, damage);
-                    if (limbScript != null && enemy.GetHealth(1) < 0) limbScript.RemoveLimb(1);
+                    if (limbScript != null && enemy.GetHealth(1) <= 0) limbScript.RemoveLimb(1);
                     break;
 
                 case "LowerLegR":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(3, damage);
-                    if (limbScript != null && enemy.GetHealth(3) < 0) limbScript.RemoveLimb(3);
+                    if (limbScript != null && enemy.GetHealth(3) <= 0) limbScript.RemoveLimb(3);
                     break;
 
                 // ARMS
                 case "ArmL":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(7, damage);
-                    if (limbScript != null && enemy.GetHealth(7) < 0) limbScript.RemoveLimb(7);
+                    if (limbScript != null && enemy.GetHealth(7) <= 0) limbScript.RemoveLimb(7);
                     break;
 
                 case "ArmR":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(5, damage);
-                    if (limbScript != null && enemy.GetHealth(5) < 0) limbScript.RemoveLimb(5);
+                    if (limbScript != null && enemy.GetHealth(5) <= 0) limbScript.RemoveLimb(5);
                     break;
 
                 case "ShoulderL":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(8, damage);
-                    if (limbScript != null && enemy.GetHealth(8) < 0) limbScript.RemoveLimb(8);
+                    if (limbScript != null && enemy.GetHealth(8) <= 0) limbScript.RemoveLimb(8);
                     break;
 
                 case "ShoulderR":
                     enemy.TakeDamage(damage, percentageDamage);
                     enemy.DamageLimb(6, damage);
-                    if (limbScript != null && enemy.GetHealth(6) < 0) limbScript.RemoveLimb(6);
+                    if (limbScript != null && enemy.GetHealth(6) <= 0) limbScript.RemoveLimb(6);
                     break;
 
                 // TORSO
@@ -655,12 +655,6 @@ public class Gun : Weapon
         lr.SetPosition(0, v0);
         lr.SetPosition(1, v1);
         Destroy(InstantiatedLaser.gameObject, laserTime);
-    }
-
-    private void SetFOV(float fov)
-    {
-        Camera.main.fieldOfView = fov;
-        weaponCam.fieldOfView = fov;
     }
 
     // public override void EquipWeapon()
@@ -806,12 +800,6 @@ public class Gun : Weapon
         gunTip = gunTipOG;
         muzzleFlash = muzzleFlashOG;
         shootSound = shootSoundOG;
-    }
-
-    public void ResetFOV()
-    {
-        Camera.main.fieldOfView = defaultFov;
-        weaponCam.fieldOfView = defaultFov;
     }
 
     public void ResetRecoils()

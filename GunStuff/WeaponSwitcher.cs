@@ -159,7 +159,6 @@ public class WeaponSwitcher : MonoBehaviour
 
         if (currentGun != null)
         {
-            currentGun.ResetFOV();
             GameManager.GM.currentGun = currentGun;
         }
         else

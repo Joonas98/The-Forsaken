@@ -4,16 +4,15 @@ using UnityEngine;
 
 public class AttachmentsScript : MonoBehaviour
 {
-
     [SerializeField] private Gun gunScript;
 
+    [Header("Attachments")]
     public GameObject[] scopes;
-
     public GameObject[] muzzleDevices;
-
     public GameObject[] grips;
     public GameObject[] lasers;
 
+    [Header("Iron sights")]
     public GameObject ironSights;
     public GameObject ironSights2;
     public GameObject ironMask;
@@ -22,19 +21,16 @@ public class AttachmentsScript : MonoBehaviour
     // Testing variables
     private int currentScope = -1;
     private int currentGrip = -1;
-    private int currentSilencer = -1;
+    private int currentMuzzle = -1;
 
     private void Awake()
     {
-
-        if (gunScript == null)
-            gunScript = GetComponent<Gun>();
-
+        if (gunScript == null) gunScript = GetComponent<Gun>();
     }
 
     private void Update()
     {
-        // Attachmenttien selaaminen numeronäppäimillä
+        // Scroll attachments with number keys
         #region Scopes Cycle
 
         if (scopes.Length > 0)
@@ -138,32 +134,32 @@ public class AttachmentsScript : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Keypad5))
             {
-                currentSilencer += 1;
-                if (currentSilencer >= muzzleDevices.Length)
+                currentMuzzle += 1;
+                if (currentMuzzle >= muzzleDevices.Length)
                 {
                     UnequipSilencer();
                 }
                 else
                 {
-                    EquipSilencer(currentSilencer);
+                    EquipMuzzle(currentMuzzle);
                 }
             }
 
             if (Input.GetKeyDown(KeyCode.Keypad4))
             {
-                currentSilencer -= 1;
-                if (currentSilencer == -1)
+                currentMuzzle -= 1;
+                if (currentMuzzle == -1)
                 {
                     UnequipSilencer();
                 }
-                else if (currentSilencer < -1)
+                else if (currentMuzzle < -1)
                 {
-                    currentSilencer = muzzleDevices.Length - 1;
-                    EquipSilencer(currentSilencer);
+                    currentMuzzle = muzzleDevices.Length - 1;
+                    EquipMuzzle(currentMuzzle);
                 }
                 else
                 {
-                    EquipSilencer(currentSilencer);
+                    EquipMuzzle(currentMuzzle);
                 }
             }
         }
@@ -171,8 +167,6 @@ public class AttachmentsScript : MonoBehaviour
         #endregion
 
     }
-
-
 
     public void EquipScope(int scopeIndex)
     {
@@ -184,7 +178,7 @@ public class AttachmentsScript : MonoBehaviour
 
         if (scopes.Length >= scopeIndex && scopeIndex != -1)
         {
-            scopes[scopeIndex].gameObject.SetActive(true);
+            if (scopeIndex < scopes.Length) scopes[scopeIndex].SetActive(true);
         }
 
         if (scopeIndex != -1)
@@ -196,8 +190,8 @@ public class AttachmentsScript : MonoBehaviour
             EquipIrons(true);
         }
 
-        // Scope mount pois tietyille tähtäimille
-        if (scopeMount != null && scopes[scopeIndex].gameObject.name == "4 Kobra" || scopeMount != null && scopes[scopeIndex].gameObject.name == "14 PSO-1")
+        // Disable scope mount for certain scopes. Most weapons never use scope mounts
+        if (scopeMount != null && scopes[scopeIndex].name == "4 Kobra" || scopeMount != null && scopes[scopeIndex].name == "14 PSO-1")
         {
             scopeMount.SetActive(false);
         }
@@ -239,22 +233,23 @@ public class AttachmentsScript : MonoBehaviour
     }
 
 
-    public void EquipSilencer(int silencerIndex)
+    public void EquipMuzzle(int muzzleIndex)
     {
-        foreach (GameObject silencer in muzzleDevices)
+        foreach (GameObject muzzleDevice in muzzleDevices)
         {
-            silencer.SetActive(false);
+            muzzleDevice.SetActive(false);
         }
 
-        if (muzzleDevices.Length >= silencerIndex)
+        if (muzzleIndex < 0) return; // Unequipping
+        if (muzzleDevices.Length >= muzzleIndex)
         {
-            muzzleDevices[silencerIndex].gameObject.SetActive(true);
+            muzzleDevices[muzzleIndex].gameObject.SetActive(true);
         }
     }
 
     public void UnequipSilencer()
     {
-        currentSilencer = -1;
+        currentMuzzle = -1;
         gunScript.ResetGunTip();
 
         foreach (GameObject silencer in muzzleDevices)
