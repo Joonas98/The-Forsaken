@@ -5,12 +5,18 @@ using UnityEngine;
 public class AttachmentsScript : MonoBehaviour
 {
     [SerializeField] private Gun gunScript;
+    [SerializeField] private Transform scopesHolder, muzzlesHolder, gripsHolder;
 
     [Header("Attachments")]
     public GameObject[] scopes;
     public GameObject[] muzzleDevices;
     public GameObject[] grips;
     public GameObject[] lasers;
+
+    [Header("Exceptions")]
+    public int[] unavailableScopes;
+    public int[] unavailableMuzzles;
+    public int[] unavailableGrips;
 
     [Header("Iron sights")]
     public GameObject ironSights;
@@ -22,6 +28,40 @@ public class AttachmentsScript : MonoBehaviour
     private int currentScope = -1;
     private int currentGrip = -1;
     private int currentMuzzle = -1;
+
+    private void OnValidate()
+    {
+        // if (scopesHolder == null) scopesHolder = GameObject.Find("Scopes").transform;
+        // if (muzzlesHolder == null) muzzlesHolder = GameObject.Find("Muzzles").transform;
+        // if (gripsHolder == null) gripsHolder = GameObject.Find("Grips").transform;
+
+        if (scopesHolder != null)
+        {
+            scopes = new GameObject[scopesHolder.childCount];
+            for (int i = 0; i < scopes.Length; i++)
+            {
+                scopes[i] = scopesHolder.transform.GetChild(i).gameObject;
+            }
+        }
+
+        if (muzzlesHolder != null)
+        {
+            muzzleDevices = new GameObject[muzzlesHolder.childCount];
+            for (int i = 0; i < muzzleDevices.Length; i++)
+            {
+                muzzleDevices[i] = muzzlesHolder.transform.GetChild(i).gameObject;
+            }
+        }
+
+        if (gripsHolder != null)
+        {
+            grips = new GameObject[gripsHolder.childCount];
+            for (int i = 0; i < grips.Length; i++)
+            {
+                grips[i] = gripsHolder.transform.GetChild(i).gameObject;
+            }
+        }
+    }
 
     private void Awake()
     {
@@ -129,7 +169,7 @@ public class AttachmentsScript : MonoBehaviour
         {
             if (Input.GetKeyDown(KeyCode.Keypad6))
             {
-                UnequipSilencer();
+                UnequipMuzzle();
             }
 
             if (Input.GetKeyDown(KeyCode.Keypad5))
@@ -137,7 +177,7 @@ public class AttachmentsScript : MonoBehaviour
                 currentMuzzle += 1;
                 if (currentMuzzle >= muzzleDevices.Length)
                 {
-                    UnequipSilencer();
+                    UnequipMuzzle();
                 }
                 else
                 {
@@ -150,7 +190,7 @@ public class AttachmentsScript : MonoBehaviour
                 currentMuzzle -= 1;
                 if (currentMuzzle == -1)
                 {
-                    UnequipSilencer();
+                    UnequipMuzzle();
                 }
                 else if (currentMuzzle < -1)
                 {
@@ -170,10 +210,9 @@ public class AttachmentsScript : MonoBehaviour
 
     public void EquipScope(int scopeIndex)
     {
-
         foreach (GameObject scope in scopes)
         {
-            scope.SetActive(false);
+            if (scope != null) scope.SetActive(false);
         }
 
         if (scopes.Length >= scopeIndex && scopeIndex != -1)
@@ -211,6 +250,12 @@ public class AttachmentsScript : MonoBehaviour
 
     public void EquipGrip(int gripIndex)
     {
+        if (gripIndex == -1)
+        {
+            UnequipGrip();
+            return;
+        }
+
         foreach (GameObject grip in grips)
         {
             grip.SetActive(false);
@@ -219,6 +264,10 @@ public class AttachmentsScript : MonoBehaviour
         if (grips.Length >= gripIndex)
         {
             grips[gripIndex].gameObject.SetActive(true);
+        }
+        else
+        {
+            Debug.Log("Invalid gripIndex: " + gripIndex);
         }
 
     }
@@ -235,26 +284,31 @@ public class AttachmentsScript : MonoBehaviour
 
     public void EquipMuzzle(int muzzleIndex)
     {
+        if (muzzleIndex == -1)
+        {
+            UnequipMuzzle();
+            return;
+        }
+
         foreach (GameObject muzzleDevice in muzzleDevices)
         {
             muzzleDevice.SetActive(false);
         }
 
-        if (muzzleIndex < 0) return; // Unequipping
         if (muzzleDevices.Length >= muzzleIndex)
         {
-            muzzleDevices[muzzleIndex].gameObject.SetActive(true);
+            muzzleDevices[muzzleIndex].SetActive(true);
         }
     }
 
-    public void UnequipSilencer()
+    public void UnequipMuzzle()
     {
         currentMuzzle = -1;
         gunScript.ResetGunTip();
 
-        foreach (GameObject silencer in muzzleDevices)
+        foreach (GameObject muzzle in muzzleDevices)
         {
-            silencer.SetActive(false);
+            muzzle.SetActive(false);
         }
 
     }

@@ -137,7 +137,7 @@ public class Enemy : MonoBehaviour
     {
         for (int i = 0; i < limbHealths.Length; i++)
         {
-            if (i == 0)
+            if (i == 0) // Set head to maxHealth
             {
                 limbHealths[i] = maxHealth;
             }

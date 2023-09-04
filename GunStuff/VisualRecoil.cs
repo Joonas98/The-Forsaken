@@ -4,9 +4,6 @@ using UnityEngine;
 
 public class VisualRecoil : MonoBehaviour
 {
-
-    private Vector3 currentRotation, targetRotation, targetPosition, currentPosition, gunPositionOG;
-
     public float vrecoilX;
     public float vrecoilY;
     public float vrecoilZ;
@@ -15,6 +12,7 @@ public class VisualRecoil : MonoBehaviour
     public float returnAmount; // Speed for return
 
     private bool aiming;
+    private Vector3 currentRotation, targetRotation, targetPosition, currentPosition, gunPositionOG;
 
     private void Start()
     {

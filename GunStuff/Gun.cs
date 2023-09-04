@@ -63,8 +63,8 @@ public class Gun : Weapon
 
     [Header("Other Things")]
     [Tooltip("What layers the gun can hit")] public LayerMask targetLayers;
-    public GameObject gunTip, aimingSpot;
-    public Transform casingTransform;
+    [HideInInspector] public GameObject gunTip, aimingSpot;
+    [HideInInspector] public Transform casingTransform;
     public AnimationClip reloadAnimation;
     public string overrideReloadName;
     [HideInInspector] public Camera scopeCam = null;
@@ -83,15 +83,15 @@ public class Gun : Weapon
     [HideInInspector] public string magString, totalAmmoString;
     // public GameObject damagePopupText;
 
-    [SerializeField] private Animator animator;
     [SerializeField] private bool hasShootAnimation;
+    private Animator animator;
     private GameObject reloadSymbol;
     private Recoil recoilScript;
     private CanvasManager canvasManagerScript;
     private TextMeshProUGUI magazineText;
     private float shotCounter, fireRate;
     private bool hasFired = false;
-    private GameObject CrosshairContents;
+    private GameObject crosshairContents;
     private Crosshair crosshairScript;
     private PlayerMovement playerMovementScript;
     private PlayerInventory inventoryScript;
@@ -110,49 +110,23 @@ public class Gun : Weapon
     private const float unsprintLerpThreshold = 30f; // We don't want to be able to shoot right away after sprinting
     private const float sprintLerpMultiplier = 15f; // Weapon sprint lerp and readiness: aimSpeed * this
 
+    // OnValidate function is called on editor instead of runtime
+    // So this is to automatize tasks like set references whilst keeping runtime activity minimal
+    protected override void OnValidate()
+    {
+        base.OnValidate();
+        HandlePrefabReferences();
+    }
+
     protected override void Awake()
     {
         base.Awake();
-        vire = GameObject.Find("ViRe").GetComponent<VisualRecoil>();
-
-        if (bulletHoleScript == null)
-            bulletHoleScript = GetComponent<BulletHoles>();
-
-        recoilScript = GetComponentInParent<Recoil>();
-        mainCamera = Camera.main;
-        weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
-        magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
-        GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
-        crosshairScript = CrosshairCanvas.GetComponent<Crosshair>();
-        reloadSymbol = CrosshairCanvas.transform.GetChild(0).gameObject;
-        canvasManagerScript = GameObject.Find("Canvases").GetComponent<CanvasManager>();
-        animator = GetComponent<Animator>();
-        inventoryScript = GameObject.Find("Player").GetComponent<PlayerInventory>();
-
+        HandleSceneReferences();
         HandleAnimationStrings();
-
-        aimSpeedOG = aimSpeed;
-        shootSoundOG = shootSound;
-        muzzleFlashOG = muzzleFlash;
-        gunTipOG = gunTip;
-        aimingSpotOG = aimingSpot;
-        recoilXOG = recoilX;
-        recoilYOG = recoilY;
-        recoilZOG = recoilZ;
-        RPMOG = RPM;
-
-        muzzleFlash = gunTip.GetComponentInChildren<ParticleSystem>();
-        muzzleFlashLight = gunTip.GetComponent<Light>();
-
-        equipTrans = GameObject.Find("EquipTrans").transform;
     }
 
     private void Start()
     {
-        CrosshairContents = GameObject.Find("CrosshairPanel");
-        playerMovementScript = GameObject.Find("Player").GetComponent<PlayerMovement>();
-        animator = GetComponent<Animator>();
-
         shotsLeft = pelletCount;
         currentMagazine = magazineSize;
         magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
@@ -163,10 +137,54 @@ public class Gun : Weapon
         UpdateRecoil();
     }
 
+    // Find some references for the script within the prefab
+    private void HandlePrefabReferences()
+    {
+        if (animator == null) animator = GetComponent<Animator>();
+        if (gunTip == null) gunTip = transform.Find("GunTip").gameObject;
+        if (bulletHoleScript == null) bulletHoleScript = GetComponent<BulletHoles>();
+        if (muzzleFlash == null) muzzleFlash = gunTip.GetComponentInChildren<ParticleSystem>();
+        if (muzzleFlashLight == null) muzzleFlashLight = gunTip.GetComponent<Light>();
+        if (aimingSpot == null) aimingSpot = transform.Find("AimSpot").gameObject;
+        if (casingTransform == null) casingTransform = transform.Find("CasingSpot");
+
+        if (muzzleFlashLight != null) useMuzzleLight = true;
+    }
+
+    // Find some references for the script within the scene
+    private void HandleSceneReferences()
+    {
+        mainCamera = Camera.main;
+        vire = GetComponentInParent<VisualRecoil>();
+        recoilScript = GetComponentInParent<Recoil>();
+        inventoryScript = GetComponentInParent<PlayerInventory>();
+        playerMovementScript = GetComponentInParent<PlayerMovement>();
+
+        weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
+        magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
+        canvasManagerScript = GameObject.Find("Canvases").GetComponent<CanvasManager>();
+        equipTrans = GameObject.Find("EquipTrans").transform;
+        crosshairContents = GameObject.Find("CrosshairPanel");
+
+        GameObject crosshairCanvas = GameObject.Find("CrossHairCanvas");
+        crosshairScript = crosshairCanvas.GetComponent<Crosshair>();
+        reloadSymbol = crosshairCanvas.transform.GetChild(0).gameObject;
+
+        // Original values
+        aimSpeedOG = aimSpeed;
+        shootSoundOG = shootSound;
+        muzzleFlashOG = muzzleFlash;
+        gunTipOG = gunTip;
+        aimingSpotOG = aimingSpot;
+        recoilXOG = recoilX;
+        recoilYOG = recoilY;
+        recoilZOG = recoilZ;
+        RPMOG = RPM;
+    }
+
     protected override void OnEnable()
     {
         base.OnEnable();
-        // SetFOV(defaultFov); // Avoid bugs
 
         // Handle ammo UI 
         magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
@@ -177,7 +195,7 @@ public class Gun : Weapon
         FovController.Instance.fovAim = zoomAmount * FovController.Instance.fovDefault;
 
         RefreshGun();
-        EquipWeapon(); // Animations etc. when equpping weapon
+        EquipWeapon(); // Animations etc. when equipping weapon
     }
 
     protected override void Update()
@@ -202,7 +220,8 @@ public class Gun : Weapon
 
         // Light from muzzle flash that is not too expensive and looks nice enough
         if (muzzleFlashLight == null || !useMuzzleLight) return;
-        bool isEmitting = muzzleFlash.isEmitting;
+        bool isEmitting = false;
+        if (muzzleFlash != null) isEmitting = muzzleFlash.isEmitting;
         muzzleFlashLight.enabled = isEmitting;
     }
 
@@ -229,7 +248,7 @@ public class Gun : Weapon
             isAiming = true;
             playedUnaimSound = false;
             // WeaponSwayAndBob.instance.disableSwayBob = true;
-            CrosshairContents.SetActive(false);
+            crosshairContents.SetActive(false);
             WeaponSwitcher.CanSwitch(false);
 
             transform.position = Vector3.Slerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), aimSpeed * Time.deltaTime);
@@ -245,7 +264,7 @@ public class Gun : Weapon
             }
             playedAimSound = false;
             // WeaponSwayAndBob.instance.disableSwayBob = false;
-            CrosshairContents.SetActive(true);
+            crosshairContents.SetActive(true);
 
             if (equipped == true && unequipping == false)
                 transform.position = Vector3.Slerp(transform.position, weaponSpot.transform.position, aimSpeed * Time.deltaTime);
@@ -463,7 +482,7 @@ public class Gun : Weapon
                 // HEAD
                 case "Head":
                     enemy.TakeDamage(Mathf.RoundToInt(damage * headshotMultiplier), percentageDamage, true);
-                    enemy.DamageLimb(0, damage);
+                    enemy.DamageLimb(0, Mathf.RoundToInt(damage * headshotMultiplier));
                     if (limbScript != null && enemy.GetHealth(0) <= 0) limbScript.RemoveLimb(0);
                     break;
 
@@ -544,7 +563,9 @@ public class Gun : Weapon
     // Main shooting function
     public void Shoot(int pelletCount)
     {
-        muzzleFlash.Play();
+        if (muzzleFlash != null) muzzleFlash.Play();
+        else Debug.Log("No muzzle flash reference!");
+
         int penetrationLeft = penetration;
         recoilScript.RecoilFire();
         audioSource.PlayOneShot(shootSound);

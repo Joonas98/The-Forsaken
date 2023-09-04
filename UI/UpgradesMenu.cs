@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using System;
 
 public class UpgradesMenu : MonoBehaviour
 {
@@ -67,6 +68,7 @@ public class UpgradesMenu : MonoBehaviour
     // All attachments are not available for all guns
     public void FilterAttachments()
     {
+        if (attchiesScript == null) return;
         FilterScopes();
         FilterMuzzles();
         FilterGrips();
@@ -80,7 +82,14 @@ public class UpgradesMenu : MonoBehaviour
         }
         else
         {
-
+            for (int i = 0; i < attchiesScript.unavailableScopes.Length; i++)
+            {
+                int scopeIndex = attchiesScript.unavailableScopes[i];
+                if (scopeIndex >= 0 && scopeIndex < scopesGroup.transform.childCount)
+                {
+                    scopesGroup.transform.GetChild(scopeIndex).gameObject.SetActive(false);
+                }
+            }
         }
     }
 

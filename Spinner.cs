@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class Spinner : MonoBehaviour
 {
-    [SerializeField] private float spinSpeed;
-    [SerializeField] private float pausedSpinSpeed;
-    [Tooltip("1 = X, 2 = Y, 3 = Z")] [SerializeField] private int spinAxis;
+    [SerializeField] private float spinSpeed = 2.5f;
+    [SerializeField] private float pausedSpinSpeed = 0.0015f;
+    [Tooltip("1 = X, 2 = Y, 3 = Z")] [SerializeField] private int spinAxis = 2;
 
     void Update()
     {

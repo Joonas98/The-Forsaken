@@ -12,7 +12,7 @@ public class Weapon : MonoBehaviour
     [HideInInspector] public bool equipped, unequipping;
 
     [Header("Weapon class audio")]
-    public AudioSource audioSource;
+    [HideInInspector] public AudioSource audioSource;
     public AudioClip equipSound, unequipSound;
 
     // Private and protected
@@ -21,6 +21,11 @@ public class Weapon : MonoBehaviour
 
     protected Transform equipTrans;
     protected Transform weaponSpot;
+
+    protected virtual void OnValidate()
+    {
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
+    }
 
     protected virtual void Awake()
     {
