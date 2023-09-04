@@ -68,7 +68,12 @@ public class UpgradesMenu : MonoBehaviour
     // All attachments are not available for all guns
     public void FilterAttachments()
     {
-        if (attchiesScript == null) return;
+        if (attchiesScript == null)
+        {
+            Debug.Log("No reference to attachment script");
+            return;
+        }
+
         FilterScopes();
         FilterMuzzles();
         FilterGrips();
@@ -87,20 +92,50 @@ public class UpgradesMenu : MonoBehaviour
                 int scopeIndex = attchiesScript.unavailableScopes[i];
                 if (scopeIndex >= 0 && scopeIndex < scopesGroup.transform.childCount)
                 {
-                    scopesGroup.transform.GetChild(scopeIndex).gameObject.SetActive(false);
+                    scopesGroup.transform.GetChild(scopeIndex + 1).gameObject.SetActive(false);
                 }
             }
         }
     }
 
+
     private void FilterMuzzles()
     {
-        if (attchiesScript.muzzleDevices.Length == 0) muzzlesGroup.SetActive(false);
+        if (attchiesScript.muzzleDevices.Length == 0)
+        {
+            muzzlesGroup.SetActive(false);
+        }
+        else
+        {
+            for (int i = 0; i < attchiesScript.unavailableMuzzles.Length; i++)
+            {
+                int muzzleIndex = attchiesScript.unavailableMuzzles[i];
+                if (muzzleIndex >= 0 && muzzleIndex < muzzlesGroup.transform.childCount)
+                {
+                    muzzlesGroup.transform.GetChild(muzzleIndex + 1).gameObject.SetActive(false);
+                }
+            }
+        }
     }
 
     private void FilterGrips()
     {
-        if (attchiesScript.grips.Length == 0) gripsGroup.SetActive(false);
+        if (attchiesScript.grips.Length == 0)
+        {
+            gripsGroup.SetActive(false);
+        }
+        else
+        {
+            for (int i = 0; i < attchiesScript.unavailableGrips.Length; i++)
+            {
+                int gripIndex = attchiesScript.unavailableGrips[i];
+                if (gripIndex >= 0 && gripIndex < gripsGroup.transform.childCount)
+                {
+                    gripsGroup.transform.GetChild(gripIndex + 1).gameObject.SetActive(false);
+                }
+            }
+        }
     }
+
 
 }

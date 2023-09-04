@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class AttachmentsScript : MonoBehaviour
 {
@@ -34,22 +35,39 @@ public class AttachmentsScript : MonoBehaviour
         // if (scopesHolder == null) scopesHolder = GameObject.Find("Scopes").transform;
         // if (muzzlesHolder == null) muzzlesHolder = GameObject.Find("Muzzles").transform;
         // if (gripsHolder == null) gripsHolder = GameObject.Find("Grips").transform;
+        if (gunScript == null) gunScript = GetComponent<Gun>();
 
         if (scopesHolder != null)
         {
             scopes = new GameObject[scopesHolder.childCount];
+
             for (int i = 0; i < scopes.Length; i++)
             {
-                scopes[i] = scopesHolder.transform.GetChild(i).gameObject;
+                if (unavailableScopes != null && unavailableScopes.Contains(i))
+                {
+                    scopes[i] = null; // Assign null for unavailable scopes
+                }
+                else
+                {
+                    scopes[i] = scopesHolder.transform.GetChild(i).gameObject;
+                }
             }
         }
 
         if (muzzlesHolder != null)
         {
             muzzleDevices = new GameObject[muzzlesHolder.childCount];
+
             for (int i = 0; i < muzzleDevices.Length; i++)
             {
-                muzzleDevices[i] = muzzlesHolder.transform.GetChild(i).gameObject;
+                if (unavailableMuzzles != null && unavailableMuzzles.Contains(i))
+                {
+                    muzzleDevices[i] = null; // Assign null for unavailable muzzle devices
+                }
+                else
+                {
+                    muzzleDevices[i] = muzzlesHolder.transform.GetChild(i).gameObject;
+                }
             }
         }
 
@@ -210,6 +228,12 @@ public class AttachmentsScript : MonoBehaviour
 
     public void EquipScope(int scopeIndex)
     {
+        if (scopeIndex == -1)
+        {
+            UnequipScope();
+            return;
+        }
+
         foreach (GameObject scope in scopes)
         {
             if (scope != null) scope.SetActive(false);
@@ -217,7 +241,7 @@ public class AttachmentsScript : MonoBehaviour
 
         if (scopes.Length >= scopeIndex && scopeIndex != -1)
         {
-            if (scopeIndex < scopes.Length) scopes[scopeIndex].SetActive(true);
+            if (scopes[scopeIndex] != null) scopes[scopeIndex].SetActive(true);
         }
 
         if (scopeIndex != -1)
@@ -230,7 +254,7 @@ public class AttachmentsScript : MonoBehaviour
         }
 
         // Disable scope mount for certain scopes. Most weapons never use scope mounts
-        if (scopeMount != null && scopes[scopeIndex].name == "4 Kobra" || scopeMount != null && scopes[scopeIndex].name == "14 PSO-1")
+        if (scopeMount != null && (scopes[scopeIndex].name == "6 RD Russian" || scopes[scopeIndex].name == "16 Russian Sniper"))
         {
             scopeMount.SetActive(false);
         }
@@ -241,7 +265,7 @@ public class AttachmentsScript : MonoBehaviour
         currentScope = -1;
         foreach (GameObject scope in scopes)
         {
-            scope.SetActive(false);
+            if (scope != null) scope.SetActive(false);
         }
 
         EquipIrons(true);
@@ -258,12 +282,12 @@ public class AttachmentsScript : MonoBehaviour
 
         foreach (GameObject grip in grips)
         {
-            grip.SetActive(false);
+            if (grip != null) grip.SetActive(false);
         }
 
         if (grips.Length >= gripIndex)
         {
-            grips[gripIndex].gameObject.SetActive(true);
+            if (grips[gripIndex] != null) grips[gripIndex].gameObject.SetActive(true);
         }
         else
         {
@@ -292,12 +316,12 @@ public class AttachmentsScript : MonoBehaviour
 
         foreach (GameObject muzzleDevice in muzzleDevices)
         {
-            muzzleDevice.SetActive(false);
+            if (muzzleDevice != null) muzzleDevice.SetActive(false);
         }
 
         if (muzzleDevices.Length >= muzzleIndex)
         {
-            muzzleDevices[muzzleIndex].SetActive(true);
+            if (muzzleDevices[muzzleIndex] != null) muzzleDevices[muzzleIndex].SetActive(true);
         }
     }
 
@@ -308,7 +332,7 @@ public class AttachmentsScript : MonoBehaviour
 
         foreach (GameObject muzzle in muzzleDevices)
         {
-            muzzle.SetActive(false);
+            if (muzzle != null) muzzle.SetActive(false);
         }
 
     }

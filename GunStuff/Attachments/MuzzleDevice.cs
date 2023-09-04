@@ -16,6 +16,11 @@ public class MuzzleDevice : MonoBehaviour
     public float adsTimeChange, equipTimeChange;
     public float xRecoilChange, yRecoilChange, zRecoilChange;
 
+    private void OnValidate()
+    {
+        if (gunScript == null) gunScript = GetComponentInParent<Gun>();
+    }
+
     private void Awake()
     {
         if (gunScript == null) gunScript = GetComponentInParent<Gun>();

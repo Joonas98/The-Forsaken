@@ -4,13 +4,17 @@ using UnityEngine;
 
 public class Scope : MonoBehaviour
 {
-
     public Gun gunScript;
     public Camera scopeCam;
     public GameObject aimPosition;
-    private GameObject aimPositionOG;
 
     [SerializeField] private float maxZoom, minZoom;
+
+    private void OnValidate()
+    {
+        if (scopeCam == null) scopeCam = GetComponentInChildren<Camera>();
+        if (gunScript == null) gunScript = GetComponentInParent<Gun>();
+    }
 
     private void Awake()
     {
