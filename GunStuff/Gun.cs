@@ -121,6 +121,7 @@ public class Gun : Weapon
     protected override void Awake()
     {
         base.Awake();
+        HandlePrefabReferences();
         HandleSceneReferences();
         HandleAnimationStrings();
     }
@@ -744,7 +745,7 @@ public class Gun : Weapon
         if (!dropCasings) return;
 
         GameObject newCasing = Instantiate(casingGO, casingTransform.position, transform.rotation * Quaternion.Euler(-90f, 0f, 0f));
-        Rigidbody newCasingRB = null;
+        Rigidbody newCasingRB;
 
         if (newCasing.GetComponent<Rigidbody>() != null)
         {
@@ -755,7 +756,7 @@ public class Gun : Weapon
             newCasingRB = newCasing.GetComponentInChildren<Rigidbody>();
         }
         newCasingRB.AddForce(transform.up * 1f + transform.right * -1f);
-        Destroy(newCasing.gameObject, casingDespawnTime);
+        Destroy(newCasing, casingDespawnTime);
     }
 
     // Update values and stuff

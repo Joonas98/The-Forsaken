@@ -9,29 +9,22 @@ public class WaveSpawner : MonoBehaviour
 {
     public StyleManager styleManager;
     public TextMeshProUGUI roundPopup1, roundPopup2;
-
     public bool useFloatingSpawn;
-
     public int waveCount;
     public int baseEnemyCount;
     public int enemyCountIncrease;
-
     public float spawnRate;
     public float waveLenght;
     public float spawnRadius, spawnProtection;
     public float floatingHeight = 500f;
-
     public Transform[] spawnPoints;
     public ParticleSystem[] spawnParticleSystems;
-    public GameObject[] enemyPrefabs;
-
+    public GameObject enemyPrefab;
     public AudioSource audioSource;
     public AudioClip waveStartSound;
-
     public LayerMask groundLayer;
-
     public GameObject spawnDebugPrefab;
-    // Privates
+
     private int waveNumber = 0;
     private GameObject playerGO;
 
@@ -45,6 +38,29 @@ public class WaveSpawner : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.T))
         {
             StartCoroutine(StartWaves());
+        }
+
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            // Create a ray from the camera's position and forward direction
+            Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+
+            // Create a RaycastHit variable to store information about the hit point
+            RaycastHit hit;
+
+            // Perform the raycast
+            if (Physics.Raycast(ray, out hit))
+            {
+                // Check if the ray hit something
+                if (hit.collider != null)
+                {
+                    // Get the point where the ray hit
+                    Vector3 spawnPosition = hit.point;
+
+                    // Call the SpawnFromCamera function to spawn an enemy at the hit point
+                    SpawnDirect(spawnPosition);
+                }
+            }
         }
     }
 
@@ -80,21 +96,28 @@ public class WaveSpawner : MonoBehaviour
         }
     }
 
-    IEnumerator Spawn(int x) // Yksittäisen vihollisen spawnaaminen
+    IEnumerator Spawn(int x) // Spawning one enemy
     {
         for (int i = 0; i < x; i++)
         {
             int randomNumber = Random.Range(0, spawnPoints.Length);
             Vector3 positionToSpawn = spawnParticleSystems[randomNumber].transform.position;
             if (!spawnParticleSystems[randomNumber].isPlaying) spawnParticleSystems[randomNumber].Play();
-            GameObject enemyToSpawn = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
 
-            GameObject newGO = Instantiate(enemyToSpawn, positionToSpawn, Quaternion.identity);
+            GameObject newGO = Instantiate(enemyPrefab, positionToSpawn, Quaternion.identity);
             GameManager.GM.enemyCount++;
             GameManager.GM.UpdateEnemyCount();
 
             yield return new WaitForSeconds(spawnRate);
         }
+    }
+
+    public void SpawnDirect(Vector3 spawnLocation)
+    {
+        // Instantiate the enemy prefab at the specified spawn location
+        Instantiate(enemyPrefab, spawnLocation, Quaternion.identity);
+        GameManager.GM.enemyCount++;
+        GameManager.GM.UpdateEnemyCount();
     }
 
     // Cast ray from sky to find spawn point
@@ -118,7 +141,6 @@ public class WaveSpawner : MonoBehaviour
             {
                 spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y, hitInfo.point.z);
 
-                GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
                 GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
                 GameManager.GM.enemyCount++;
                 GameManager.GM.UpdateEnemyCount();

@@ -126,29 +126,41 @@ public class ObjectPlacing : MonoBehaviour
     {
         if (activeAimer == null) return;
 
-        if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
+        Renderer renderer = activeAimer.GetComponent<Renderer>();
+
+        if (renderer == null)
         {
-            Vector3 aimerPosition = hit.point;
-            float angle = Vector3.Angle(hit.normal, Vector3.up);
+            // Try to find a Renderer in children
+            renderer = activeAimer.GetComponentInChildren<Renderer>();
+        }
 
-            if (angle >= placingInfo.minAllowedAngle && angle <= placingInfo.maxAllowedAngle)
+        if (renderer != null)
+        {
+            if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
             {
-                activeAimer.GetComponent<Renderer>().material.color = validPlacementColor;
-                aimerPosition = hit.point;
-                activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+                Vector3 aimerPosition = hit.point;
+                float angle = Vector3.Angle(hit.normal, Vector3.up);
 
-                // Place the aimed object when left clicking
-                if (Input.GetMouseButtonDown(0))
+                if (angle >= placingInfo.minAllowedAngle && angle <= placingInfo.maxAllowedAngle)
                 {
-                    _ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
+                    renderer.material.color = validPlacementColor;
+                    aimerPosition = hit.point;
+                    activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+
+                    // Place the aimed object when left clicking
+                    if (Input.GetMouseButtonDown(0))
+                    {
+                        _ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
+                    }
                 }
-            }
-            else
-            {
-                activeAimer.GetComponent<Renderer>().material.color = invalidPlacementColor;
-                aimerPosition = initialAimerPosition;
-                activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+                else
+                {
+                    renderer.material.color = invalidPlacementColor;
+                    aimerPosition = initialAimerPosition;
+                    activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+                }
             }
         }
     }
+
 }

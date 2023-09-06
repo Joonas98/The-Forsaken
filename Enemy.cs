@@ -36,6 +36,7 @@ public class Enemy : MonoBehaviour
     public Rigidbody[] rigidbodies;
     public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
     public Animator animator;
+    public Transform torsoTransform; // Used e.g. turret targeting
 
     private GameObject player;
 
@@ -340,7 +341,9 @@ public class Enemy : MonoBehaviour
 
     private void ContinueAfterRagdoll()
     {
-        if (enemyNavScript.IsAgentOnNavMesh(gameObject) == false) enemyNavScript.MoveToNavMesh();
+        // 6.9.2023 Trying to always call MoveToNavMesh() because this is causing errors sometimes
+        // if (enemyNavScript.IsAgentOnNavMesh(gameObject) == false) enemyNavScript.MoveToNavMesh();
+        enemyNavScript.MoveToNavMesh();
         navAgent.isStopped = false;
     }
 
