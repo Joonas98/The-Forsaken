@@ -29,30 +29,29 @@ public class EnemyNav : MonoBehaviour
     private void Update()
     {
         if (!navMeshAgent.isActiveAndEnabled) return; // Avoid errors when agent is disabled
-
         navMeshAgent.destination = targetLocation.position;
 
-        if (navMeshAgent.remainingDistance < navMeshAgent.stoppingDistance) // Rotate towards player when stoppingDistance is reached
-        {
-            navMeshAgent.updateRotation = false;
-            Vector3 lookPos = targetLocation.position - transform.position;
-            lookPos.y = 0;
-            Quaternion rotation = Quaternion.LookRotation(lookPos);
-            transform.rotation = Quaternion.Slerp(transform.rotation, rotation, 5f);
-        }
-        else
-        {
-            if (navMeshAgent.updateRotation != true) navMeshAgent.updateRotation = true;
-        }
+        // Old system, seems to be obsolete as of 7.9.2023
+        //  if (navMeshAgent.remainingDistance < navMeshAgent.stoppingDistance) // Rotate towards player when stoppingDistance is reached
+        //  {
+        //      navMeshAgent.updateRotation = false;
+        //      Vector3 lookPos = targetLocation.position - transform.position;
+        //      lookPos.y = 0;
+        //      Quaternion rotation = Quaternion.LookRotation(lookPos);
+        //      transform.rotation = Quaternion.Slerp(transform.rotation, rotation, 5f);
+        //  }
+        //  else
+        //  {
+        //      if (navMeshAgent.updateRotation != true) navMeshAgent.updateRotation = true;
+        //  }
     }
 
     public bool IsAgentOnNavMesh(GameObject agentObject)
     {
         Vector3 agentPosition = agentObject.transform.position;
-        NavMeshHit hit;
 
         // Check for nearest point on navmesh to agent, within onMeshThreshold
-        if (NavMesh.SamplePosition(agentPosition, out hit, onMeshThreshold, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(agentPosition, out NavMeshHit hit, onMeshThreshold, NavMesh.AllAreas))
         {
             // Check if the positions are vertically aligned
             if (Mathf.Approximately(agentPosition.x, hit.position.x)
@@ -62,14 +61,12 @@ public class EnemyNav : MonoBehaviour
                 return agentPosition.y >= hit.position.y;
             }
         }
-
         return false;
     }
 
     public void MoveToNavMesh()
     {
-        NavMeshHit myNavHit;
-        if (NavMesh.SamplePosition(transform.position, out myNavHit, 100, -1))
+        if (NavMesh.SamplePosition(transform.position, out NavMeshHit myNavHit, 100, -1))
         {
             transform.position = myNavHit.position;
         }

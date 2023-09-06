@@ -37,6 +37,7 @@ public class Enemy : MonoBehaviour
     public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
     public Animator animator;
     public Transform torsoTransform; // Used e.g. turret targeting
+    public DebuffManager debuffManager;
 
     private GameObject player;
 
@@ -57,12 +58,6 @@ public class Enemy : MonoBehaviour
 
     [Header("Effects")]
     public Gradient eyeGradient;
-    public GameObject[] effectList;
-    public enum debuffs
-    {
-        Arcane, Crimson, Dark, Fairy, Fire, Frost, Holy, Light, Mist, Nature, ShockBlue, ShockYellow,
-        Universe, Void, Water, Wind
-    }
     public Material originalMaterial;
 
     private Material eyeMaterialR, eyeMaterialL;
@@ -113,7 +108,7 @@ public class Enemy : MonoBehaviour
         navAgent.speed = movementSpeed;
         ogMovementSpeed = navAgent.speed;
 
-        if (!GameManager.GM.useEnemyDebug)
+        if (!GameManager.GM.useEnemyDebug && debugVelocityTextfield != null)
         {
             Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
         }
@@ -130,8 +125,19 @@ public class Enemy : MonoBehaviour
         animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
         CalculateSlows();
         HandleSwinging();
-        CheckRagdollMagnitude();
         DebugUpdate();
+
+        if (bodyRB.transform.position.y < -50f)
+        {
+            Debug.Log("Enemy bugged out of map, teleporting");
+            bodyRB.position = transform.position;
+            TurnOffRagdoll();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        CheckRagdollMagnitude();
     }
 
     private void SetLimbHealth()
@@ -153,18 +159,19 @@ public class Enemy : MonoBehaviour
 
     private void CheckRagdollMagnitude()
     {
+        if (!ragdolling || isDead) return;
         // When magnitude has been low enough for certain time, stand up
-        if (bodyRB.velocity.magnitude < standUpMagnitude && ragdolling && !isDead && !standCountdownActive)
+        if (bodyRB.velocity.magnitude < standUpMagnitude && ragdolling && !standCountdownActive)
         {
             countdown = Time.time;
             standCountdownActive = true;
         }
-        else if (bodyRB.velocity.magnitude > standUpMagnitude && ragdolling && !isDead)
+        else if (bodyRB.velocity.magnitude > standUpMagnitude && ragdolling)
         {
             standCountdownActive = false;
         }
 
-        if (Time.time > countdown + standUpDelay && ragdolling && !isDead && bodyRB.velocity.magnitude < standUpMagnitude)
+        if (Time.time > countdown + standUpDelay && bodyRB.velocity.magnitude < standUpMagnitude)
         {
             TurnOffRagdoll();
         }
@@ -180,9 +187,9 @@ public class Enemy : MonoBehaviour
         Destroy(gameObject, despawnTime);
 
         navAgent.speed = 0;
-        navAgent.isStopped = true;
+        // navAgent.isStopped = true;
         enemyNavScript.enabled = false;
-        navAgent.enabled = false;
+        // navAgent.enabled = false;
 
         bodyRB.velocity = new Vector3(0, 0, 0);
         foreach (Rigidbody rb in rigidbodies) // Otherwise gameobjects keep moving forever
@@ -204,6 +211,21 @@ public class Enemy : MonoBehaviour
         GameManager.GM.UpdateEnemyCount();
 
         Destroy(gameObject, 0f);
+    }
+
+    public void Stun(float duration)
+    {
+        if (ragdolling || isDead) return;
+        navAgent.isStopped = true;
+        animator.enabled = false;
+        Invoke(nameof(Unstun), duration);
+    }
+
+    public void Unstun()
+    {
+        if (ragdolling || isDead) return;
+        navAgent.isStopped = false;
+        animator.enabled = true;
     }
 
     public void HandlePopup(int number, bool headshot)
@@ -263,18 +285,6 @@ public class Enemy : MonoBehaviour
         return limbHealths[limbIndex];
     }
 
-    public IEnumerator ApplyDebuff(debuffs debuffenum, float duration)
-    {
-        effectList[(int)debuffenum].SetActive(true); // FX
-        yield return new WaitForSeconds(duration);
-        RemoveDebuff(debuffenum);
-    }
-
-    public void RemoveDebuff(debuffs debuffenum)
-    {
-        effectList[(int)debuffenum].SetActive(false); // FX
-    }
-
     private void SetRagdollParts()
     {
         Collider[] colliders = gameObject.GetComponentsInChildren<Collider>();
@@ -300,42 +310,55 @@ public class Enemy : MonoBehaviour
             rb.isKinematic = false;
         }
 
-        navAgent.isStopped = true;
-        standCountdownActive = false;
-        animator.enabled = false;
-
         foreach (Collider c in ragdollParts)
         {
             c.isTrigger = false;
         }
+
+        // Stop and disable the NavMesh agent
+        if (navAgent != null)
+        {
+            navAgent.isStopped = true;
+            navAgent.enabled = false;
+        }
+
+        standCountdownActive = false;
+        animator.enabled = false;
     }
 
     public void TurnOffRagdoll()
     {
-        if (isDead) return;
+        if (isDead || !ragdolling) return;
+        ragdolling = false;
 
         foreach (Rigidbody rb in rigidbodies)
         {
             rb.isKinematic = true;
         }
 
-        ragdolling = false;
-        transform.position = modelRoot.transform.position; //Enemy GO does not move with ragdoll, so do that when stop ragdoll
-        animator.enabled = true;
-        if (!isCrawling)
-        {
-            animator.Play("Stand up");
-            Invoke("ContinueAfterRagdoll", 2f);
-        }
-        else
-        {
-            animator.Play("Base Blend Tree Crawl");
-            Invoke("ContinueAfterRagdoll", 1f);
-        }
-
         foreach (Collider c in ragdollParts)
         {
             c.isTrigger = true;
+        }
+
+        transform.position = modelRoot.transform.position; //Enemy GO does not move with ragdoll, so do that when stop ragdoll
+        animator.enabled = true;
+
+        // Re-enable and start the NavMesh agent
+        if (navAgent != null)
+        {
+            navAgent.enabled = true;
+            navAgent.isStopped = true;
+            if (!isCrawling)
+            {
+                animator.Play("Stand up");
+                Invoke(nameof(ContinueAfterRagdoll), 2f);
+            }
+            else
+            {
+                animator.Play("Base Blend Tree Crawl");
+                Invoke(nameof(ContinueAfterRagdoll), 1f);
+            }
         }
     }
 
@@ -343,7 +366,9 @@ public class Enemy : MonoBehaviour
     {
         // 6.9.2023 Trying to always call MoveToNavMesh() because this is causing errors sometimes
         // if (enemyNavScript.IsAgentOnNavMesh(gameObject) == false) enemyNavScript.MoveToNavMesh();
+        if (ragdolling) return;
         enemyNavScript.MoveToNavMesh();
+        if (!navAgent.isActiveAndEnabled) navAgent.enabled = true;
         navAgent.isStopped = false;
     }
 
@@ -505,6 +530,12 @@ public class Enemy : MonoBehaviour
 
     public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
     {
+        if (debuffManager.IsDebuffActive(DebuffManager.Debuffs.ShockBlue))
+        {
+            eyeMaterialR.SetColor("_EmissionColor", debuffManager.shockedEyeColor * Mathf.Pow(3, 3));
+            eyeMaterialL.SetColor("_EmissionColor", debuffManager.shockedEyeColor * Mathf.Pow(3, 3));
+            return;
+        }
         eyeMaterialR.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
         eyeMaterialL.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
     }
@@ -532,6 +563,7 @@ public class Enemy : MonoBehaviour
 
     public void DebugUpdate()
     {
+        if (debugVelocityTextfield == null || debugAnimatorVelocity == null) return;
         debugVelocityTextfield.text = navAgent.velocity.magnitude.ToString("F2");
         debugAnimatorVelocity.text = animator.GetFloat("Velocity").ToString();
     }

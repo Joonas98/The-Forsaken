@@ -53,7 +53,7 @@ public class UkkoBlastAbility : Ability
             {
                 x.TakeDamage(damage);
                 damagedEnemies.Add(x);
-                x.StartCoroutine(x.ApplyDebuff(Enemy.debuffs.ShockBlue, 2f));
+                x.debuffManager.ApplyDebuff(DebuffManager.Debuffs.ShockBlue, 2f);
             }
         }
 

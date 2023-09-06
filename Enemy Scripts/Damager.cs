@@ -7,6 +7,11 @@ public class Damager : MonoBehaviour
 
     [SerializeField] private Enemy enemyScript;
 
+    private void Start()
+    {
+        if (enemyScript == null) enemyScript = GetComponentInParent<Enemy>();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") == true)
