@@ -27,9 +27,9 @@ public class Enemy : MonoBehaviour
     [Tooltip("How close to player to start swinging")] public float attackDistance;
 
     [Header("References")]
+    public LimbManager limbManager;
     public List<Collider> ragdollParts = new List<Collider>();
     public Collider[] damagers;
-    public Collider enemyCollider;
     public GameObject[] zombieSkins;
     public GameObject eyeRight, eyeLeft;
     public GameObject modelRoot; // Hips
@@ -57,6 +57,7 @@ public class Enemy : MonoBehaviour
     public Color normalColor, headshotColor, healingColor;
 
     [Header("Effects")]
+    public ParticleSystem bloodFX;
     public Gradient eyeGradient;
     public Material originalMaterial;
 
@@ -181,15 +182,12 @@ public class Enemy : MonoBehaviour
     {
         if (isDead) return;
         isDead = true;
-        enemyCollider.enabled = false;
 
         TurnOnRagdoll();
         Destroy(gameObject, despawnTime);
 
         navAgent.speed = 0;
-        // navAgent.isStopped = true;
         enemyNavScript.enabled = false;
-        // navAgent.enabled = false;
 
         bodyRB.velocity = new Vector3(0, 0, 0);
         foreach (Rigidbody rb in rigidbodies) // Otherwise gameobjects keep moving forever
@@ -249,14 +247,16 @@ public class Enemy : MonoBehaviour
         if (percentageAmount > 0)
         {
             var hpPercentage = (100 / maxHealth) * percentageAmount;
-            damage = damage + hpPercentage;
+            damage += hpPercentage;
         }
+
         HandlePopup(damage, headshot);
         currentHealth -= damage;
         healthPercentage = (100 / maxHealth) * currentHealth;
         newMaterial.SetFloat("_BloodAmount", 1f);
         UpdateEyeColor(); // Enemy health can be seen from eyes
 
+        // Sometimes make noise when damaged
         if (!isDead && Random.Range(0, 3) == 1)
         {
             int rindex = Random.Range(0, takeDamageSounds.Length);
@@ -267,6 +267,75 @@ public class Enemy : MonoBehaviour
         {
             // Todo: add death sound?
             Die();
+        }
+    }
+
+    public void GetShot(RaycastHit hit, int damageAmount, int percentageDamage = 0)
+    {
+        EnemyImpactFX(hit);
+        switch (hit.collider.tag)
+        {
+            // HEAD
+            case "Head":
+                TakeDamage(damageAmount, percentageDamage, true);
+                DamageLimb(0, damageAmount);
+                if (limbManager != null && GetHealth(0) <= 0) limbManager.RemoveLimb(0);
+                break;
+
+            // LEGS
+            case "UpperLegL":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(2, damageAmount);
+                if (limbManager != null && GetHealth(2) <= 0) limbManager.RemoveLimb(2);
+                break;
+
+            case "UpperLegR":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(4, damageAmount);
+                if (limbManager != null && GetHealth(4) <= 0) limbManager.RemoveLimb(4);
+                break;
+
+            case "LowerLegL":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(1, damageAmount);
+                if (limbManager != null && GetHealth(1) <= 0) limbManager.RemoveLimb(1);
+                break;
+
+            case "LowerLegR":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(3, damageAmount);
+                if (limbManager != null && GetHealth(3) <= 0) limbManager.RemoveLimb(3);
+                break;
+
+            // ARMS
+            case "ArmL":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(7, damageAmount);
+                if (limbManager != null && GetHealth(7) <= 0) limbManager.RemoveLimb(7);
+                break;
+
+            case "ArmR":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(5, damageAmount);
+                if (limbManager != null && GetHealth(5) <= 0) limbManager.RemoveLimb(5);
+                break;
+
+            case "ShoulderL":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(8, damageAmount);
+                if (limbManager != null && GetHealth(8) <= 0) limbManager.RemoveLimb(8);
+                break;
+
+            case "ShoulderR":
+                TakeDamage(damageAmount, percentageDamage);
+                DamageLimb(6, damageAmount);
+                if (limbManager != null && GetHealth(6) <= 0) limbManager.RemoveLimb(6);
+                break;
+
+            // TORSO
+            case "Torso":
+                TakeDamage(damageAmount, percentageDamage);
+                break;
         }
     }
 
@@ -566,6 +635,16 @@ public class Enemy : MonoBehaviour
         if (debugVelocityTextfield == null || debugAnimatorVelocity == null) return;
         debugVelocityTextfield.text = navAgent.velocity.magnitude.ToString("F2");
         debugAnimatorVelocity.text = animator.GetFloat("Velocity").ToString();
+    }
+
+    // Blood effect at enemies
+    public void EnemyImpactFX(RaycastHit hit)
+    {
+        if (bloodFX != null)
+        {
+            ParticleSystem bloodFXGO = Instantiate(bloodFX, hit.point, Quaternion.LookRotation(hit.normal));
+            Destroy(bloodFXGO.gameObject, 2f);
+        }
     }
 
 }

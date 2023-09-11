@@ -51,10 +51,14 @@ public class TurretTargeting : MonoBehaviour
                 {
                     float distance = Vector3.Distance(transform.position, collider.transform.position);
 
-                    if (distance < closestDistance)
+                    // Perform a raycast to check LOS
+                    if (CanSeeTarget(collider.transform))
                     {
-                        closestDistance = distance;
-                        newTarget = enemyScript.torsoTransform;
+                        if (distance < closestDistance)
+                        {
+                            closestDistance = distance;
+                            newTarget = enemyScript.torsoTransform;
+                        }
                     }
                 }
             }
@@ -64,4 +68,22 @@ public class TurretTargeting : MonoBehaviour
         lockedTargetTrans = newTarget;
         lockedAtTarget = newTarget != null;
     }
+
+    private bool CanSeeTarget(Transform target)
+    {
+        RaycastHit hit;
+        Vector3 direction = (target.position - rotatingPart.transform.position).normalized;
+
+        if (Physics.Raycast(rotatingPart.transform.position, direction, out hit, targetingRange, LayerMask.NameToLayer("Enemy")))
+        {
+            // We have line-of-sight to the target since it's on the "Enemy" layer
+            return true;
+        }
+        else
+        {
+            // There is an obstacle in the way or the target is not on the "Enemy" layer
+            return false;
+        }
+    }
+
 }

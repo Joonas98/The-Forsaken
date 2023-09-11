@@ -39,10 +39,10 @@ public class Gun : Weapon
     public float vireReturn = 8;
 
     [Header("Effects")]
-    public bool useMuzzleLight = true; // When using suppressor don't emit light
+    public bool isSilenced = false; // Adjust sound and muzzle flash light
     [HideInInspector] public Light muzzleFlashLight;
     [HideInInspector] public ParticleSystem muzzleFlash;
-    public ParticleSystem bloodFX, hitFX, groundFX;
+    public ParticleSystem hitFX, groundFX;
     public LineRenderer LR;
     public bool dropCasings;
     public GameObject casingGO;
@@ -55,7 +55,7 @@ public class Gun : Weapon
 
     [Header("Audio")]
     public AudioMixer audioMixer;
-    public AudioClip shootSound;
+    public AudioClip shootSound, silencedShootSound;
     public AudioClip reloadSound, aimSound, unaimSound;
     public AudioClip zoomScopeInSound, zoomScopeOutSound;
     public AudioClip actionSound, dryFireSound; // Action sound is pump shotgun, bolt action etc.
@@ -149,7 +149,7 @@ public class Gun : Weapon
         if (aimingSpot == null) aimingSpot = transform.Find("AimSpot").gameObject;
         if (casingTransform == null) casingTransform = transform.Find("CasingSpot");
 
-        if (muzzleFlashLight != null) useMuzzleLight = true;
+        if (muzzleFlashLight != null) isSilenced = false;
     }
 
     // Find some references for the script within the scene
@@ -220,7 +220,7 @@ public class Gun : Weapon
         // Debug.Log(unsprintLerp * sprintLerpMultiplier * aimSpeed);
 
         // Light from muzzle flash that is not too expensive and looks nice enough
-        if (muzzleFlashLight == null || !useMuzzleLight) return;
+        if (muzzleFlashLight == null || isSilenced) return;
         bool isEmitting = false;
         if (muzzleFlash != null) isEmitting = muzzleFlash.isEmitting;
         muzzleFlashLight.enabled = isEmitting;
@@ -457,102 +457,39 @@ public class Gun : Weapon
             targetRB.AddForce(((mainCamera.transform.position - hit.transform.position) * -1) * knockbackPower, ForceMode.Impulse);
         }
 
-        // Destroyable stuff like windows or boxes etc.
-        if (hit.collider.CompareTag("Destroyable"))
-        {
-            Destroy(hit.collider.gameObject);
-        }
-
         // Handle enemies
         Enemy enemy = hit.collider.gameObject.GetComponentInParent<Enemy>();
         if (enemy != null)
         {
-            LimbManager limbScript = hit.collider.gameObject.GetComponentInParent<LimbManager>();
-            EnemyImpactFX(hit);
 
             if (enemy.GetHealth() > 0) // Hitmarker
             {
-                if (hit.collider.tag == "Head")
+                if (hit.collider.CompareTag("Head"))
                     canvasManagerScript.Hitmarker(hit.point, true);
                 else
                     canvasManagerScript.Hitmarker(hit.point, false);
             }
 
-            switch (hit.collider.tag)
+            if (hit.collider.CompareTag("Head"))
             {
-                // HEAD
-                case "Head":
-                    enemy.TakeDamage(Mathf.RoundToInt(damage * headshotMultiplier), percentageDamage, true);
-                    enemy.DamageLimb(0, Mathf.RoundToInt(damage * headshotMultiplier));
-                    if (limbScript != null && enemy.GetHealth(0) <= 0) limbScript.RemoveLimb(0);
-                    break;
-
-                // LEGS
-                case "UpperLegL":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(2, damage);
-                    if (limbScript != null && enemy.GetHealth(2) <= 0) limbScript.RemoveLimb(2);
-                    break;
-
-                case "UpperLegR":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(4, damage);
-                    if (limbScript != null && enemy.GetHealth(4) <= 0) limbScript.RemoveLimb(4);
-                    break;
-
-                case "LowerLegL":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(1, damage);
-                    if (limbScript != null && enemy.GetHealth(1) <= 0) limbScript.RemoveLimb(1);
-                    break;
-
-                case "LowerLegR":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(3, damage);
-                    if (limbScript != null && enemy.GetHealth(3) <= 0) limbScript.RemoveLimb(3);
-                    break;
-
-                // ARMS
-                case "ArmL":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(7, damage);
-                    if (limbScript != null && enemy.GetHealth(7) <= 0) limbScript.RemoveLimb(7);
-                    break;
-
-                case "ArmR":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(5, damage);
-                    if (limbScript != null && enemy.GetHealth(5) <= 0) limbScript.RemoveLimb(5);
-                    break;
-
-                case "ShoulderL":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(8, damage);
-                    if (limbScript != null && enemy.GetHealth(8) <= 0) limbScript.RemoveLimb(8);
-                    break;
-
-                case "ShoulderR":
-                    enemy.TakeDamage(damage, percentageDamage);
-                    enemy.DamageLimb(6, damage);
-                    if (limbScript != null && enemy.GetHealth(6) <= 0) limbScript.RemoveLimb(6);
-                    break;
-
-                // TORSO
-                case "Torso":
-                    enemy.TakeDamage(damage, percentageDamage);
-
-                    // Torso Punch ability
-                    if (AbilityMaster.abilities.Contains(6))
-                    {
-                        if (UnityEngine.Random.value < 0.25f) // 25% chance
-                        {
-                            enemy.TurnOnRagdoll();
-                            audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
-                            enemy.Invoke("TurnOffRagdoll", 1f);
-                        }
-                    }
-                    break;
+                enemy.GetShot(hit, Mathf.RoundToInt(damage * headshotMultiplier), percentageDamage);
             }
+            else
+            {
+                enemy.GetShot(hit, damage, percentageDamage);
+            }
+
+            // Torso Punch ability
+            if (AbilityMaster.abilities.Contains(6) && hit.collider.CompareTag("Torso"))
+            {
+                if (UnityEngine.Random.value < 0.25f) // 25% chance
+                {
+                    if (enemy.isDead) return;
+                    enemy.TurnOnRagdoll();
+                    audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
+                }
+            }
+
         }
         else // Hit something like ground
         {
@@ -569,8 +506,12 @@ public class Gun : Weapon
 
         int penetrationLeft = penetration;
         recoilScript.RecoilFire();
-        audioSource.PlayOneShot(shootSound);
-        Invoke("PlayActionSound", actionDelay);
+        Invoke(nameof(PlayActionSound), actionDelay);
+
+        // Play shooting sound
+        if (!isSilenced) audioSource.PlayOneShot(shootSound);
+        else audioSource.PlayOneShot(silencedShootSound);
+
         if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
         DropCasing();
 
@@ -592,7 +533,7 @@ public class Gun : Weapon
             RaycastHit[] hitPointsList;
             if (!isAiming) hitPointsList = Physics.RaycastAll(mainCamera.transform.position, forwardVector, Mathf.Infinity, targetLayers);
             else hitPointsList = Physics.RaycastAll(aimingSpot.transform.position, forwardVector, Mathf.Infinity, targetLayers);
-            System.Array.Sort(hitPointsList, (x, y) => x.distance.CompareTo(y.distance));
+            Array.Sort(hitPointsList, (x, y) => x.distance.CompareTo(y.distance));
 
             if (hitPointsList.Length == 0)
             {
@@ -632,22 +573,6 @@ public class Gun : Weapon
                     --penLeft;
                 }
             }
-        }
-    }
-
-    // Blood effect at enemies
-    public void EnemyImpactFX(RaycastHit hit)
-    {
-        if (bloodFX != null)
-        {
-            ParticleSystem bloodFXGO = Instantiate(bloodFX, hit.point, Quaternion.LookRotation(hit.normal));
-            Destroy(bloodFXGO.gameObject, 2f);
-        }
-
-        if (hitFX != null)
-        {
-            ParticleSystem hitFXGO = Instantiate(hitFX, hit.point, Quaternion.identity);
-            Destroy(hitFXGO, 2f);
         }
     }
 

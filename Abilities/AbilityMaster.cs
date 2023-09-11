@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Linq;
 
 // Global holder for ability data
 public class AbilityMaster : MonoBehaviour
@@ -51,7 +52,7 @@ public class AbilityMaster : MonoBehaviour
         AbilityHolder abilityHolder = player.AddComponent<AbilityHolder>();
         abilityHolder.ability = abilitiesList[abilityNumber];
         GameObject newAbility = Instantiate(abilityPrefab);
-        newAbility.transform.SetParent(abilitiesParent);
+        newAbility.transform.SetParent(abilitiesParent, false);
 
         // Some abilities need to do something right away
         //  newAbility.GetComponent<Ability>().InitializeAbility();
@@ -81,13 +82,18 @@ public class AbilityMaster : MonoBehaviour
             {
                 Debug.Log("Out of ability hotkeys");
             }
+
+            // Set the new ability as the first child under abilitiesParent
+            newAbility.transform.SetAsFirstSibling();
         }
         else
         {
             hotkeyText.text = ""; // No hotkey on passives
+                                  // Set the new ability as the last child under abilitiesParent
+            newAbility.transform.SetAsLastSibling();
         }
-
     }
+
 
     public string GetAbilityDescription(int abilityNumber)
     {
@@ -101,5 +107,4 @@ public class AbilityMaster : MonoBehaviour
             return null;
         }
     }
-
 }

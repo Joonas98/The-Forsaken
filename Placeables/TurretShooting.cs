@@ -71,7 +71,8 @@ public class TurretShooting : MonoBehaviour
 
             if (enemy != null)
             {
-                enemy.TakeDamage(damage);
+                // enemy.TakeDamage(damage);
+                enemy.GetShot(hit, damage);
 
                 shootingFX.Play();
                 audioSource.PlayOneShot(shootSound);

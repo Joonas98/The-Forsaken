@@ -5,6 +5,9 @@ using UnityEngine.UI;
 
 public class ObjectPlacing : MonoBehaviour
 {
+    [Header("Variables")]
+    public float rotationSpeed;
+
     [System.Serializable]
     public struct PlacingInfo
     {
@@ -31,6 +34,7 @@ public class ObjectPlacing : MonoBehaviour
     private GameObject placingObject;
     private Vector3 initialAimerPosition;
     private int chosenObjectIndex = 0;
+    private bool isRotating = false; // Flag to check if the player is currently rotating the object.
 
     private void Awake()
     {
@@ -99,6 +103,30 @@ public class ObjectPlacing : MonoBehaviour
                 StopPlacing();
             }
         }
+
+        // // Rotating objects that player is about to place
+        // // Check for right mouse button click to start rotating.
+        // if (Input.GetMouseButtonDown(1))
+        // {
+        //     isRotating = true;
+        // }
+        //
+        // // Check for right mouse button release to stop rotating.
+        // if (Input.GetMouseButtonUp(1))
+        // {
+        //     isRotating = false;
+        // }
+        //
+        // // Rotate the object if the player is holding the right mouse button.
+        // if (isRotating)
+        // {
+        //     float rotationSpeed = 50.0f;  // Adjust the rotation speed as needed.
+        //     float mouseX = Input.GetAxis("Mouse X");
+        //
+        //     // Rotate the activeAimer around its up axis based on mouse input.
+        //     activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
+        // }
+
     }
 
     private void StartPlacing(PlacingInfo placingInfo)
@@ -120,6 +148,7 @@ public class ObjectPlacing : MonoBehaviour
         if (activeAimer != null) Destroy(activeAimer);
         isPlacing = false;
         placingObject = null;
+        MouseLook.instance.canRotate = true; // Bug prevention
     }
 
     private void HandlePlacement(PlacingInfo placingInfo)
@@ -145,7 +174,22 @@ public class ObjectPlacing : MonoBehaviour
                 {
                     renderer.material.color = validPlacementColor;
                     aimerPosition = hit.point;
-                    activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+
+                    // Rotate the aimed object with right mouse button
+                    if (Input.GetMouseButton(1))
+                    {
+                        float mouseX = Input.GetAxis("Mouse X");
+                        activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
+                        MouseLook.instance.canRotate = false;
+                    }
+
+                    if (Input.GetMouseButtonUp(1))
+                    {
+                        MouseLook.instance.canRotate = true;
+                    }
+
+                    // activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+                    activeAimer.transform.position = (aimerPosition);
 
                     // Place the aimed object when left clicking
                     if (Input.GetMouseButtonDown(0))
