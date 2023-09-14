@@ -51,33 +51,31 @@ public class MeleeWeapon : Weapon
         base.Update();
         HandleInputs();
 
-        if (canAttack == true && attacking == true && equipped)
+        if (canAttack && attacking && equipped)
         {
             int randomSwingClip = Random.Range(0, swingSounds.Length);
             audioSource.PlayOneShot(swingSounds[randomSwingClip]);
             StartCoroutine(Attack(false));
         }
 
-        if (canAttack == true && attackingSecondary == true && equipped)
+        if (canAttack && attackingSecondary && equipped)
         {
             int randomSwingClip = Random.Range(0, swingSounds.Length);
             audioSource.PlayOneShot(swingSounds[randomSwingClip]);
             StartCoroutine(Attack(true));
         }
 
-        if (equipped && !unequipping && !attacking && !attackingSecondary)
+        if (equipped && !unequipping && !attacking && !attackingSecondary && canAttack)
         {
-            transform.position = Vector3.Lerp(transform.position, weaponSpot.transform.position, 1f * Time.deltaTime);
-            // transform.rotation = Quaternion.Lerp(transform.rotation, weaponSpot.transform.rotation, 5f * Time.deltaTime);
+            transform.SetPositionAndRotation(Vector3.Lerp(transform.position, weaponSpot.transform.position, 5f * Time.deltaTime), Quaternion.Lerp(transform.rotation, weaponSpot.transform.rotation, 5f * Time.deltaTime));
         }
-
     }
 
     public void HandleInputs()
     {
         if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) return;
 
-        if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack == true)
+        if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack)
         {
             attacking = true;
         }
@@ -86,7 +84,7 @@ public class MeleeWeapon : Weapon
             attacking = false;
         }
 
-        if (Input.GetButtonDown("Fire2") && Time.timeScale > 0 && canAttack == true)
+        if (Input.GetButtonDown("Fire2") && Time.timeScale > 0 && canAttack)
         {
             attackingSecondary = true;
         }
@@ -149,9 +147,11 @@ public class MeleeWeapon : Weapon
             if (!attackedEnemies.Contains(enemyScript))
             {
                 enemyScript.TakeDamage(damage);
-                ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
                 audioSource.PlayOneShot(stabSounds[0]);
-                Destroy(bloodFXGO.gameObject, 2f);
+
+                Vector3 hitPosition = other.transform.position;
+                Vector3 hitNormal = (hitPosition - other.transform.position).normalized;
+                enemyScript.EnemyImpactFX(hitPosition, hitNormal);
 
                 if (!attackedEnemies.Contains(enemyScript))
                     attackedEnemies.Add(enemyScript);
@@ -159,7 +159,7 @@ public class MeleeWeapon : Weapon
         }
 
         // Slashes
-        if (IsAnimationPlaying(attackAnimations[1].name))
+        if (IsAnimationPlaying(attackAnimations[1].name) || IsAnimationPlaying(attackAnimations[2].name))
         {
             enemyScript = other.GetComponentInParent<Enemy>();
             if (enemyScript == null) return;
@@ -167,26 +167,11 @@ public class MeleeWeapon : Weapon
             if (!attackedEnemies.Contains(enemyScript))
             {
                 enemyScript.TakeDamage(damageSecondary);
-                ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
                 audioSource.PlayOneShot(stabSounds[1]);
-                Destroy(bloodFXGO.gameObject, 2f);
 
-                if (!attackedEnemies.Contains(enemyScript))
-                    attackedEnemies.Add(enemyScript);
-            }
-        }
-
-        if (IsAnimationPlaying(attackAnimations[2].name))
-        {
-            enemyScript = other.GetComponentInParent<Enemy>();
-            if (enemyScript == null) return;
-
-            if (!attackedEnemies.Contains(enemyScript))
-            {
-                enemyScript.TakeDamage(damageSecondary);
-                ParticleSystem bloodFXGO = Instantiate(bloodFX, other.transform.position, Quaternion.identity);
-                audioSource.PlayOneShot(stabSounds[1]);
-                Destroy(bloodFXGO.gameObject, 2f);
+                Vector3 hitPosition = other.transform.position;
+                Vector3 hitNormal = (hitPosition - other.transform.position).normalized;
+                enemyScript.EnemyImpactFX(hitPosition, hitNormal);
 
                 if (!attackedEnemies.Contains(enemyScript))
                     attackedEnemies.Add(enemyScript);
@@ -202,5 +187,4 @@ public class MeleeWeapon : Weapon
         // Check if the Animator is currently playing the animation state
         return animator.GetCurrentAnimatorStateInfo(0).shortNameHash == animationHash;
     }
-
 }

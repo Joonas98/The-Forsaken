@@ -35,7 +35,7 @@ public class WaveSpawner : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.I))
         {
             StartCoroutine(StartWaves());
         }

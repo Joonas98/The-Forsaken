@@ -272,7 +272,7 @@ public class Enemy : MonoBehaviour
 
     public void GetShot(RaycastHit hit, int damageAmount, int percentageDamage = 0)
     {
-        EnemyImpactFX(hit);
+        EnemyImpactFX(hit.point, hit.normal);
         switch (hit.collider.tag)
         {
             // HEAD
@@ -638,11 +638,11 @@ public class Enemy : MonoBehaviour
     }
 
     // Blood effect at enemies
-    public void EnemyImpactFX(RaycastHit hit)
+    public void EnemyImpactFX(Vector3 position, Vector3 normal)
     {
         if (bloodFX != null)
         {
-            ParticleSystem bloodFXGO = Instantiate(bloodFX, hit.point, Quaternion.LookRotation(hit.normal));
+            ParticleSystem bloodFXGO = Instantiate(bloodFX, position, Quaternion.LookRotation(normal));
             Destroy(bloodFXGO.gameObject, 2f);
         }
     }

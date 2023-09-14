@@ -2,22 +2,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class GrenadeThrow : MonoBehaviour
 {
     // Variables
+    public KeyCode selectGrenadeKey, throwGrenadeKey;
     public float throwForce;
     public float throwForceImpact;
     public float grenadeSelectionTimeSlow; // Slow time down when selecting grenade
     [HideInInspector] public int selectedGrenade = 0; // 0 = normal, 1 = impact, 2 = incendiary
 
     public GameObject normalGrenadePrefab, impactGrenadePrefab, incendiaryGrenadePrefab;
-    public Image[] grenadePanels;
-    public Color defaultColor, highlightColor;
     public GameObject selectionMenu;
     public PlayerInventory inventoryScript;
     public static GrenadeThrow instance;
     public bool selectingGrenade = false;
+
+    [Header("UI & UX")]
+    public Image[] grenadePanels;
+    public Color defaultColor, highlightColor;
+
+    public Image grenadeImageHUD;
+    public Sprite[] grenadeSprites;
+    public TextMeshProUGUI changeNadeTMP, throwNadeTMP;
+
+    private void OnValidate()
+    {
+        changeNadeTMP.text = selectGrenadeKey.ToString();
+        throwNadeTMP.text = throwGrenadeKey.ToString();
+    }
 
     private void Awake()
     {
@@ -41,7 +55,7 @@ public class GrenadeThrow : MonoBehaviour
     {
         if (Time.timeScale <= 0) return; // Game paused
 
-        if (Input.GetKey(KeyCode.H) && !ObjectPlacing.instance.isChoosingObject)
+        if (Input.GetKey(selectGrenadeKey) && !ObjectPlacing.instance.isChoosingObject)
         {
             if (!selectingGrenade)
             {
@@ -64,7 +78,7 @@ public class GrenadeThrow : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.G))
+        if (Input.GetKeyDown(throwGrenadeKey))
         {
             ThrowGrenade();
         }
@@ -108,5 +122,7 @@ public class GrenadeThrow : MonoBehaviour
         grenadePanels[selectedGrenade].color = defaultColor; // Previous selection to default color
         grenadePanels[index].color = highlightColor; // Highlight new selection
         selectedGrenade = index; // Update selectedGrenade variable for other uses
+
+        grenadeImageHUD.sprite = grenadeSprites[index];
     }
 }

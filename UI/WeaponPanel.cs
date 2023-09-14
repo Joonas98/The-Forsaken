@@ -13,7 +13,7 @@ public class WeaponPanel : MonoBehaviour
     public GameObject highlightObject;
 
     private int currentIndex;
-    private GameObject handledGun;
+    private GameObject handledWeapon;
 
     private void Awake()
     {
@@ -24,23 +24,23 @@ public class WeaponPanel : MonoBehaviour
     {
         currentIndex = transform.GetSiblingIndex();
         transform.SetSiblingIndex(currentIndex - 1);
-        handledGun = weaponHolster.transform.GetChild(currentIndex).gameObject;
-        handledGun.transform.SetSiblingIndex(currentIndex - 1);
+        handledWeapon = weaponHolster.transform.GetChild(currentIndex).gameObject;
+        handledWeapon.transform.SetSiblingIndex(currentIndex - 1);
     }
 
     public void MoveWeaponDown()
     {
         currentIndex = transform.GetSiblingIndex();
         transform.SetSiblingIndex(currentIndex + 1);
-        handledGun = weaponHolster.transform.GetChild(currentIndex).gameObject;
-        handledGun.transform.SetSiblingIndex(currentIndex + 1);
+        handledWeapon = weaponHolster.transform.GetChild(currentIndex).gameObject;
+        handledWeapon.transform.SetSiblingIndex(currentIndex + 1);
     }
 
     public void SellWeapon()
     {
         currentIndex = transform.GetSiblingIndex();
-        handledGun = weaponHolster.transform.GetChild(currentIndex).gameObject;
-        Destroy(handledGun);
+        handledWeapon = weaponHolster.transform.GetChild(currentIndex).gameObject;
+        Destroy(handledWeapon);
         Destroy(gameObject);
 
         // If the weapon to be sold is currently equippped, equip knife

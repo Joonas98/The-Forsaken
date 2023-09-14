@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ObjectPlacing : MonoBehaviour
 {
     [Header("Variables")]
     public float rotationSpeed;
-
     [System.Serializable]
     public struct PlacingInfo
     {
@@ -25,9 +25,14 @@ public class ObjectPlacing : MonoBehaviour
     [HideInInspector] public static ObjectPlacing instance;
     public bool isPlacing = false;
     public bool isChoosingObject = false;
+
+    [Header("UI & UX")]
     public GameObject choosingMenu;
     public Image[] objectPanels;
+    public Image selectedImageHUD;
+    public Sprite[] objectSprites;
     public float objectSelectionTimeSlow;
+    public TextMeshProUGUI placeHotkeyTMP, changeHotkeyTMP;
 
     private RaycastHit hit;
     private GameObject activeAimer;
@@ -35,6 +40,13 @@ public class ObjectPlacing : MonoBehaviour
     private Vector3 initialAimerPosition;
     private int chosenObjectIndex = 0;
     private bool isRotating = false; // Flag to check if the player is currently rotating the object.
+    private bool canPlace = false;
+
+    private void OnValidate()
+    {
+        placeHotkeyTMP.text = placingModeHotkey.ToString();
+        changeHotkeyTMP.text = choosingMenuHotkey.ToString();
+    }
 
     private void Awake()
     {
@@ -60,6 +72,7 @@ public class ObjectPlacing : MonoBehaviour
         objectPanels[chosenObjectIndex].color = defaultColor;
         objectPanels[index].color = highlightColor;
         chosenObjectIndex = index;
+        selectedImageHUD.sprite = objectSprites[index];
     }
 
     private void HandleInputs()
@@ -103,30 +116,6 @@ public class ObjectPlacing : MonoBehaviour
                 StopPlacing();
             }
         }
-
-        // // Rotating objects that player is about to place
-        // // Check for right mouse button click to start rotating.
-        // if (Input.GetMouseButtonDown(1))
-        // {
-        //     isRotating = true;
-        // }
-        //
-        // // Check for right mouse button release to stop rotating.
-        // if (Input.GetMouseButtonUp(1))
-        // {
-        //     isRotating = false;
-        // }
-        //
-        // // Rotate the object if the player is holding the right mouse button.
-        // if (isRotating)
-        // {
-        //     float rotationSpeed = 50.0f;  // Adjust the rotation speed as needed.
-        //     float mouseX = Input.GetAxis("Mouse X");
-        //
-        //     // Rotate the activeAimer around its up axis based on mouse input.
-        //     activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
-        // }
-
     }
 
     private void StartPlacing(PlacingInfo placingInfo)
@@ -148,7 +137,7 @@ public class ObjectPlacing : MonoBehaviour
         if (activeAimer != null) Destroy(activeAimer);
         isPlacing = false;
         placingObject = null;
-        MouseLook.instance.canRotate = true; // Bug prevention
+        if (!isChoosingObject) MouseLook.instance.canRotate = true; // Bug prevention
     }
 
     private void HandlePlacement(PlacingInfo placingInfo)
@@ -169,39 +158,39 @@ public class ObjectPlacing : MonoBehaviour
             {
                 Vector3 aimerPosition = hit.point;
                 float angle = Vector3.Angle(hit.normal, Vector3.up);
+                aimerPosition = hit.point;
 
                 if (angle >= placingInfo.minAllowedAngle && angle <= placingInfo.maxAllowedAngle)
                 {
                     renderer.material.color = validPlacementColor;
-                    aimerPosition = hit.point;
-
-                    // Rotate the aimed object with right mouse button
-                    if (Input.GetMouseButton(1))
-                    {
-                        float mouseX = Input.GetAxis("Mouse X");
-                        activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
-                        MouseLook.instance.canRotate = false;
-                    }
-
-                    if (Input.GetMouseButtonUp(1))
-                    {
-                        MouseLook.instance.canRotate = true;
-                    }
-
-                    // activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
-                    activeAimer.transform.position = (aimerPosition);
-
-                    // Place the aimed object when left clicking
-                    if (Input.GetMouseButtonDown(0))
-                    {
-                        _ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
-                    }
+                    canPlace = true;
                 }
                 else
                 {
                     renderer.material.color = invalidPlacementColor;
-                    aimerPosition = initialAimerPosition;
-                    activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+                    canPlace = false;
+                }
+
+                // Rotate the aimed object with right mouse button
+                if (Input.GetMouseButton(1))
+                {
+                    float mouseX = Input.GetAxis("Mouse X");
+                    activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
+                    MouseLook.instance.canRotate = false;
+                }
+
+                if (Input.GetMouseButtonUp(1))
+                {
+                    MouseLook.instance.canRotate = true;
+                }
+
+                // activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+                activeAimer.transform.position = (aimerPosition);
+
+                // Place the aimed object when left clicking
+                if (Input.GetMouseButtonDown(0) && canPlace)
+                {
+                    _ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
                 }
             }
         }

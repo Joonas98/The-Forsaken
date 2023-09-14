@@ -6,21 +6,11 @@ using TMPro;
 
 public class GunShop : MonoBehaviour
 {
-
-    public GameObject[] weaponPrefabs;
-    public GameObject[] buttons;
-
-    public GameObject WeaponHolster;
-
     public Transform equipTrans;
-
-    private GameObject selectedWeapon;
-    private Gun selectedGunScript;
-    private int selectedGunIndex;
-
-    private string selectedGunName = "Knife";
-    private Sprite selectedGunSprite;
-
+    public WeaponList weaponListScript;
+    public GameObject weaponHolster, weaponListGO, ownedGunsList;
+    public GameObject[] weaponPrefabs;
+    public Transform buttonsParent;
     public Sprite defaultGunSprite;
 
     [SerializeField] private TextMeshProUGUI gunNameText, firemodeText, pelletCountText, spreadText;
@@ -28,22 +18,29 @@ public class GunShop : MonoBehaviour
     [SerializeField] private TextMeshProUGUI magazineSizeText, reloadTimeText, aimingSpeedText, zoomAmountText;
     [SerializeField] private TextMeshProUGUI recoilText, stationaryAccuracyText;
 
-    public GameObject weaponListGO;
-    public WeaponList weaponListScript;
-
-    public GameObject ownedGunsList;
-
-    private bool managingWeapons = false;
+    private GameObject selectedWeaponGO;
+    private Weapon selectedWeaponScript;
+    private Gun selectedGunScript;
+    private int selectedGunIndex;
+    private GameObject[] buttons;
 
     [Tooltip("Audio")]
     public AudioSource audioSource;
     public AudioClip openShopSound, closeShopSound;
     public AudioClip buyWeaponSound;
 
+    private void OnValidate()
+    {
+        buttons = new GameObject[buttonsParent.childCount];
+        for (int i = 0; i < buttonsParent.childCount; i++)
+        {
+            buttons[i] = buttonsParent.GetChild(i).gameObject;
+        }
+    }
+
     void Awake()
     {
         audioSource.ignoreListenerPause = true;
-        SelectWeapon(0);
     }
 
     private void OnEnable()
@@ -56,22 +53,49 @@ public class GunShop : MonoBehaviour
         audioSource.PlayOneShot(closeShopSound);
     }
 
-    public void SelectWeapon(int GunNumber)
+    public void SelectWeapon(int weaponIndex)
     {
-        selectedGunIndex = GunNumber;
-        selectedWeapon = weaponPrefabs[GunNumber];
-        selectedGunScript = selectedWeapon.GetComponentInChildren<Gun>(true);
+        selectedGunScript = null;
+        selectedWeaponScript = null;
 
-        gunNameText.text = selectedGunScript.weaponName.ToString();
-        if (selectedGunScript.semiAutomatic == true)
+        selectedGunIndex = weaponIndex;
+        selectedWeaponGO = weaponPrefabs[weaponIndex];
+        selectedGunScript = selectedWeaponGO.GetComponentInChildren<Gun>(true);
+        selectedWeaponScript = selectedWeaponGO.GetComponentInChildren<Weapon>(true);
+
+        UpdateWeaponInfo();
+    }
+
+    public void BuyGunButton()
+    {
+        if (selectedWeaponGO)
+            AddWeapon(selectedGunIndex);
+        buttons[selectedGunIndex].transform.SetParent(ownedGunsList.transform);
+        audioSource.PlayOneShot(buyWeaponSound);
+    }
+
+    public void AddWeapon(int GunNumber) // Add weapon to WeaponHolster and the (UI) weapon panel 
+    {
+        GameObject newWeapon = Instantiate(weaponPrefabs[GunNumber], equipTrans.position, equipTrans.transform.rotation);
+        newWeapon.transform.parent = weaponHolster.transform;
+        newWeapon.SetActive(false);
+
+        if (weaponHolster.transform.childCount == 1)
         {
-            firemodeText.text = "Semi-automatic";
+            newWeapon.SetActive(true);
         }
-        else
-        {
-            firemodeText.text = "Fully Automatic";
-        }
-        // pelletCountText.text = selectedGunScript.pelletCount.ToString() + " with " + selectedGunScript.shotgunDeviation.ToString() + " deviation";
+
+        weaponListScript.AddWeaponToPanel(selectedWeaponScript.weaponName, selectedWeaponScript.weaponSprite);
+    }
+
+    private void UpdateWeaponInfo()
+    {
+        gunNameText.text = selectedWeaponGO.GetComponent<Weapon>().weaponName;
+        if (selectedGunScript == null) return; // Melee weapon
+
+        if (selectedGunScript.semiAutomatic) firemodeText.text = "Semi-automatic";
+        else firemodeText.text = "Fully Automatic";
+
         spreadText.text = selectedGunScript.spread.ToString();
         penetrationText.text = selectedGunScript.penetration.ToString();
         damageText.text = selectedGunScript.damage.ToString();
@@ -83,45 +107,6 @@ public class GunShop : MonoBehaviour
         zoomAmountText.text = selectedGunScript.zoomAmount.ToString();
         recoilText.text = "X" + selectedGunScript.recoilX.ToString() + ", Y" + selectedGunScript.recoilY.ToString() + ", Z" + selectedGunScript.recoilZ.ToString() + ", Snappiness " +
             selectedGunScript.snappiness.ToString() + ", Return " + selectedGunScript.returnSpeed.ToString();
-        // stationaryAccuracyText.text = selectedGunScript.stationaryAccuracy.ToString();
-
-        selectedGunName = selectedGunScript.weaponName;
-        selectedGunSprite = selectedGunScript.weaponSprite;
-    }
-
-    public void BuyGunButton()
-    {
-        AddWeapon(selectedGunIndex);
-        buttons[selectedGunIndex].transform.SetParent(ownedGunsList.transform);
-        audioSource.PlayOneShot(buyWeaponSound);
-    }
-
-    public void ManageWeaponsButton()
-    {
-        if (!managingWeapons)
-        {
-            managingWeapons = true;
-        }
-        else
-        {
-            managingWeapons = false;
-        }
-    }
-
-    public void AddWeapon(int GunNumber) // Lis‰‰ ase WeaponHolsteriin ja aseen paneeli
-    {
-        GameObject newWeapon = Instantiate(weaponPrefabs[GunNumber], equipTrans.position, equipTrans.transform.rotation);
-        newWeapon.transform.parent = WeaponHolster.transform;
-        newWeapon.SetActive(false);
-
-
-        if (WeaponHolster.transform.childCount == 1)
-        {
-            newWeapon.SetActive(true);
-        }
-
-        weaponListScript.AddWeaponToPanel(selectedGunName, selectedGunSprite);
-
     }
 
 }
