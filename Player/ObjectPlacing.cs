@@ -14,6 +14,7 @@ public class ObjectPlacing : MonoBehaviour
         public GameObject aimerPrefab;
         public GameObject prefab;
 
+        public float radius;
         public float minAllowedAngle;
         public float maxAllowedAngle;
     }
@@ -63,6 +64,7 @@ public class ObjectPlacing : MonoBehaviour
 
     void Update()
     {
+        if (Time.timeScale == 0.0f) return;
         HandleInputs();
         HandlePlacement(placingObjects[chosenObjectIndex]);
     }
@@ -140,60 +142,116 @@ public class ObjectPlacing : MonoBehaviour
         if (!isChoosingObject) MouseLook.instance.canRotate = true; // Bug prevention
     }
 
-    private void HandlePlacement(PlacingInfo placingInfo)
-    {
-        if (activeAimer == null) return;
+	private void HandlePlacement(PlacingInfo placingInfo)
+	{
+		if (activeAimer == null) return;
 
-        Renderer renderer = activeAimer.GetComponent<Renderer>();
+		Renderer[] renderers = activeAimer.GetComponentsInChildren<Renderer>();
 
-        if (renderer == null)
-        {
-            // Try to find a Renderer in children
-            renderer = activeAimer.GetComponentInChildren<Renderer>();
-        }
+		if (renderers != null && renderers.Length > 0)
+		{
+			if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
+			{
+				Vector3 aimerPosition = hit.point;
+				float angle = Vector3.Angle(hit.normal, Vector3.up);
+				aimerPosition = hit.point;
 
-        if (renderer != null)
-        {
-            if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
-            {
-                Vector3 aimerPosition = hit.point;
-                float angle = Vector3.Angle(hit.normal, Vector3.up);
-                aimerPosition = hit.point;
+				// Flag to check if any renderer has valid placement
+				bool validPlacement = false;
 
-                if (angle >= placingInfo.minAllowedAngle && angle <= placingInfo.maxAllowedAngle)
-                {
-                    renderer.material.color = validPlacementColor;
-                    canPlace = true;
-                }
-                else
-                {
-                    renderer.material.color = invalidPlacementColor;
-                    canPlace = false;
-                }
+				foreach (Renderer renderer in renderers)
+				{
+					if (angle >= placingInfo.minAllowedAngle && angle <= placingInfo.maxAllowedAngle)
+					{
+						// Change the material color for each renderer
+						foreach (Material material in renderer.materials)
+						{
+							material.color = validPlacementColor;
+						}
+						validPlacement = true;
+					}
+					else
+					{
+						// Change the material color for each renderer
+						foreach (Material material in renderer.materials)
+						{
+							material.color = invalidPlacementColor;
+						}
+					}
+				}
 
-                // Rotate the aimed object with right mouse button
-                if (Input.GetMouseButton(1))
-                {
-                    float mouseX = Input.GetAxis("Mouse X");
-                    activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
-                    MouseLook.instance.canRotate = false;
-                }
+				// Rotate the aimed object with right mouse button
+				if (Input.GetMouseButton(1))
+				{
+					float mouseX = Input.GetAxis("Mouse X");
+					activeAimer.transform.Rotate(Vector3.up, mouseX * rotationSpeed * Time.deltaTime);
+					MouseLook.instance.canRotate = false;
+				}
 
-                if (Input.GetMouseButtonUp(1))
-                {
-                    MouseLook.instance.canRotate = true;
-                }
+				if (Input.GetMouseButtonUp(1))
+				{
+					MouseLook.instance.canRotate = true;
+				}
 
-                // activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
-                activeAimer.transform.position = (aimerPosition);
+				// activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+				activeAimer.transform.position = (aimerPosition);
 
-                // Place the aimed object when left clicking
-                if (Input.GetMouseButtonDown(0) && canPlace)
-                {
-                    _ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
-                }
-            }
-        }
-    }
+				// Place the aimed object when left clicking
+				if (Input.GetMouseButtonDown(0))
+				{
+					// Check if placement is valid based on the trigger collider and angle
+					if (validPlacement && IsPlacementValid(activeAimer.transform))
+					{
+						_ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
+					}
+				}
+			}
+		}
+	}
+
+	private bool IsPlacementValid(Transform placementTransform)
+	{
+		SphereCollider sphereCollider = placementTransform.GetComponent<SphereCollider>();
+		BoxCollider boxCollider = placementTransform.GetComponent<BoxCollider>();
+
+		if (sphereCollider != null)
+		{
+			Vector3 position = sphereCollider.transform.position + Vector3.up * sphereCollider.center.y;
+			Collider[] colliders = Physics.OverlapSphere(position, sphereCollider.radius);
+
+			// Check if any of the found colliders belong to the same object
+			foreach (var collider in colliders)
+			{
+				// Check if the collider belongs to the same GameObject
+				if (collider.gameObject == placementTransform.gameObject)
+				{
+					continue; // Skip this collider because it's attached to the same object.
+				}
+
+				return false;
+			}
+		}
+
+		if (boxCollider != null)
+		{
+			Vector3 position = boxCollider.bounds.center;
+			Vector3 size = boxCollider.bounds.size;
+			Collider[] colliders = Physics.OverlapBox(position, size * 0.5f, boxCollider.transform.rotation);
+			foreach (var collider in colliders)
+			{
+				// Check if the collider belongs to the same GameObject
+				if (collider.gameObject == placementTransform.gameObject)
+				{
+					continue; // Skip this collider because it's attached to the same object.
+				}
+
+				return false;
+			}
+		}
+
+		Debug.Log("Returning true");
+		return true;
+	}
+
 
 }

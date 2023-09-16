@@ -4,17 +4,13 @@ using UnityEngine;
 
 public class Mine : MonoBehaviour
 {
-
     public Grenade grenadeScript;
-
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Torso") && other.gameObject.layer == 2)
+        if (other.gameObject.layer == 11) // Explode when hitting enemy layer
         {
             grenadeScript.Explode();
         }
-
     }
-
 }
