@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using static ObjectPlacing;
 
 public class ObjectPlacing : MonoBehaviour
 {
@@ -14,10 +15,9 @@ public class ObjectPlacing : MonoBehaviour
         public GameObject aimerPrefab;
         public GameObject prefab;
 
-        public float radius;
-        public float minAllowedAngle;
         public float maxAllowedAngle;
-    }
+        public float minAllowedAngle;
+	}
 
     public List<PlacingInfo> placingObjects;
     public KeyCode placingModeHotkey, choosingMenuHotkey;
@@ -38,10 +38,7 @@ public class ObjectPlacing : MonoBehaviour
     private RaycastHit hit;
     private GameObject activeAimer;
     private GameObject placingObject;
-    private Vector3 initialAimerPosition;
     private int chosenObjectIndex = 0;
-    private bool isRotating = false; // Flag to check if the player is currently rotating the object.
-    private bool canPlace = false;
 
     private void OnValidate()
     {
@@ -131,7 +128,6 @@ public class ObjectPlacing : MonoBehaviour
         activeAimer = Instantiate(placingInfo.aimerPrefab, Vector3.zero, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
         isPlacing = true;
         placingObject = placingInfo.prefab;
-        initialAimerPosition = activeAimer.transform.position;
     }
 
     private void StopPlacing()
@@ -153,30 +149,15 @@ public class ObjectPlacing : MonoBehaviour
 			if (Physics.Raycast(Camera.main.transform.position, Camera.main.transform.forward, out hit, 100f))
 			{
 				Vector3 aimerPosition = hit.point;
-				float angle = Vector3.Angle(hit.normal, Vector3.up);
 				aimerPosition = hit.point;
 
-				// Flag to check if any renderer has valid placement
-				bool validPlacement = false;
+				bool canPlace = IsPlacementValid(activeAimer.transform);
 
 				foreach (Renderer renderer in renderers)
 				{
-					if (angle >= placingInfo.minAllowedAngle && angle <= placingInfo.maxAllowedAngle)
+					foreach (Material material in renderer.materials)
 					{
-						// Change the material color for each renderer
-						foreach (Material material in renderer.materials)
-						{
-							material.color = validPlacementColor;
-						}
-						validPlacement = true;
-					}
-					else
-					{
-						// Change the material color for each renderer
-						foreach (Material material in renderer.materials)
-						{
-							material.color = invalidPlacementColor;
-						}
+						material.color = canPlace ? validPlacementColor : invalidPlacementColor;
 					}
 				}
 
@@ -193,17 +174,12 @@ public class ObjectPlacing : MonoBehaviour
 					MouseLook.instance.canRotate = true;
 				}
 
-				// activeAimer.transform.SetPositionAndRotation(aimerPosition, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
-				activeAimer.transform.position = (aimerPosition);
+				activeAimer.transform.position = aimerPosition;
 
 				// Place the aimed object when left clicking
-				if (Input.GetMouseButtonDown(0))
+				if (Input.GetMouseButtonDown(0) && canPlace)
 				{
-					// Check if placement is valid based on the trigger collider and angle
-					if (validPlacement && IsPlacementValid(activeAimer.transform))
-					{
-						_ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
-					}
+					_ = Instantiate(placingInfo.prefab, activeAimer.transform.position, activeAimer.transform.rotation);
 				}
 			}
 		}
@@ -213,6 +189,22 @@ public class ObjectPlacing : MonoBehaviour
 	{
 		SphereCollider sphereCollider = placementTransform.GetComponent<SphereCollider>();
 		BoxCollider boxCollider = placementTransform.GetComponent<BoxCollider>();
+
+		// Check if the placement angle is allowed
+		Vector3 placementPosition = placementTransform.position;
+		Ray ray = new Ray(placementPosition, Vector3.down);
+
+        // !!! Known issue, for some objects, the ray hits aimer object rather than aimed surface
+        // Stills works fine right now for currently implemented objects 16.9.2023
+		if (Physics.Raycast(ray, out RaycastHit hit))
+		{
+			float angle = Vector3.Angle(ray.direction, hit.normal);
+			if (angle > placingObjects[chosenObjectIndex].maxAllowedAngle)
+			{
+               // Debug.Log("Placement not allowed, aimed angle is: " + angle);
+				return false;
+			}
+		}
 
 		if (sphereCollider != null)
 		{
@@ -249,7 +241,7 @@ public class ObjectPlacing : MonoBehaviour
 			}
 		}
 
-		Debug.Log("Returning true");
+        // New object is on allowed angle and not too close to anything
 		return true;
 	}
 
