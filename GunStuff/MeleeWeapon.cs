@@ -101,7 +101,7 @@ public class MeleeWeapon : Weapon
         animator.SetFloat("SlashSpeedMultiplier", attackAnimations[1].length / secondaryAttackDuration);
     }
 
-    public override void UnequipWeapon()
+	public override void UnequipWeapon()
     {
         base.UnequipWeapon();
     }

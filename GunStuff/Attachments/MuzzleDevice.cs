@@ -6,15 +6,14 @@ public class MuzzleDevice : MonoBehaviour
 {
     public ParticleSystem muzzleEffect;
     public GameObject muzzleTip;
-    // public AudioClip muzzleSound;
     public bool isSilencer; // Useful for disabling muzzle light effect and other applications in future like possible abilities
 
     private Gun gunScript;
 
     [Header("Stat changes")]
-    public float reloadTimeChange;
-    public float adsTimeChange, equipTimeChange;
-    public float xRecoilChange, yRecoilChange, zRecoilChange;
+    public float reloadTimeMultiplier;
+    public float adsTimeMultiplier, equipTimeMultiplier;
+    public float xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier;
 
     private void OnValidate()
     {
@@ -31,8 +30,9 @@ public class MuzzleDevice : MonoBehaviour
         if (muzzleTip != null) gunScript.gunTip = muzzleTip;
         if (muzzleEffect != null) gunScript.muzzleFlash = muzzleEffect;
 
-        if (xRecoilChange != 0 && yRecoilChange != 0 && zRecoilChange != 0)
-            gunScript.AdjustRecoil(-xRecoilChange, -yRecoilChange, -zRecoilChange);
+        gunScript.AdjustRecoil(xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier);
+        gunScript.AdjustReloadtime(reloadTimeMultiplier);
+        gunScript.AdjustAimspeed(adsTimeMultiplier);
 
         if (isSilencer) gunScript.isSilenced = true;
         else gunScript.isSilenced = false;

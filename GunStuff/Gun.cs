@@ -106,6 +106,7 @@ public class Gun : Weapon
     private ParticleSystem muzzleFlashOG;
     private float aimSpeedOG;
     private float recoilXOG, recoilYOG, recoilZOG;
+    protected float ogReloadTime;
     private VisualRecoil vire;
     private const float unsprintLerpThreshold = 30f; // We don't want to be able to shoot right away after sprinting
     private const float sprintLerpMultiplier = 15f; // Weapon sprint lerp and readiness: aimSpeed * this
@@ -172,7 +173,8 @@ public class Gun : Weapon
         reloadSymbol = crosshairCanvas.transform.GetChild(0).gameObject;
 
         // Original values
-        aimSpeedOG = aimSpeed;
+        ogReloadTime = reloadTime;
+		aimSpeedOG = aimSpeed;
         shootSoundOG = shootSound;
         muzzleFlashOG = muzzleFlash;
         gunTipOG = gunTip;
@@ -199,7 +201,7 @@ public class Gun : Weapon
         EquipWeapon(); // Animations etc. when equipping weapon
 	}
 
-    protected override void Update()
+	protected override void Update()
     {
         if (Time.timeScale <= 0) return; // Game paused
 
@@ -248,7 +250,6 @@ public class Gun : Weapon
         {
             isAiming = true;
             playedUnaimSound = false;
-            // WeaponSwayAndBob.instance.disableSwayBob = true;
             crosshairContents.SetActive(false);
             WeaponSwitcher.CanSwitch(false);
 
@@ -604,17 +605,11 @@ public class Gun : Weapon
         Destroy(InstantiatedLaser.gameObject, laserTime);
     }
 
-    // public override void EquipWeapon()
-    // {
-    //     base.EquipWeapon();
-    //     shotCounter = equipTime;
-    // }
-    //
-    // public override void UnequipWeapon()
-    // {
-    //     base.UnequipWeapon();
-    //     shotCounter = unequipTime + 0.01f;
-    // }
+	public override void UnequipWeapon()
+    {
+        base.UnequipWeapon();
+        animator.Play("Entry");
+    }
 
     public void UpdateFirerate()
     {
@@ -648,12 +643,12 @@ public class Gun : Weapon
     // Reloading delay etc.
     IEnumerator WaitReloadTime(float r, int ammoAmount)
     {
-        yield return new WaitForSeconds(r + 0.05f);
+        yield return new WaitForSeconds(r + 0.05f); // Wait the reload time + small extra to avoid bugs
         currentMagazine = ammoAmount;
         magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
         magazineText.text = magString;
         WeaponSwitcher.CanSwitch(true);
-        audioMixer.SetFloat("WeaponsPitch", 1f);
+        audioMixer.SetFloat("WeaponsPitch", 1f); // Reset weapon pitch (it might be changed to match reload speed)
         isReloading = false;
         reloadSymbol.SetActive(false);
     }
@@ -689,7 +684,6 @@ public class Gun : Weapon
     {
         UpdateFirerate();
         UpdateRecoil();
-
         // If we own the viper venom ability, adjust percentage damage
         if (AbilityMaster.abilities.Contains(2)) percentageDamage = 5;
     }
@@ -697,35 +691,28 @@ public class Gun : Weapon
     // Adjust values from other scripts
     #region Adjust Values 
 
-    public void AdjustDamage(int amount)
+    public void AdjustDamage(float multiplier)
     {
-        damage = damage + amount;
+        damage = Mathf.RoundToInt(damage * multiplier);
     }
 
-    public void AdjustReloadtime(float amount)
+    public void AdjustReloadtime(float multiplier)
     {
-        reloadTime = reloadTime + amount;
+        reloadTime *= multiplier;
     }
 
-    public void AdjustRecoil(float xAmount, float yAmount, float zAmount)
+    public void AdjustRecoil(float xmultiplier, float ymultiplier, float zmultiplier)
     {
-        recoilX = recoilXOG + xAmount;
-        recoilY = recoilYOG + yAmount;
-        recoilZ = recoilZOG + zAmount;
+        recoilX *= xmultiplier;
+        recoilY *= ymultiplier;
+        recoilZ *= zmultiplier;
 
-        if (recoilX < 0) recoilX = 0;
-        if (recoilY < 0) recoilY = 0;
-        if (recoilZ < 0) recoilZ = 0;
         UpdateRecoil();
     }
 
-    public void AdjustAimspeed(float amount)
+    public void AdjustAimspeed(float multiplier)
     {
-        aimSpeed = aimSpeed + amount;
-        if (aimSpeed < 1f)
-        {
-            aimSpeed = 1f;
-        }
+        aimSpeed *= 1f / multiplier;
     }
 
     #endregion
@@ -760,6 +747,11 @@ public class Gun : Weapon
     public void ResetRotation()
     {
         transform.localRotation = Quaternion.Euler(0, 180, 0);
+    }
+
+    public void ResetReloadtime()
+    {
+        reloadTime = ogReloadTime;
     }
 
     #endregion

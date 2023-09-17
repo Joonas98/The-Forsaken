@@ -54,12 +54,12 @@ public class Weapon : MonoBehaviour
         equipRotZ = Random.Range(0, 360);
     }
 
-    public virtual void EquipWeapon()
+	public virtual void EquipWeapon()
     {
         StartCoroutine(WaitEquipTime(true));
     }
 
-    public virtual void UnequipWeapon()
+	public virtual void UnequipWeapon()
     {
         StartCoroutine(WaitEquipTime(false));
     }

@@ -5,8 +5,8 @@ using UnityEngine;
 public class Grip : MonoBehaviour
 {
     public Gun gunScript;
-    public float reloadTimeChange, adsTimeChange, equipTimeChange;
-    public float xRecoilChange, yRecoilChange, zRecoilChange;
+    public float reloadTimeMultiplier, adsTimeMultiplier, equipTimeMultiplier;
+    public float xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier;
 
     private void OnValidate()
     {
@@ -20,14 +20,14 @@ public class Grip : MonoBehaviour
 
     private void OnEnable()
     {
-        gunScript.AdjustReloadtime(-reloadTimeChange);
-        gunScript.AdjustRecoil(-xRecoilChange, -yRecoilChange, -zRecoilChange);
-        gunScript.AdjustAimspeed(adsTimeChange);
+        gunScript.AdjustReloadtime(reloadTimeMultiplier);
+        gunScript.AdjustRecoil(xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier);
+        gunScript.AdjustAimspeed(adsTimeMultiplier);
     }
 
     private void OnDisable()
     {
-        gunScript.AdjustReloadtime(reloadTimeChange);
+        gunScript.ResetReloadtime();
         gunScript.ResetRecoils();
         gunScript.ResetAimSpeed();
     }
