@@ -96,7 +96,7 @@ public class GunShop : MonoBehaviour
         if (selectedGunScript.semiAutomatic) firemodeText.text = "Semi-automatic";
         else firemodeText.text = "Fully Automatic";
 
-        spreadText.text = selectedGunScript.spread.ToString();
+        spreadText.text = selectedGunScript.aimSpread.ToString();
         penetrationText.text = selectedGunScript.penetration.ToString();
         damageText.text = selectedGunScript.damage.ToString();
         headshotMultiplierText.text = selectedGunScript.headshotMultiplier.ToString();
@@ -105,7 +105,7 @@ public class GunShop : MonoBehaviour
         reloadTimeText.text = selectedGunScript.reloadTime.ToString();
         aimingSpeedText.text = selectedGunScript.aimSpeed.ToString();
         zoomAmountText.text = selectedGunScript.zoomAmount.ToString();
-        recoilText.text = "X" + selectedGunScript.recoilX.ToString() + ", Y" + selectedGunScript.recoilY.ToString() + ", Z" + selectedGunScript.recoilZ.ToString() + ", Snappiness " +
+        recoilText.text = "X" + selectedGunScript.recoil.x.ToString() + ", Y" + selectedGunScript.recoil.y.ToString() + ", Z" + selectedGunScript.recoil.z.ToString() + ", Snappiness " +
             selectedGunScript.snappiness.ToString() + ", Return " + selectedGunScript.returnSpeed.ToString();
     }
 

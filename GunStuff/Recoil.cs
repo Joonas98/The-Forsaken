@@ -6,14 +6,7 @@ using TMPro;
 public class Recoil : MonoBehaviour
 {
     [HideInInspector] public static Recoil Instance;
-    [Tooltip("Will the camera return where it was before recoiling. Needs to be balanced seperately")] public bool useReturningRecoil;
-    [Tooltip("Up and down")] public float recoilX;
-    [Tooltip("Left and right")] public float recoilY;
-    [Tooltip("Tilt")] public float recoilZ;
-
     public float flinchX, flinchY, flinchZ; // Flinch = take damage
-
-    public float rec1, rec2, rec3, rec4, rec5, rec6;
     public float snappiness;
     public float returnSpeed;
     public Transform playerTrans;
@@ -67,67 +60,39 @@ public class Recoil : MonoBehaviour
     {
         if (!movementScript.isGrounded) // Mid air
         {
-            recoilMultiplier = rec1;
+            recoilMultiplier = GameManager.GM.currentGun.rec1;
         }
         else if (movementScript.isGrounded && !movementScript.isStationary && !aiming) // Grounded, moving, not aiming
         {
-            recoilMultiplier = rec2;
+            recoilMultiplier = GameManager.GM.currentGun.rec2;
         }
         else if (movementScript.isGrounded && !movementScript.isStationary && aiming) // Grounded, moving, aiming
         {
-            recoilMultiplier = rec3;
+            recoilMultiplier = GameManager.GM.currentGun.rec3;
         }
         else if (movementScript.isGrounded && movementScript.isStationary && !aiming) // Grounded, not moving, not aiming
         {
-            recoilMultiplier = rec4;
+            recoilMultiplier = GameManager.GM.currentGun.rec4;
         }
         else if (movementScript.isGrounded && movementScript.isStationary && aiming)  // Grounded, not moving, aiming
         {
-            recoilMultiplier = rec5;
+            recoilMultiplier = GameManager.GM.currentGun.rec5;
         }
         else // Nothing above, probably never used
         {
-            recoilMultiplier = rec6;
+            recoilMultiplier = GameManager.GM.currentGun.rec6;
         }
 
-        targetRotation += new Vector3(recoilX, Random.Range(-recoilY * 0.1f, recoilY * 0.1f), Random.Range(-recoilZ, recoilZ)) * recoilMultiplier;
+        // This is the recoil itself
+        targetRotation += new Vector3(-GameManager.GM.currentGun.recoil.x, 
+            Random.Range(-GameManager.GM.currentGun.recoil.y * 0.1f, GameManager.GM.currentGun.recoil.y * 0.1f), 
+            Random.Range(-GameManager.GM.currentGun.recoil.z, GameManager.GM.currentGun.recoil.z)) * recoilMultiplier;
     }
 
-    // Recoil from taking damage
-    // Some variables like return speed is still determined by the held weapon
+    // Flinch from taking damage
+    // Some variables like return speed are still determined by the held weapon
     public void DamageFlinch(float flinchMultiplier)
     {
         targetRotation += new Vector3(Random.Range(-flinchX, flinchX), Random.Range(-flinchY, flinchY), Random.Range(-flinchZ, flinchZ)) * flinchMultiplier;
     }
-
-    #region Setters
-
-    // Set functions
-    public void SetRecoilX(float value)
-    {
-        recoilX = value;
-    }
-
-    public void SetRecoilY(float value)
-    {
-        recoilY = value;
-    }
-
-    public void SetRecoilZ(float value)
-    {
-        recoilZ = value;
-    }
-
-    public void SetSnappiness(float value)
-    {
-        snappiness = value;
-    }
-
-    public void SetReturnSpeed(float value)
-    {
-        returnSpeed = value;
-    }
-
-    #endregion
-
 }

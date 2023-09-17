@@ -22,8 +22,9 @@ public class Fire : MonoBehaviour
     private bool stopped = false;
     private float stopIntensitySpeed = 1f; // When fire ends, how fast we lerp the ligh out
     private float lerpTimer = 0f;
+	private List<Enemy> damagedEnemies = new List<Enemy>();
 
-    private void Awake()
+	private void Awake()
     {
         damageCounter = damageInterval;
 
@@ -56,25 +57,30 @@ public class Fire : MonoBehaviour
         if (damageCounter <= 0)
         {
             damageCounter = damageInterval;
-
+            damagedEnemies.Clear();
             Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
             foreach (Collider collider in colliders)
             {
-                if (collider.CompareTag("Torso") && collider.gameObject.layer == 2)
-                {
-                    Enemy enemyScriptStart = collider.gameObject.GetComponentInParent<Enemy>();
+				if (collider.gameObject.layer == 11)
+				{
+					Enemy enemyScript = collider.gameObject.GetComponentInParent<Enemy>();
 
-                    if (!healingFire)
-                    {
-                        enemyScriptStart.TakeDamage(damage);
-                    }
-                    else
-                    {
-                        enemyScriptStart.TakeDamage(damage * -1);
-                    }
-                }
+					if (!damagedEnemies.Contains(enemyScript))
+					{
+						if (!healingFire)
+						{
+							enemyScript.TakeDamage(damage);
+						}
+						else
+						{
+							enemyScript.TakeDamage(damage * -1);
+						}
 
-                if (collider.CompareTag("Player"))
+						damagedEnemies.Add(enemyScript); // Add the enemy to the list of damaged enemies
+					}
+				}
+
+				if (collider.CompareTag("Player"))
                 {
                     Player playerScript = collider.gameObject.GetComponentInParent<Player>();
                     if (playerScript == null) return;
@@ -98,8 +104,8 @@ public class Fire : MonoBehaviour
 
     public void InitializeFire(float duration)
     {
-        // Debug.Log("Fire initialized");
-        Invoke("StopFire", duration);
+		// Debug.Log("Fire initialized");
+		Invoke(nameof(StopFire), duration);
     }
 
     public void StopFire()

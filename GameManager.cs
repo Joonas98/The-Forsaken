@@ -112,25 +112,6 @@ public class GameManager : MonoBehaviour
                 enemy.GetComponent<Enemy>().Die();
             }
         }
-
-        // if (Input.GetKeyDown(KeyCode.N))
-        // {
-        //     GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
-        //     foreach (GameObject enemy in enemiesToDestroy)
-        //     {
-        //         enemy.GetComponent<Enemy>().TurnOnRagdoll();
-        //     }
-        // }
-        //
-        // if (Input.GetKeyDown(KeyCode.M))
-        // {
-        //     GameObject[] enemiesToDestroy = GameObject.FindGameObjectsWithTag("Enemy");
-        //     foreach (GameObject enemy in enemiesToDestroy)
-        //     {
-        //         enemy.GetComponent<Enemy>().TurnOffRagdoll();
-        //     }
-        // }
-
     }
 
     public void HandleDebugs()
@@ -148,9 +129,9 @@ public class GameManager : MonoBehaviour
 
         if (useRecoilDebug)
         {
-            recoilDebugTexts[0].text = "X: " + recoil.recoilX.ToString();
-            recoilDebugTexts[1].text = "Y: " + recoil.recoilY.ToString();
-            recoilDebugTexts[2].text = "Z: " + recoil.recoilZ.ToString();
+            recoilDebugTexts[0].text = "X: " + currentGun.recoil.x.ToString();
+            recoilDebugTexts[1].text = "Y: " + currentGun.recoil.y.ToString();
+            recoilDebugTexts[2].text = "Z: " + currentGun.recoil.z.ToString();
             recoilDebugTexts[3].text = "Snp: " + recoil.snappiness.ToString();
             recoilDebugTexts[4].text = "Rtn: " + recoil.returnSpeed.ToString();
             recoilDebugTexts[5].text = "RecMP: " + recoil.recoilMultiplier.ToString();
@@ -158,12 +139,12 @@ public class GameManager : MonoBehaviour
 
         if (useVireDebug)
         {
-            vireDebugTexts[0].text = "VRX: " + vire.vrecoilX.ToString();
-            vireDebugTexts[1].text = "VRY: " + vire.vrecoilY.ToString();
-            vireDebugTexts[2].text = "VRZ: " + vire.vrecoilZ.ToString();
-            vireDebugTexts[3].text = "VRKB: " + vire.kickbackZ.ToString();
-            vireDebugTexts[4].text = "VRSnap: " + vire.snappiness.ToString();
-            vireDebugTexts[5].text = "VRRtrn: " + vire.returnAmount.ToString();
+            vireDebugTexts[0].text = "VRX: " + currentGun.vire.x.ToString();
+            vireDebugTexts[1].text = "VRY: " + currentGun.vire.y.ToString();
+            vireDebugTexts[2].text = "VRZ: " + currentGun.vire.z.ToString();
+            vireDebugTexts[3].text = "VRKB: " + currentGun.vireKick.ToString();
+            vireDebugTexts[4].text = "VRSnap: " + currentGun.vireSnap.ToString();
+            vireDebugTexts[5].text = "VRRtrn: " + currentGun.vireReturn.ToString();
         }
     }
 
