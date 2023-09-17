@@ -197,7 +197,7 @@ public class Gun : Weapon
 
         RefreshGun();
         EquipWeapon(); // Animations etc. when equipping weapon
-    }
+	}
 
     protected override void Update()
     {
@@ -328,27 +328,28 @@ public class Gun : Weapon
 
     public void HandleShooting()
     {
-        // Can't shoot when running (unless got Bullet Ballet ability)
-        if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
-        {
-            isFiring = false;
-            hasFired = false; // This fixes a bug where semiauto guns break with Bullet Ballet ability
-            return;
-        }
-
-        // Shooting
-        if (Input.GetButton("Fire1") && (unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold)
-        {
-            isFiring = true;
-        }
-        else if (Input.GetButtonUp("Fire1") || !Input.GetButton("Fire1"))
+		// Shooting
+		if (Input.GetButton("Fire1") && ((unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold || AbilityMaster.abilities.Contains(7)))
+		{
+			isFiring = true;
+		}
+		else if (Input.GetButtonUp("Fire1") || !Input.GetButton("Fire1"))
         {
             isFiring = false;
             hasFired = false;
         }
 
-        // Fully automatic weapons
-        if (isFiring == true && semiAutomatic == false)
+		// Check if the player is running without the "Bullet Ballet" ability
+		if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
+		{
+			// Prevent firing while running
+			isFiring = false;
+			hasFired = false; // Reset the hasFired state
+			return;
+		}
+
+		// Fully automatic weapons
+		if (isFiring && !semiAutomatic)
         {
             if (shotCounter <= 0 && currentMagazine > 0) //Shooting
             {
@@ -369,10 +370,8 @@ public class Gun : Weapon
         }
 
         // Semi automatic weapons
-        else if (isFiring == true && semiAutomatic == true && hasFired == false)
+        else if (isFiring && semiAutomatic && !hasFired)
         {
-            hasFired = true;
-
             if (shotCounter <= 0 && currentMagazine > 0) //Shooting
             {
                 shotCounter = fireRate;
@@ -381,7 +380,7 @@ public class Gun : Weapon
                 --currentMagazine;
                 magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
                 magazineText.text = magString;
-            }
+			}
             else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire semi auto
             {
                 shotCounter = fireRate;
@@ -389,7 +388,8 @@ public class Gun : Weapon
                 audioSource.PlayOneShot(dryFireSound);
                 isFiring = false;
             }
-        }
+			hasFired = true;
+		}
     }
 
     // Mostly to lerp weapons

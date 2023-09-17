@@ -79,7 +79,7 @@ public class Player : MonoBehaviour
         {
             kickTimeStamp = Time.time + kickCooldown;
             // playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
-            playerMovement.ApplySlowEffect(0.75f, 0.5f);
+            playerMovement.ApplySpeedEffect(0.75f, 0.5f);
             Invoke("Kick", 0.15f);
         }
         if (kickTimeStamp <= Time.time) kickSymbol.SetActive(true);

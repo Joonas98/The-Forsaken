@@ -44,13 +44,13 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 moveDirection;
     private Vector3 lastPosition = new Vector3(0, 0, 0);
 
-    private struct SlowEffect
+    private struct MovementSpeedEffect
     {
-        public float slowPercentage;    // Percentage of slow (e.g., 0.25 for 25%)
-        public float duration;              // Remaining duration of the slow effect
+        public float speedDelta;    // Percentage of speed change (e.g., 0.25 for 25%)
+        public float duration;       // Remaining duration of the speed effect
     }
 
-    private SlowEffect[] slowEffects;
+    private MovementSpeedEffect[] movementSpeedEffects;
 
     // Important for custom sliding system
     private Vector3 hitPointNormal;
@@ -85,12 +85,12 @@ public class PlayerMovement : MonoBehaviour
     {
         canRun = true;
         initialYOffset = legHud.position.y - mainCamera.transform.position.y;
-        slowEffects = new SlowEffect[9]; // Maximum of 9 slow effects should be enough 
+        movementSpeedEffects = new MovementSpeedEffect[9]; // Maximum of 9 slow effects should be enough 
     }
 
     void Update()
     {
-        CalculateSlows();
+        CalculateSpeedEffects();
         HandleRunning();
         HandleJump();
         HandleMovement();
@@ -181,31 +181,45 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void CalculateSlows()
-    {
-        float cumulativeSlowPercentage = 1.0f;
+	private void CalculateSpeedEffects()
+	{
+		float cumulativeSpeedPercentage = 1.0f;
 
-        for (int i = 0; i < slowEffects.Length; i++)
-        {
-            if (slowEffects[i].duration > 0.0f)
-            {
-                // Reduce the duration of the slow effect
-                slowEffects[i].duration -= Time.deltaTime;
+		for (int i = 0; i < movementSpeedEffects.Length; i++)
+		{
+			if (movementSpeedEffects[i].duration > 0.0f)
+			{
+				// Reduce the duration of the speed effect
+				movementSpeedEffects[i].duration -= Time.deltaTime;
 
-                // Apply the slow percentage to the cumulativeSlowPercentage
-                cumulativeSlowPercentage *= (1.0f - slowEffects[i].slowPercentage);
-            }
-        }
+				// Determine whether it's a speed increase or decrease
+				float speedModifier = 1.0f;
+				if (movementSpeedEffects[i].speedDelta > 0.0f)
+				{
+					// It's a speed increase
+					speedModifier = movementSpeedEffects[i].speedDelta;
+				}
+				else if (movementSpeedEffects[i].speedDelta < 0.0f)
+				{
+					// It's a speed decrease
+					speedModifier = 1.0f - Mathf.Abs(movementSpeedEffects[i].speedDelta);
+				}
 
-        // Calculate the effective movement speed
-        speed = ogSpeed * cumulativeSlowPercentage;
-        runningSpeed = ogRunningspeed * cumulativeSlowPercentage;
+				// Apply the speed modifier to the cumulativeSpeedPercentage
+				cumulativeSpeedPercentage *= speedModifier;
+			}
+		}
 
-        if (speed < 0f) speed = 0f;
-        if (runningSpeed < 0f) runningSpeed = 0f;
-    }
+		// Calculate the effective movement speed
+		speed = ogSpeed * cumulativeSpeedPercentage;
+		runningSpeed = ogRunningspeed * cumulativeSpeedPercentage;
 
-    public void Run(bool run)
+		if (speed < 0f) speed = 0f;
+		if (runningSpeed < 0f) runningSpeed = 0f;
+	}
+
+
+	public void Run(bool run)
     {
         if (!run || !canRun)
         {
@@ -254,16 +268,16 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    public void ApplySlowEffect(float slowPercentage, float duration)
+    public void ApplySpeedEffect(float multiplier, float duration)
     {
-        // Find an available slot in the slow sources array
-        for (int i = 0; i < slowEffects.Length; i++)
+        // Find an available slot in the effects sources array
+        for (int i = 0; i < movementSpeedEffects.Length; i++)
         {
-            if (slowEffects[i].duration <= 0.0f)
+            if (movementSpeedEffects[i].duration <= 0.0f)
             {
-                // Set the slow source information
-                slowEffects[i].slowPercentage = slowPercentage;
-                slowEffects[i].duration = duration;
+                // Set the effect source information
+                movementSpeedEffects[i].speedDelta = multiplier;
+                movementSpeedEffects[i].duration = duration;
 
                 // Exit the loop
                 break;

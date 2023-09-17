@@ -26,4 +26,5 @@ MonoBehaviour:
   activateSFX: {fileID: 8300000, guid: f324121b0f463954cb54e6403b3605b9, type: 3}
   endSFX: {fileID: 8300000, guid: 2ede5da223a58be4f897ad8e1e3fb4ce, type: 3}
   audioSource: {fileID: 0}
-  dashSpeed: 5
+  speedMultiplier: 4
+  speedDuration: 2

@@ -450,7 +450,7 @@ public class Enemy : MonoBehaviour
             canAttack = false;
             PlayerMovement playerMovement = playerScript.GetComponent<PlayerMovement>();
             // playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
-            playerMovement.ApplySlowEffect(0.50f, 0.5f);
+            playerMovement.ApplySpeedEffect(0.50f, 0.5f);
             StartCoroutine(AttackCooldown());
         }
     }
