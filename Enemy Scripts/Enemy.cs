@@ -53,8 +53,11 @@ public class Enemy : MonoBehaviour
 
     [Header("Damage Popup")]
     public Transform popupTransform;
-    public DamageNumber dpopNormalPrefab;
-    public Color normalColor, headshotColor, healingColor;
+    public DamageNumber[] dpopPrefabs;
+    public enum DamagePopupType // Dpops for different purposes
+    {
+        Normal, Headshot, Healing, Fire, Shock
+    }
 
     [Header("Effects")]
     public ParticleSystem bloodFX;
@@ -226,22 +229,51 @@ public class Enemy : MonoBehaviour
         animator.enabled = true;
     }
 
-    public void HandlePopup(int number, bool headshot)
-    {
+    public void HandlePopup(int number, DamagePopupType type = DamagePopupType.Normal)
+	{
         if (isDead) return;
         if (number == 0) return;
 
-        if (dpopNormalPrefab == null) return;
-        DamageNumber damageNumber = dpopNormalPrefab.Spawn(popupTransform.position, number);
-        // damageNumber.SetFollowedTarget(popupTransform);
+        DamageNumber damageNumber;
 
-        if (number < 0) damageNumber.SetColor(healingColor);
-        else if (headshot) damageNumber.SetColor(headshotColor);
-        else damageNumber.SetColor(normalColor);
+        // We choose the right damage popup with the type enum
+		switch (type)
+        {
+            case DamagePopupType.Normal:
+				// Debug.Log("Normal popup");
+				damageNumber = dpopPrefabs[0].Spawn(popupTransform.position, number);
+				break;
+
+			case DamagePopupType.Headshot:
+               // Debug.Log("Headshot popup");
+				damageNumber = dpopPrefabs[1].Spawn(popupTransform.position, number);
+				break;
+
+            case DamagePopupType.Healing:
+				// Debug.Log("Healing popup");
+				damageNumber = dpopPrefabs[2].Spawn(popupTransform.position, number);
+				break;
+
+			case DamagePopupType.Fire:
+               // Debug.Log("Fire popup");
+				damageNumber = dpopPrefabs[3].Spawn(popupTransform.position, number);
+				break;
+
+            case DamagePopupType.Shock:
+               // Debug.Log("Shock popup");
+				damageNumber = dpopPrefabs[4].Spawn(popupTransform.position, number);
+				break;
+
+            default:
+               // Debug.Log("Default popup");
+				damageNumber = dpopPrefabs[0].Spawn(popupTransform.position, number);
+				break;
+        }
+		damageNumber.followedTarget = transform;
     }
 
     // The actual damage processing, should be always called via TakeDamage() functions
-    public void TakeDamage(int damage, int percentageAmount = 0, bool headshot = false)
+    public void TakeDamage(int damage, int percentageAmount = 0, DamagePopupType type = DamagePopupType.Normal)
     {
         // If optional percentageAmount was given, add % based damage to the actual damage
         if (percentageAmount > 0)
@@ -250,7 +282,7 @@ public class Enemy : MonoBehaviour
             damage += hpPercentage;
         }
 
-        HandlePopup(damage, headshot);
+        HandlePopup(damage, type);
         currentHealth -= damage;
         healthPercentage = (100 / maxHealth) * currentHealth;
         newMaterial.SetFloat("_BloodAmount", 1f);
@@ -270,6 +302,15 @@ public class Enemy : MonoBehaviour
         }
     }
 
+    public void Heal(int amount)
+    {
+        Debug.Log("Healing enemy");
+		HandlePopup(amount, DamagePopupType.Healing);
+		currentHealth += amount;
+		healthPercentage = (100 / maxHealth) * currentHealth;
+		UpdateEyeColor(); // Enemy health can be seen from eyes
+	}
+
     public void GetShot(RaycastHit hit, int damageAmount, int percentageDamage = 0)
     {
         EnemyImpactFX(hit.point, hit.normal);
@@ -277,7 +318,7 @@ public class Enemy : MonoBehaviour
         {
             // HEAD
             case "Head":
-                TakeDamage(damageAmount, percentageDamage, true);
+                TakeDamage(damageAmount, percentageDamage, DamagePopupType.Headshot);
                 DamageLimb(0, damageAmount);
                 if (limbManager != null && GetHealth(0) <= 0) limbManager.RemoveLimb(0);
                 break;

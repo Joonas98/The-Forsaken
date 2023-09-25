@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using SCPE;
+using static Enemy;
 
 public class Fire : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class Fire : MonoBehaviour
     public float damageInterval;
     public int damage;
     public float radius;
+    public float debuffDurationPerTick; // If >0, apply fire debuff each tick
 
     public AudioSource audioSource;
     public AudioClip startSFX;
@@ -54,32 +56,49 @@ public class Fire : MonoBehaviour
             ppColorize.intensity.value = Mathf.Lerp(ppColorize.intensity.value, 0f, stopIntensitySpeed * Time.deltaTime);
             return;
         }
-        if (damageCounter <= 0)
+        if (damageCounter <= 0) // Time for damage tick
         {
             damageCounter = damageInterval;
             damagedEnemies.Clear();
             Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
             foreach (Collider collider in colliders)
             {
-				if (collider.gameObject.layer == 11)
+				// Found object is enemy
+				if (collider.gameObject.layer == 11) 
 				{
+                    // Reference enemy script
 					Enemy enemyScript = collider.gameObject.GetComponentInParent<Enemy>();
+					if (enemyScript == null) return;
 
+                    // Reference debuff manager, if we want to set them on fire
+                    DebuffManager debuffManager;
+					debuffManager = enemyScript.GetComponent<DebuffManager>();
+
+					// Make sure we don't damage the same enemy multiple times
 					if (!damagedEnemies.Contains(enemyScript))
 					{
 						if (!healingFire)
 						{
-							enemyScript.TakeDamage(damage);
+                            // Direct damage from the fire
+							enemyScript.TakeDamage(damage, 0, DamagePopupType.Fire);
+
+                            // Apply fire debuff
+                            if (debuffDurationPerTick > 0)
+                            {
+                                debuffManager.ApplyDebuff(DebuffManager.Debuffs.Fire, debuffDurationPerTick);
+                            }
 						}
 						else
 						{
-							enemyScript.TakeDamage(damage * -1);
+                            // Todo: heal function to enemies
+							enemyScript.Heal(damage);
 						}
 
 						damagedEnemies.Add(enemyScript); // Add the enemy to the list of damaged enemies
 					}
 				}
 
+                // Found object the player
 				if (collider.CompareTag("Player"))
                 {
                     Player playerScript = collider.gameObject.GetComponentInParent<Player>();
@@ -113,7 +132,6 @@ public class Fire : MonoBehaviour
         // Debug.Log("Stopping fire");
         stopped = true;
         ps.Stop();
-        // fireLight.intensity /= 2f;
         Destroy(gameObject, 3f); // 3f to let the fire particles finish
     }
 
