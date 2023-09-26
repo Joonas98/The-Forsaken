@@ -88,7 +88,7 @@ public class DebuffManager : MonoBehaviour
 				if (Time.time - fireLastTickTime >= fireEffect.tickInterval)
 				{
 					// Apply damage
-					enemyScript.TakeDamage(fireEffect.tickDamage, 0, Enemy.DamagePopupType.Fire);
+					enemyScript.TakeDamage(fireEffect.tickDamage, 0, Enemy.DamageType.Fire);
 
 					// Update the last tick time for "Fire"
 					fireLastTickTime = Time.time;
@@ -125,13 +125,15 @@ public class DebuffManager : MonoBehaviour
     public void RemoveDebuff(Debuffs debuffenum)
     {
 		//Debug.Log("Disabling debuff: " + debuffenum);
+		if (debuffenum == Debuffs.Crimson) enemyScript.ResetCrimsonDamage();
+
 		// Deactivate the FX for the debuff
-		if(debuffenum == Debuffs.Fire) { 
+		if (debuffenum == Debuffs.Fire)
+		{ 
 		ParticleSystem debuffParticleSystem = effectList[(int)debuffenum].GetComponent<ParticleSystem>();
 		var emission = debuffParticleSystem.emission;
 		emission.enabled = false;
-
-		Invoke(nameof(DisableFire), 2f);
+		Invoke(nameof(DisableFire), 3f); // Disable the fire particle system after all particles have faded away
 		} 
 		else
 		{
@@ -151,8 +153,8 @@ public class DebuffManager : MonoBehaviour
 		if(!IsDebuffActive(Debuffs.Fire)) effectList[(int)Debuffs.Fire].SetActive(false);
 	}
 
-    // Check if a specific debuff is active
-    public bool IsDebuffActive(Debuffs debuffenum)
+	// Check if a specific debuff is active
+	public bool IsDebuffActive(Debuffs debuffenum)
     {
         return activeDebuffs.ContainsKey(debuffenum);
     }

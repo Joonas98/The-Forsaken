@@ -41,6 +41,11 @@ public class Enemy : MonoBehaviour
 
     private GameObject player;
 
+    [Header("Debuff variables")]
+    public int crimsonDamage; // How much crimson debuff damage ramps up each time damage is taken
+
+    private int crimsonDamageCurrent; // The current amount of damage crimson debuff deals each time
+
     [Header("Navigation and movement")]
     public EnemyNav enemyNavScript;
     public NavMeshAgent navAgent;
@@ -54,9 +59,9 @@ public class Enemy : MonoBehaviour
     [Header("Damage Popup")]
     public Transform popupTransform;
     public DamageNumber[] dpopPrefabs;
-    public enum DamagePopupType // Dpops for different purposes
+    public enum DamageType // Dpops for different purposes
     {
-        Normal, Headshot, Healing, Fire, Shock
+        Normal, Headshot, Healing, Fire, Shock, Crimson
     }
 
     [Header("Effects")]
@@ -64,7 +69,8 @@ public class Enemy : MonoBehaviour
     public Gradient eyeGradient;
     public Material originalMaterial;
 
-    private Material eyeMaterialR, eyeMaterialL;
+	[SerializeField] private float eyeEmissionIntensity;
+	private Material eyeMaterialR, eyeMaterialL;
     private SkinnedMeshRenderer smr;
     private Material newMaterial;
 
@@ -121,7 +127,7 @@ public class Enemy : MonoBehaviour
     private void Start()
     {
         slowEffects = new SlowEffect[5]; // Maximum of 5 slow effects should be enough 
-    }
+	}
 
     private void Update()
     {
@@ -229,7 +235,7 @@ public class Enemy : MonoBehaviour
         animator.enabled = true;
     }
 
-    public void HandlePopup(int number, DamagePopupType type = DamagePopupType.Normal)
+    public void HandlePopup(int number, DamageType type = DamageType.Normal)
 	{
         if (isDead) return;
         if (number == 0) return;
@@ -239,42 +245,55 @@ public class Enemy : MonoBehaviour
         // We choose the right damage popup with the type enum
 		switch (type)
         {
-            case DamagePopupType.Normal:
+            case DamageType.Normal:
 				// Debug.Log("Normal popup");
 				damageNumber = dpopPrefabs[0].Spawn(popupTransform.position, number);
 				break;
 
-			case DamagePopupType.Headshot:
+			case DamageType.Headshot:
                // Debug.Log("Headshot popup");
 				damageNumber = dpopPrefabs[1].Spawn(popupTransform.position, number);
 				break;
 
-            case DamagePopupType.Healing:
+            case DamageType.Healing:
 				// Debug.Log("Healing popup");
 				damageNumber = dpopPrefabs[2].Spawn(popupTransform.position, number);
 				break;
 
-			case DamagePopupType.Fire:
+			case DamageType.Fire:
                // Debug.Log("Fire popup");
 				damageNumber = dpopPrefabs[3].Spawn(popupTransform.position, number);
 				break;
 
-            case DamagePopupType.Shock:
+            case DamageType.Shock:
                // Debug.Log("Shock popup");
 				damageNumber = dpopPrefabs[4].Spawn(popupTransform.position, number);
 				break;
 
-            default:
+			case DamageType.Crimson:
+				// Debug.Log("Crimson popup");
+				damageNumber = dpopPrefabs[5].Spawn(popupTransform.position, number);
+				break;
+
+			default:
                // Debug.Log("Default popup");
 				damageNumber = dpopPrefabs[0].Spawn(popupTransform.position, number);
 				break;
         }
-		damageNumber.followedTarget = transform;
-    }
+		damageNumber.spamGroup = gameObject.GetInstanceID().ToString();
+		damageNumber.followedTarget = torsoTransform;
+	}
 
     // The actual damage processing, should be always called via TakeDamage() functions
-    public void TakeDamage(int damage, int percentageAmount = 0, DamagePopupType type = DamagePopupType.Normal)
+    public void TakeDamage(int damage, int percentageAmount = 0, DamageType type = DamageType.Normal)
     {
+        if(debuffManager.IsDebuffActive(DebuffManager.Debuffs.Crimson) && type != DamageType.Crimson)
+        {
+           // Debug.Log("Dealing crimson damage");
+            crimsonDamageCurrent += crimsonDamage;
+            TakeDamage(crimsonDamageCurrent, 0, DamageType.Crimson);
+        }
+
         // If optional percentageAmount was given, add % based damage to the actual damage
         if (percentageAmount > 0)
         {
@@ -282,10 +301,15 @@ public class Enemy : MonoBehaviour
             damage += hpPercentage;
         }
 
+        // Handle popup according to the dmg amount and type
         HandlePopup(damage, type);
+
+        // Adjust health and health %
         currentHealth -= damage;
-        healthPercentage = (100 / maxHealth) * currentHealth;
-        newMaterial.SetFloat("_BloodAmount", 1f);
+		healthPercentage = Mathf.Clamp((100 * currentHealth) / maxHealth, 0, 100);
+
+        // Visual updates according to damage
+		newMaterial.SetFloat("_BloodAmount", 1f); // Blood on the skinned mesh renderer
         UpdateEyeColor(); // Enemy health can be seen from eyes
 
         // Sometimes make noise when damaged
@@ -304,8 +328,8 @@ public class Enemy : MonoBehaviour
 
     public void Heal(int amount)
     {
-        Debug.Log("Healing enemy");
-		HandlePopup(amount, DamagePopupType.Healing);
+       // Debug.Log("Healing enemy");
+		HandlePopup(amount, DamageType.Healing);
 		currentHealth += amount;
 		healthPercentage = (100 / maxHealth) * currentHealth;
 		UpdateEyeColor(); // Enemy health can be seen from eyes
@@ -318,7 +342,7 @@ public class Enemy : MonoBehaviour
         {
             // HEAD
             case "Head":
-                TakeDamage(damageAmount, percentageDamage, DamagePopupType.Headshot);
+                TakeDamage(damageAmount, percentageDamage, DamageType.Headshot);
                 DamageLimb(0, damageAmount);
                 if (limbManager != null && GetHealth(0) <= 0) limbManager.RemoveLimb(0);
                 break;
@@ -385,12 +409,14 @@ public class Enemy : MonoBehaviour
         limbHealths[limbIndex] -= damage;
     }
 
+    // Get enemy health
     public int GetHealth()
     {
         return currentHealth;
     }
 
-    public int GetHealth(int limbIndex)
+	// Get limb health with index
+	public int GetHealth(int limbIndex)
     {
         return limbHealths[limbIndex];
     }
@@ -638,19 +664,28 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    public void UpdateEyeColor() // Enemy HP% can be seen from the eye color
-    {
-        if (debuffManager.IsDebuffActive(DebuffManager.Debuffs.ShockBlue))
-        {
-            eyeMaterialR.SetColor("_EmissionColor", debuffManager.shockedEyeColor * Mathf.Pow(3, 3));
-            eyeMaterialL.SetColor("_EmissionColor", debuffManager.shockedEyeColor * Mathf.Pow(3, 3));
-            return;
-        }
-        eyeMaterialR.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
-        eyeMaterialL.SetColor("_EmissionColor", eyeGradient.Evaluate(healthPercentage / 100f) * Mathf.Pow(2, 2));
-    }
+	public void UpdateEyeColor()
+	{
+		Color eyeColor;
 
-    private void RandomizeSkins()
+        // Adjust eye color according to possible debuffs
+		if (debuffManager.IsDebuffActive(DebuffManager.Debuffs.ShockBlue))
+		{
+			eyeColor = debuffManager.shockedEyeColor;
+		}
+		else
+		{
+            // On default, the eye color indicates HP%
+			eyeColor = eyeGradient.Evaluate(healthPercentage / 100f);
+		}
+
+		// Adjusting the emission intensity
+		eyeMaterialR.SetColor("_EmissionColor", eyeColor * eyeEmissionIntensity);
+		eyeMaterialL.SetColor("_EmissionColor", eyeColor * eyeEmissionIntensity);
+	}
+
+
+	private void RandomizeSkins()
     {
         // 18.6.23 All zombies are 1 prefab and the skin is randomized on awake
         if (zombieSkins.Length > 0)
@@ -683,9 +718,14 @@ public class Enemy : MonoBehaviour
     {
         if (bloodFX != null)
         {
-            ParticleSystem bloodFXGO = Instantiate(bloodFX, position, Quaternion.LookRotation(normal));
+            ParticleSystem bloodFXGO = Instantiate(bloodFX, position, Quaternion.identity);
             Destroy(bloodFXGO.gameObject, 2f);
         }
     }
+
+	public void ResetCrimsonDamage()
+	{
+		crimsonDamageCurrent = 0;
+	}
 
 }

@@ -80,7 +80,7 @@ public class Fire : MonoBehaviour
 						if (!healingFire)
 						{
                             // Direct damage from the fire
-							enemyScript.TakeDamage(damage, 0, DamagePopupType.Fire);
+							enemyScript.TakeDamage(damage, 0, DamageType.Fire);
 
                             // Apply fire debuff
                             if (debuffDurationPerTick > 0)

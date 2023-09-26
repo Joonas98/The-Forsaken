@@ -51,7 +51,7 @@ public class UkkoBlastAbility : Ability
         {
             if (x != null && !damagedEnemies.Contains(x))
             {
-                x.TakeDamage(damage);
+                x.TakeDamage(damage, 0, Enemy.DamageType.Shock);
                 damagedEnemies.Add(x);
                 x.debuffManager.ApplyDebuff(DebuffManager.Debuffs.ShockBlue, 2f);
             }
