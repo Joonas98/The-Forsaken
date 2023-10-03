@@ -12,8 +12,8 @@ public class Gun : Weapon
 	public bool semiAutomatic;
 	public int pelletCount, penetration, damage, magazineSize;
 	public float hipSpread, aimSpread, headshotMultiplier, RPM, reloadTime, knockbackPower, range;
-	[Tooltip("Should be more than 1. High = faster")][SerializeField] public float aimSpeed;
-	[Tooltip("Should be 0-1. Low = more zoom")][SerializeField] public float zoomAmount;
+	[Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
+	[Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
 	//0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
 	public int ammoType; // Todo: change ammotype to enum?
 	[HideInInspector] public int percentageDamage;
@@ -159,7 +159,7 @@ public class Gun : Weapon
 		inventoryScript = GetComponentInParent<PlayerInventory>();
 		playerMovementScript = GetComponentInParent<PlayerMovement>();
 
-		weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
+		// weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
 		magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
 		canvasManagerScript = GameObject.Find("Canvases").GetComponent<CanvasManager>();
 		equipTrans = GameObject.Find("EquipTrans").transform;
@@ -247,7 +247,7 @@ public class Gun : Weapon
 		{
 			isAiming = true;
 			playedUnaimSound = false;
-		//	crosshairContents.SetActive(false);
+			//	crosshairContents.SetActive(false);
 			WeaponSwitcher.CanSwitch(false);
 
 			transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), aimSpeed * Time.deltaTime);

@@ -4,182 +4,209 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Variables")]
-    public float speed;
-    public float runningSpeed, slopeSpeed, gravity, jumpHeight;
-    private float runThreshold = 5f; // If controller.velocity.magnitude is less than this, can't be running
+	[Header("Variables")]
+	public float speed;
+	public float runningSpeed, slopeSpeed, gravity, jumpHeight;
+	private float runThreshold = 5f; // If controller.velocity.magnitude is less than this, can't be running
 
-    [Header("Audio")]
-    public AudioSource audioSource;
-    public AudioClip[] jumpSounds;
+	[Header("Audio")]
+	public AudioSource audioSource;
+	public AudioClip[] jumpSounds;
 
-    [Header("Headbob")]
-    [SerializeField] private float walkBobSpeed = 14f;
-    [SerializeField] private float walkBobAmount = 0.05f;
-    [SerializeField] private float sprintBobSpeed = 18f;
-    [SerializeField] private float sprintBobAmount = 0.1f;
-    [SerializeField] private float bobReturnSpeed = 0.25f; // How fast to return -> 0, 0, 0 when not bobbing
-    private float defaultYPos = 0;
-    private float bobTimer;
+	[Header("Headbob")]
+	[SerializeField] private float walkBobSpeed = 14f;
+	[SerializeField] private float walkBobAmount = 0.05f;
+	[SerializeField] private float sprintBobSpeed = 18f;
+	[SerializeField] private float sprintBobAmount = 0.1f;
+	[SerializeField] private float bobReturnSpeed = 0.25f; // How fast to return -> 0, 0, 0 when not bobbing
+	private float defaultYPos = 0;
+	private float bobTimer;
 
-    [Header("Other stuff")]
-    public CharacterController controller;
-    public Transform legHud; // The HUD elements at the legs need to be moved with headbob
-    public LayerMask groundmask;
-    public Transform groundCheck;
-    [Tooltip("Radius of ground check sphere")] public float groundDistance;
-    public GameObject mainCamera;
-    public GameObject fallingSymbol;
+	[Header("Other stuff")]
+	public CharacterController controller;
+	public Transform legHud; // The HUD elements at the legs need to be moved with headbob
+	public LayerMask groundmask;
+	public Transform groundCheck;
+	[Tooltip("Radius of ground check sphere")] public float groundDistance;
+	public GameObject mainCamera;
+	public GameObject fallingSymbol;
 
-    [HideInInspector] public bool isStationary;
-    [HideInInspector] public bool canRun = true;
-    [HideInInspector] public bool isGrounded, isRunning;
-    [HideInInspector] public bool isSlowed;
-    [HideInInspector] public float ogSpeed, ogRunningspeed;
+	[HideInInspector] public bool isStationary;
+	[HideInInspector] public bool canRun = true;
+	[HideInInspector] public bool isGrounded, isRunning;
+	[HideInInspector] public bool isSlowed;
+	[HideInInspector] public float ogSpeed, ogRunningspeed;
 
-    // Private stuff
-    private GameObject runningSymbol;
-    private float initialYOffset; // Variable for removing leg HUD bouncing
-    private Vector3 velocity;
-    private Vector3 moveDirection;
-    private Vector3 lastPosition = new Vector3(0, 0, 0);
+	// Private stuff
+	private GameObject runningSymbol;
+	private float initialYOffset; // Variable for removing leg HUD bouncing
+	private Vector3 velocity;
+	private Vector3 moveDirection;
+	private Vector3 lastPosition = new Vector3(0, 0, 0);
+	private float timeOnSlope;
 
-    private struct MovementSpeedEffect
-    {
-        public float speedDelta;    // Percentage of speed change (e.g., 0.25 for 25%)
-        public float duration;       // Remaining duration of the speed effect
-    }
+	private struct MovementSpeedEffect
+	{
+		public float speedDelta;    // Percentage of speed change (e.g., 0.25 for 25%)
+		public float duration;       // Remaining duration of the speed effect
+	}
 
-    private MovementSpeedEffect[] movementSpeedEffects;
+	private MovementSpeedEffect[] movementSpeedEffects;
 
-    // Important for custom sliding system
-    private Vector3 hitPointNormal;
+	// Important for custom sliding system
+	private Vector3 hitPointNormal;
 
-    // Custom slope sliding system
-    private bool isSliding
-    {
-        get
-        {
-            if (isGrounded && Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 2f, groundmask))
-            {
-                hitPointNormal = slopeHit.normal;
-                return Vector3.Angle(hitPointNormal, Vector3.up) > controller.slopeLimit;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
+	// Custom slide system
+	public float slideDelay; // Be this time on slope to start sliding
 
-    private void Awake()
-    {
-        ogSpeed = speed;
-        ogRunningspeed = runningSpeed;
-        runningSymbol = GameObject.Find("RunningSymbol");
-        if (runningSymbol != null) runningSymbol.SetActive(false);
-        defaultYPos = mainCamera.transform.localPosition.y;
-    }
+	private bool isSlideDelayOver => timeOnSlope >= slideDelay;
 
-    private void Start()
-    {
-        canRun = true;
-        initialYOffset = legHud.position.y - mainCamera.transform.position.y;
-        movementSpeedEffects = new MovementSpeedEffect[9]; // Maximum of 9 slow effects should be enough 
-    }
+	private bool isSliding
+	{
+		get
+		{
+			if (isGrounded && Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 2f, groundmask))
+			{
+				hitPointNormal = slopeHit.normal;
 
-    void Update()
-    {
-        CalculateSpeedEffects();
-        HandleRunning();
-        HandleJump();
-        HandleMovement();
-        HandleHeadbob();
-        FallingSymbol();
+				if (Vector3.Angle(hitPointNormal, Vector3.up) > controller.slopeLimit)
+				{
+					// Check if the slide delay is over
+					if (isSlideDelayOver)
+					{
+						return true;
+					}
+					else
+					{
+						// Increment the time on the slope
+						timeOnSlope += Time.deltaTime;
+						return false;
+					}
+				}
+			}
 
-        if (lastPosition != transform.position)
-        {
-            isStationary = false;
-        }
-        else
-        {
-            isStationary = true;
-        }
-        lastPosition = transform.position;
-    }
+			// Reset the time on the slope if not on a slope
+			timeOnSlope = 0f;
+			return false;
+		}
+	}
 
-    private void OnGUI()
-    {
-        // GUI.Label(new Rect(300, 300, 80, 20), speed.ToString());
-    }
+	private void Awake()
+	{
+		ogSpeed = speed;
+		ogRunningspeed = runningSpeed;
+		runningSymbol = GameObject.Find("RunningSymbol");
+		if (runningSymbol != null) runningSymbol.SetActive(false);
+		defaultYPos = mainCamera.transform.localPosition.y;
+	}
 
-    private void HandleMovement()
-    {
-        float x, z;
+	private void Start()
+	{
+		canRun = true;
+		initialYOffset = legHud.position.y - mainCamera.transform.position.y;
+		movementSpeedEffects = new MovementSpeedEffect[9]; // Maximum of 9 slow effects should be enough 
+	}
 
-        x = Input.GetAxis("Horizontal");
-        z = Input.GetAxis("Vertical");
+	void Update()
+	{
+		CalculateSpeedEffects();
+		HandleRunning();
+		HandleJump();
+		HandleMovement();
+		HandleHeadbob();
+		FallingSymbol();
 
-        if (!isSliding)
-        {
-            moveDirection = transform.right * x + transform.forward * z;
-        }
-        else
-        {
-            moveDirection += new Vector3(hitPointNormal.x, -hitPointNormal.y, hitPointNormal.z) * slopeSpeed;
-            controller.Move(slopeSpeed * Time.deltaTime * moveDirection);
-            goto skipMovement;
-        }
+		if (lastPosition != transform.position)
+		{
+			isStationary = false;
+		}
+		else
+		{
+			isStationary = true;
+		}
+		lastPosition = transform.position;
+	}
 
-        if (!isRunning)
-        {
-            controller.Move(speed * Time.deltaTime * moveDirection);
-        }
-        else
-        {
-            controller.Move(runningSpeed * Time.deltaTime * moveDirection);
-        }
-    skipMovement:;
-    }
+	private void OnGUI()
+	{
+		// GUI.Label(new Rect(300, 300, 80, 20), speed.ToString());
+	}
 
-    private void HandleJump()
-    {
-        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundmask);
+	private void HandleMovement()
+	{
+		float x, z;
 
-        if (Input.GetButtonDown("Jump") && isGrounded && !isSliding)
-        {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            int raIndex = Random.Range(0, jumpSounds.Length);
-            audioSource.PlayOneShot(jumpSounds[raIndex]);
-        }
+		x = Input.GetAxis("Horizontal");
+		z = Input.GetAxis("Vertical");
 
-        if (isGrounded && velocity.y < 0 && !isSliding)
-        {
-            velocity.y = -50f;
-        }
+		if (!isSliding)
+		{
+			moveDirection = transform.right * x + transform.forward * z;
+		}
+		else
+		{
+			moveDirection += new Vector3(hitPointNormal.x, -hitPointNormal.y, hitPointNormal.z) * slopeSpeed;
+			controller.Move(slopeSpeed * Time.deltaTime * moveDirection);
+			goto skipMovement;
+		}
 
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
-    }
+		if (!isRunning)
+		{
+			controller.Move(speed * Time.deltaTime * moveDirection);
+		}
+		else
+		{
+			controller.Move(runningSpeed * Time.deltaTime * moveDirection);
+		}
+	skipMovement:;
+	}
 
-    private void HandleRunning()
-    {
-        if (Input.GetKey(KeyCode.LeftShift) && Time.timeScale > 0 && canRun)
-        {
-            if (controller.velocity.magnitude >= runThreshold)
-            {
-                Run(true);
-            }
-            else
-            {
-                Run(false);
-            }
-        }
-        else if (!Input.GetKey(KeyCode.LeftShift) && isRunning)
-        {
-            Run(false);
-        }
-    }
+	private void HandleJump()
+	{
+		isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundmask);
+
+		if (isGrounded)
+		{
+			// Only allow jumping if not sliding on a steep slope
+			if (!isSliding || Vector3.Angle(Vector3.up, hitPointNormal) <= controller.slopeLimit)
+			{
+				if (Input.GetButtonDown("Jump"))
+				{
+					velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+					int raIndex = Random.Range(0, jumpSounds.Length);
+					audioSource.PlayOneShot(jumpSounds[raIndex]);
+				}
+			}
+
+			// Apply gravity when grounded
+			if (velocity.y < 0)
+			{
+				velocity.y = -50f;
+			}
+		}
+
+		velocity.y += gravity * Time.deltaTime;
+		controller.Move(velocity * Time.deltaTime);
+	}
+
+	private void HandleRunning()
+	{
+		if (Input.GetKey(KeyCode.LeftShift) && Time.timeScale > 0 && canRun)
+		{
+			if (controller.velocity.magnitude >= runThreshold)
+			{
+				Run(true);
+			}
+			else
+			{
+				Run(false);
+			}
+		}
+		else if (!Input.GetKey(KeyCode.LeftShift) && isRunning)
+		{
+			Run(false);
+		}
+	}
 
 	private void CalculateSpeedEffects()
 	{
@@ -220,69 +247,69 @@ public class PlayerMovement : MonoBehaviour
 
 
 	public void Run(bool run)
-    {
-        if (!run || !canRun)
-        {
-            isRunning = false;
-            runningSymbol.SetActive(false);
-        }
-        else
-        {
-            isRunning = true;
-            runningSymbol.SetActive(true);
-        }
-    }
+	{
+		if (!run || !canRun)
+		{
+			isRunning = false;
+			runningSymbol.SetActive(false);
+		}
+		else
+		{
+			isRunning = true;
+			runningSymbol.SetActive(true);
+		}
+	}
 
-    private void HandleHeadbob() // Base from video: https://www.youtube.com/watch?v=_c5IoF1op4E
-    {
-        if (!isGrounded || isStationary) // Disable sway, return to original position if stationary or mid-air
-        {
-            mainCamera.transform.localPosition =
-                 Vector3.MoveTowards(mainCamera.transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * bobReturnSpeed);
-            bobTimer = 0;
-        }
-        else if (Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f)
-        {
-            bobTimer += Time.deltaTime * (isRunning ? sprintBobSpeed : walkBobSpeed);
-            mainCamera.transform.localPosition = new Vector3(
-                mainCamera.transform.localPosition.x,
-                defaultYPos + Mathf.Sin(bobTimer) * (isRunning ? sprintBobAmount : walkBobAmount),
-                mainCamera.transform.localPosition.z);
-        }
+	private void HandleHeadbob() // Base from video: https://www.youtube.com/watch?v=_c5IoF1op4E
+	{
+		if (!isGrounded || isStationary) // Disable sway, return to original position if stationary or mid-air
+		{
+			mainCamera.transform.localPosition =
+				 Vector3.MoveTowards(mainCamera.transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * bobReturnSpeed);
+			bobTimer = 0;
+		}
+		else if (Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f)
+		{
+			bobTimer += Time.deltaTime * (isRunning ? sprintBobSpeed : walkBobSpeed);
+			mainCamera.transform.localPosition = new Vector3(
+				mainCamera.transform.localPosition.x,
+				defaultYPos + Mathf.Sin(bobTimer) * (isRunning ? sprintBobAmount : walkBobAmount),
+				mainCamera.transform.localPosition.z);
+		}
 
-        // Leg HUD needs to be adjusted too, or it's bouncing annoyingly
-        float newY = mainCamera.transform.position.y + initialYOffset;
-        Vector3 newPosition = new Vector3(legHud.position.x, newY, legHud.position.z);
-        legHud.position = newPosition;
-    }
+		// Leg HUD needs to be adjusted too, or it's bouncing annoyingly
+		float newY = mainCamera.transform.position.y + initialYOffset;
+		Vector3 newPosition = new Vector3(legHud.position.x, newY, legHud.position.z);
+		legHud.position = newPosition;
+	}
 
-    private void FallingSymbol()
-    {
-        if (!isGrounded)
-        {
-            fallingSymbol.SetActive(true);
-        }
-        else
-        {
-            fallingSymbol.SetActive(false);
-        }
-    }
+	private void FallingSymbol()
+	{
+		if (!isGrounded)
+		{
+			fallingSymbol.SetActive(true);
+		}
+		else
+		{
+			fallingSymbol.SetActive(false);
+		}
+	}
 
-    public void ApplySpeedEffect(float multiplier, float duration)
-    {
-        // Find an available slot in the effects sources array
-        for (int i = 0; i < movementSpeedEffects.Length; i++)
-        {
-            if (movementSpeedEffects[i].duration <= 0.0f)
-            {
-                // Set the effect source information
-                movementSpeedEffects[i].speedDelta = multiplier;
-                movementSpeedEffects[i].duration = duration;
+	public void ApplySpeedEffect(float multiplier, float duration)
+	{
+		// Find an available slot in the effects sources array
+		for (int i = 0; i < movementSpeedEffects.Length; i++)
+		{
+			if (movementSpeedEffects[i].duration <= 0.0f)
+			{
+				// Set the effect source information
+				movementSpeedEffects[i].speedDelta = multiplier;
+				movementSpeedEffects[i].duration = duration;
 
-                // Exit the loop
-                break;
-            }
-        }
-    }
+				// Exit the loop
+				break;
+			}
+		}
+	}
 
 }
