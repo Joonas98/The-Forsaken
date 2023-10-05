@@ -82,14 +82,12 @@ public class Gun : Weapon
 
 	[SerializeField] private bool hasShootAnimation;
 	private Animator animator;
-	private GameObject reloadSymbol;
 	private Recoil recoilScript;
-	private CanvasManager canvasManagerScript;
+	//private CanvasManager canvasManagerScript;
 	private TextMeshProUGUI magazineText;
 	private float shotCounter, fireRate;
 	private bool hasFired = false;
 	private GameObject crosshairContents;
-	private Crosshair crosshairScript;
 	private PlayerMovement playerMovementScript;
 	private PlayerInventory inventoryScript;
 	private float sprintLerp, unsprintLerp; // Timers to handle lerping
@@ -161,14 +159,8 @@ public class Gun : Weapon
 
 		// weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
 		magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
-		canvasManagerScript = GameObject.Find("Canvases").GetComponent<CanvasManager>();
 		equipTrans = GameObject.Find("EquipTrans").transform;
 		crosshairContents = GameObject.Find("CrosshairPanel");
-		spreadText = GameObject.Find("SpreadText").GetComponent<TextMeshProUGUI>();
-
-		GameObject crosshairCanvas = GameObject.Find("CrossHairCanvas");
-		crosshairScript = crosshairCanvas.GetComponent<Crosshair>();
-		reloadSymbol = crosshairCanvas.transform.GetChild(0).gameObject;
 
 		// Original values
 		ogReloadTime = reloadTime;
@@ -211,7 +203,6 @@ public class Gun : Weapon
 		HandleAiming();
 	selectionsSkip:
 		HandleReloading();
-		HandleCrosshair();
 		HandleScopeZoom();
 		HandleSwitchingLerps();
 		HandleSprinting();
@@ -295,7 +286,6 @@ public class Gun : Weapon
 			audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / reloadTime);
 
 			WeaponSwitcher.CanSwitch(false);
-			reloadSymbol.SetActive(true);
 			shotCounter = reloadTime;
 			audioSource.PlayOneShot(reloadSound);
 
@@ -412,11 +402,6 @@ public class Gun : Weapon
 		}
 	}
 
-	public void HandleCrosshair()
-	{
-		crosshairScript.AdjustCrosshair(aimSpread);
-	}
-
 	// Mouse wheel changes scope zoom
 	private void HandleScopeZoom()
 	{
@@ -463,9 +448,9 @@ public class Gun : Weapon
 			if (enemy.GetHealth() > 0) // Hitmarker
 			{
 				if (hit.collider.CompareTag("Head"))
-					canvasManagerScript.Hitmarker(hit.point, true);
+					HitmarkAndCrosshair.instance.Hitmarker(hit.point, true);
 				else
-					canvasManagerScript.Hitmarker(hit.point, false);
+					HitmarkAndCrosshair.instance.Hitmarker(hit.point, false);
 			}
 
 			if (hit.collider.CompareTag("Head"))
@@ -583,7 +568,7 @@ public class Gun : Weapon
 		}
 
 		currentSpread = Mathf.Lerp(currentSpread, targetSpread, aimSpeed * Time.deltaTime);
-		spreadText.text = currentSpread.ToString("F3") + " -spread";
+		if (spreadText != null) spreadText.text = currentSpread.ToString("F3") + " -spread";
 	}
 
 	// Ground impacts
@@ -636,7 +621,6 @@ public class Gun : Weapon
 		WeaponSwitcher.CanSwitch(true);
 		audioMixer.SetFloat("WeaponsPitch", 1f); // Reset weapon pitch (it might be changed to match reload speed)
 		isReloading = false;
-		reloadSymbol.SetActive(false);
 	}
 
 	// Invoked after action delay

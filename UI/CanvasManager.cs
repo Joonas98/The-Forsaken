@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class CanvasManager : MonoBehaviour
 {
+	// Old system as of 5.10.2023
 	[Header("Keybinds")]
 	public KeyCode shopKeycode;
 	public KeyCode inventoryKeycode;
@@ -180,45 +181,6 @@ public class CanvasManager : MonoBehaviour
 
 	public void Hitmarker(Vector3 hitPosition, bool isHeadshot)
 	{
-		#region old system
-		// if (isHeadshot)
-		// {
-		//     StopAllCoroutines();
-		//     foreach (Image img in hitmarkImages)
-		//     {
-		//         img.color = new Color(1, 1, 1, 1);
-		//         StartCoroutine(FadeImage(img, true));
-		//     }
-		// }
-		// else
-		// {
-		//     StopAllCoroutines();
-		//     foreach (Image img in hitmarkImages)
-		//     {
-		//         img.color = new Color(1, 1, 1, 1);
-		//         StartCoroutine(FadeImage(img, false));
-		//     }
-		// }
-
-		// Yksi kuva systeemi
-		//  if (isHeadshot)
-		//  {
-		//      StopAllCoroutines();
-		//      Vector3 screenPos = Camera.main.WorldToScreenPoint(hitPosition);
-		//      oneHitmarkImage.rectTransform.position = screenPos;
-		//      oneHitmarkImage.color = new Color(1, 1, 1, 1);
-		//      StartCoroutine(FadeImage(oneHitmarkImage, true));
-		//  }
-		//  else
-		//  {
-		//      StopAllCoroutines();
-		//      Vector3 screenPos = Camera.main.WorldToScreenPoint(hitPosition);
-		//      oneHitmarkImage.rectTransform.position = screenPos;
-		//      oneHitmarkImage.color = new Color(1, 1, 1, 1);
-		//      StartCoroutine(FadeImage(oneHitmarkImage, false));
-		//  }
-		#endregion
-
 		// Object pooled hitmarkers
 		GameObject hitmark = ObjectPool.SharedInstance.GetPooledObject();
 		if (hitmark != null)

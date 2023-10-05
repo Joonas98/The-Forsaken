@@ -53,6 +53,7 @@ public class NewCanvasManager : MonoBehaviour
 		{
 			case MenuType.Shop:
 				shopCanvas.SetActive(true);
+				NewWeaponShop.instance.UpdateWeaponButtonColors();
 				break;
 			case MenuType.Pause:
 				pauseCanvas.SetActive(true);
