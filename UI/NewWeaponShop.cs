@@ -97,6 +97,7 @@ public class NewWeaponShop : MonoBehaviour
 
 		// Update modal window UI
 		modalManager.descriptionText = "You are about to purchase: " + weaponScript.weaponName + "<br> For the price of: " + weaponScript.weaponPrice.ToString();
+		modalManager.UpdateUI();
 
 		// Clear listeners to avoid 
 		confirmPurchaseButton.onClick.RemoveAllListeners();

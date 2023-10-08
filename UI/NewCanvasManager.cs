@@ -10,9 +10,13 @@ public class NewCanvasManager : MonoBehaviour
 	public KeyCode abilitiesKey;
 
 	[Header("References")]
+	// The main canvases
 	public GameObject shopCanvas;
 	public GameObject pauseCanvas;
 	public GameObject abilityCanvas;
+
+	// Close modal window when closing menus
+	public Michsky.MUIP.ModalWindowManager confirmPurchaseModalWindow;
 
 	// Privates
 	private enum MenuType { None, Shop, Pause, Abilities }
@@ -32,6 +36,9 @@ public class NewCanvasManager : MonoBehaviour
 
 	private void ToggleMenu(MenuType menuType)
 	{
+		// Prevent menu changing when purchase confirmation window is open
+		if (confirmPurchaseModalWindow.GetComponent<CanvasGroup>().alpha > 0) return;
+
 		if (currentMenu == menuType)
 		{
 			CloseMenu();
