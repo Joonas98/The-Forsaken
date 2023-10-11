@@ -60,7 +60,9 @@ public class NewWeaponShop : MonoBehaviour
 		GameObject newWeapon = Instantiate(purchasedWeapon, equipTrans.position, equipTrans.transform.rotation); // Set the correct position and rotation
 		newWeapon.transform.parent = WeaponSwitcher.instance.transform; // Set the correct parent
 
+		// Add UI elements of the new weapon
 		AddWeaponToPanel(newWeapon.GetComponent<Weapon>());
+		NewAttachmentShop.instance.AddOwnedWeaponButton(newWeapon);
 	}
 
 	// Add weapon panel to top right corner of HUD
@@ -96,7 +98,7 @@ public class NewWeaponShop : MonoBehaviour
 		Weapon weaponScript = weaponPrefab.GetComponent<Weapon>();
 
 		// Update modal window UI
-		modalManager.descriptionText = "You are about to purchase: " + weaponScript.weaponName + "<br> For the price of: " + weaponScript.weaponPrice.ToString();
+		modalManager.descriptionText = "You are about to purchase: " + weaponScript.weaponName + "<br> For the price of: " + weaponScript.weaponPrice.ToString() + "€";
 		modalManager.UpdateUI();
 
 		// Clear listeners to avoid 
