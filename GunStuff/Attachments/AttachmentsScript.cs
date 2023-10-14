@@ -210,7 +210,6 @@ public class AttachmentsScript : MonoBehaviour
 	public void EquipScope(int scopeIndex)
 	{
 		currentScope = scopeIndex;
-		Debug.Log("Equipping scope: " + scopeIndex);
 		if (scopeIndex == -1)
 		{
 			UnequipScope();
@@ -258,7 +257,6 @@ public class AttachmentsScript : MonoBehaviour
 	public void EquipGrip(int gripIndex)
 	{
 		currentGrip = gripIndex;
-		Debug.Log("Equipping grip: " + gripIndex);
 		if (gripIndex == -1)
 		{
 			UnequipGrip();
@@ -297,7 +295,6 @@ public class AttachmentsScript : MonoBehaviour
 	public void EquipMuzzle(int muzzleIndex)
 	{
 		currentMuzzle = muzzleIndex;
-		Debug.Log("Equipping ,uzzle: " + muzzleIndex);
 		if (muzzleIndex == -1)
 		{
 			UnequipMuzzle();

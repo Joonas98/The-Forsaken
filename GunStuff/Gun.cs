@@ -602,7 +602,7 @@ public class Gun : Weapon
 	public override void UnequipWeapon()
 	{
 		base.UnequipWeapon();
-		animator.Play("Entry");
+		// animator.Play("Entry");
 	}
 
 	public void UpdateFirerate()

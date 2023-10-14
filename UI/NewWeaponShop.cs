@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -51,6 +53,9 @@ public class NewWeaponShop : MonoBehaviour
 
 		// Convert the list to an array
 		weaponButtons = buttonList.ToArray();
+
+		// Sort weapon buttons by their prices
+		SortWeaponButtonsByPrice();
 	}
 
 	// Main purchase function
@@ -112,6 +117,25 @@ public class NewWeaponShop : MonoBehaviour
 
 		// Update all weapon button colors on confirmed purchase
 		confirmPurchaseButton.onClick.AddListener(() => UpdateWeaponButtonColors());
+	}
+
+	// Sort the weapon buttons by weapon prices
+	public void SortWeaponButtonsByPrice()
+	{
+		foreach (var parent in weaponButtonParents)
+		{
+			// Get all the WeaponButtons under the current parent.
+			WeaponButton[] buttons = parent.GetComponentsInChildren<WeaponButton>();
+
+			// Sort the buttons by weapon price in ascending order.
+			Array.Sort(buttons, (a, b) => a.weaponScript.weaponPrice.CompareTo(b.weaponScript.weaponPrice));
+
+			// Reparent the buttons in the order they were sorted.
+			for (int i = 0; i < buttons.Length; i++)
+			{
+				buttons[i].transform.SetSiblingIndex(i);
+			}
+		}
 	}
 
 }
