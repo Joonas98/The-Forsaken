@@ -258,7 +258,6 @@ public class NewAttachmentShop : MonoBehaviour
 	private IEnumerator AttachListenersToButtonsDelayed()
 	{
 		yield return new WaitForEndOfFrame();
-		Debug.Log("Listeners in");
 		AttachListenersToButtons(AttachmentType.Scope);
 		AttachListenersToButtons(AttachmentType.Muzzle);
 		AttachListenersToButtons(AttachmentType.Grip);
@@ -267,7 +266,6 @@ public class NewAttachmentShop : MonoBehaviour
 	private IEnumerator UpdateSelectionHighlights()
 	{
 		yield return new WaitForEndOfFrame();
-		Debug.Log("Highlights in");
 		if (attachmentsScript.scopes.Length > 0) ChangeHighlight(scopesParent.GetChild(attachmentsScript.currentScope + 1).gameObject, scopesParent);
 		if (attachmentsScript.muzzleDevices.Length > 0) ChangeHighlight(muzzlesParent.GetChild(attachmentsScript.currentMuzzle + 1).gameObject, muzzlesParent);
 		if (attachmentsScript.grips.Length > 0) ChangeHighlight(gripsParent.GetChild(attachmentsScript.currentGrip + 1).gameObject, gripsParent);

@@ -59,7 +59,8 @@ public class Gun : Weapon
 
 	[Header("Other Things")]
 	[Tooltip("What layers the gun can hit")] public LayerMask targetLayers;
-	[HideInInspector] public GameObject gunTip, aimingSpot;
+	public Transform gunTip;
+	[HideInInspector] public GameObject aimingSpot;
 	[HideInInspector] public Transform casingTransform;
 	public AnimationClip reloadAnimation;
 	public string overrideReloadName;
@@ -98,7 +99,7 @@ public class Gun : Weapon
 	[HideInInspector] public GameObject aimingSpotOG;
 
 	private AudioClip shootSoundOG;
-	private GameObject gunTipOG;
+	private Transform gunTipOG;
 	private ParticleSystem muzzleFlashOG;
 	private float aimSpeedOG;
 	private Vector3 recoilOG;
@@ -138,7 +139,7 @@ public class Gun : Weapon
 	private void HandlePrefabReferences()
 	{
 		if (animator == null) animator = GetComponent<Animator>();
-		if (gunTip == null) gunTip = transform.Find("GunTip").gameObject;
+		if (gunTip == null) gunTip = transform.Find("GunTip");
 		if (bulletHoleScript == null) bulletHoleScript = GetComponent<BulletHoles>();
 		if (muzzleFlash == null) muzzleFlash = gunTip.GetComponentInChildren<ParticleSystem>();
 		if (muzzleFlashLight == null) muzzleFlashLight = gunTip.GetComponent<Light>();
@@ -516,11 +517,11 @@ public class Gun : Weapon
 
 			if (hitPointsList.Length == 0)
 			{
-				DrawLaser(gunTip.transform.position, forwardVector * 5000);
+				DrawLaser(gunTip.position, forwardVector * 5000);
 			}
 			else
 			{
-				DrawLaser(gunTip.transform.position, hitPointsList[0].point);
+				DrawLaser(gunTip.position, hitPointsList[0].point);
 			}
 
 			List<Enemy> hitEnemies = new List<Enemy>();

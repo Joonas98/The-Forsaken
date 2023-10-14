@@ -49,6 +49,10 @@ public class WeaponSwayAndBob : MonoBehaviour
 	private Vector3 defaultMultiplier;
 	private Vector3 bobEulerRotation;
 
+	[Header("Clipping prevention")]
+	public float maxDistance;
+	public float offsetDistance;
+
 	// Important privates for multiple functions
 	Vector2 walkInput;
 	Vector2 lookInput;
@@ -135,8 +139,6 @@ public class WeaponSwayAndBob : MonoBehaviour
 		bobPosition.x = (curveCos * bobLimit.x * (mover.isGrounded ? 1 : 0)) - (walkInput.x * travelLimit.x);
 		bobPosition.y = (curveSin * bobLimit.y) * verticalMovement * 5f;
 		bobPosition.z = -(walkInput.y * travelLimit.z);
-		// Debug.Log("Vertical movement: " + verticalMovement);
-		// Debug.Log("Bob position Y: " + bobPosition.y);
 	}
 
 	void BobRotation() // Player movement -> rotation change (roll, pitch, yaw)

@@ -4,107 +4,138 @@ using UnityEngine;
 
 public class LimbManager : MonoBehaviour
 {
+	[Header("Legs")]
+	public GameObject leftLowerLeg;   // 1
+	public GameObject leftUpperLeg;   // 2
+	public GameObject rightLowerLeg;  // 3
+	public GameObject rightUpperLeg;  // 4
 
-    [Header("Legs")]
-    public GameObject LeftLowerLeg;   // 1
-    public GameObject LeftUpperLeg;   // 2
-    public GameObject RightLowerLeg;  // 3
-    public GameObject RightUpperLeg;  // 4
+	[Header("Arms")]
+	public GameObject rightArm;       // 5
+	public GameObject rightShoulder;  // 6
+	public GameObject leftArm;           // 7
+	public GameObject leftShoulder;    // 8
 
-    [Header("Arms")]
-    public GameObject RightArm;       // 5
-    public GameObject RightShoulder;  // 6
-    public GameObject LeftArm;           // 7
-    public GameObject LeftShoulder;    // 8
+	[Header("Others")]
+	public GameObject neck;  // 0
+	public Transform head; // Used only for headshot effect
+	public Enemy enemyScript;
 
-    [Header("Others")]
-    public GameObject Neck;              // 0
-    public Enemy enemyScript;
+	public ParticleSystem decapitationFX;
+	public ParticleSystem dismembermentFX;
 
-    public ParticleSystem headshotFX;
-    public ParticleSystem normalHitFX;
+	public AudioSource audioSource;
+	public AudioClip decapitationSound;
+	public AudioClip[] dismembermentSounds;
 
-    public AudioSource audioSource;
-    public AudioClip decapitationSound;
-    public AudioClip loseLegSound;
+	// This is the dismemberment or decapitation system
+	// When deleting a limb, it's scale is changed to 0, 0, 0 and SFX + VFX are played
+	public void RemoveLimb(int limbNumber)
+	{
+		ParticleSystem limbFX;
+		switch (limbNumber)
+		{
+			case 0:
+				// Headshot FX
+				ParticleSystem fxGO = Instantiate(decapitationFX, neck.transform.position, neck.transform.rotation);
+				fxGO.transform.parent = neck.transform; // Make the particle system follow the neck
+				Destroy(fxGO.gameObject, decapitationFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
 
-    public AudioClip[] loseLimbSounds;
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, head.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
 
-    public void RemoveLimb(int limbNumber)
-    {
-        if (limbNumber == 0)
-        {
-            ParticleSystem headshotFXGO = Instantiate(headshotFX, Neck.transform.position, Quaternion.LookRotation(Vector3.up));
-            headshotFXGO.transform.parent = Neck.transform;
-            Destroy(headshotFXGO.gameObject, 2f);
+				neck.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(decapitationSound, 10f);
+				break;
 
-            ParticleSystem basicFXGO = Instantiate(normalHitFX, Neck.transform.position, Quaternion.LookRotation(Vector3.up));
-            basicFXGO.transform.parent = Neck.transform;
-            Destroy(basicFXGO.gameObject, 2f);
+			case 1:
+				leftLowerLeg.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
 
-            Neck.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(decapitationSound);
-        }
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, leftLowerLeg.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
 
-        if (limbNumber == 1)
-        {
-            LeftLowerLeg.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+				if (!enemyScript.isCrawling)
+					enemyScript.StartCrawling();
+				break;
 
-            if (!enemyScript.isCrawling)
-                enemyScript.StartCrawling();
-        }
+			case 2:
+				leftUpperLeg.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
 
-        if (limbNumber == 2)
-        {
-            LeftUpperLeg.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, leftUpperLeg.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
 
-            if (!enemyScript.isCrawling)
-                enemyScript.StartCrawling();
-        }
+				if (!enemyScript.isCrawling)
+					enemyScript.StartCrawling();
+				break;
 
-        if (limbNumber == 3)
-        {
-            RightLowerLeg.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+			case 3:
+				rightLowerLeg.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
 
-            if (!enemyScript.isCrawling)
-                enemyScript.StartCrawling();
-        }
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, rightLowerLeg.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
 
-        if (limbNumber == 4)
-        {
-            RightUpperLeg.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
+				if (!enemyScript.isCrawling)
+					enemyScript.StartCrawling();
+				break;
 
-            if (!enemyScript.isCrawling)
-                enemyScript.StartCrawling();
-        }
+			case 4:
+				rightUpperLeg.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
 
-        if (limbNumber == 5)
-        {
-            RightArm.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
-        }
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, rightUpperLeg.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
 
-        if (limbNumber == 6)
-        {
-            RightShoulder.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
-        }
+				if (!enemyScript.isCrawling)
+					enemyScript.StartCrawling();
+				break;
 
-        if (limbNumber == 7)
-        {
-            LeftArm.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
-        }
+			case 5:
+				rightArm.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
 
-        if (limbNumber == 8)
-        {
-            LeftShoulder.transform.localScale = new Vector3(0, 0, 0);
-            audioSource.PlayOneShot(loseLimbSounds[Random.Range(0, loseLimbSounds.Length)]);
-        }
-    }
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, rightArm.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
+				break;
 
+			case 6:
+				rightShoulder.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
+
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, rightShoulder.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
+				break;
+
+			case 7:
+				leftArm.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
+
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, leftArm.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
+				break;
+
+			case 8:
+				leftShoulder.transform.localScale = new Vector3(0, 0, 0);
+				audioSource.PlayOneShot(dismembermentSounds[Random.Range(0, dismembermentSounds.Length)], 10f);
+
+				// Destructed limb FX
+				limbFX = Instantiate(dismembermentFX, leftShoulder.transform.position, Quaternion.identity);
+				Destroy(limbFX.gameObject, dismembermentFX.main.duration + 1f); // Let the emission stop and particles fade before deletion
+				break;
+
+			default:
+
+				break;
+		}
+	}
 }

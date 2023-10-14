@@ -80,10 +80,6 @@ public class Enemy : MonoBehaviour
 	public AudioClip[] attackSounds;
 	public AudioClip[] randomSounds;
 
-	[Header("Debug information")]
-	public TextMeshProUGUI debugVelocityTextfield;
-	public TextMeshProUGUI debugAnimatorVelocity;
-
 	// Various privates
 	private bool canAttack = true, canSwing = true, ragdolling = false;
 	private bool standCountdownActive = false;
@@ -117,11 +113,6 @@ public class Enemy : MonoBehaviour
 		currentHealth = maxHealth;
 		navAgent.speed = movementSpeed;
 		ogMovementSpeed = navAgent.speed;
-
-		if (!GameManager.GM.useEnemyDebug && debugVelocityTextfield != null)
-		{
-			Destroy(debugVelocityTextfield.GetComponentInParent<Canvas>().gameObject);
-		}
 	}
 
 	private void Start()
@@ -135,7 +126,6 @@ public class Enemy : MonoBehaviour
 		animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
 		CalculateSlows();
 		HandleSwinging();
-		DebugUpdate();
 
 		if (bodyRB.transform.position.y < -50f)
 		{
@@ -704,13 +694,6 @@ public class Enemy : MonoBehaviour
 		newMaterial = new Material(originalMaterial);
 		smr = GetComponentInChildren<SkinnedMeshRenderer>();
 		smr.material = newMaterial;
-	}
-
-	public void DebugUpdate()
-	{
-		if (debugVelocityTextfield == null || debugAnimatorVelocity == null) return;
-		debugVelocityTextfield.text = navAgent.velocity.magnitude.ToString("F2");
-		debugAnimatorVelocity.text = animator.GetFloat("Velocity").ToString();
 	}
 
 	// Blood effect at enemies
