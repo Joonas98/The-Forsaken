@@ -98,6 +98,7 @@ public class Player : MonoBehaviour
 		int kickSFXIndex = Random.Range(0, kickSounds.Length);
 		playerAS.PlayOneShot(kickSounds[kickSFXIndex]);
 		kickSymbol.SetActive(false);
+		Recoil.Instance.KickFlinch();
 
 		// Physics and functionality
 		Collider[] kickedColliders = Physics.OverlapSphere(kickTransform.position, kickRadius);

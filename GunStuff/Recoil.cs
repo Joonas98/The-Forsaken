@@ -7,11 +7,11 @@ public class Recoil : MonoBehaviour
 {
 	[HideInInspector] public static Recoil Instance;
 	public float flinchX, flinchY, flinchZ; // Flinch = take damage
+	public float kickFlinch; // How much we recoil when kicking
 	public float snappiness;
 	public float returnSpeed;
 	public Transform playerTrans;
 	public float recoilMultiplier;
-	[HideInInspector] public bool aiming;
 	public PlayerMovement movementScript;
 
 	private Vector3 currentRotation;
@@ -32,10 +32,12 @@ public class Recoil : MonoBehaviour
 
 	void Update()
 	{
-		aiming = GameManager.GM.currentGunAiming;
-
-		// When shooting, don't return recoil to 0
-		if (GameManager.GM.currentGun != null && (!GameManager.GM.currentGun.isFiring || GameManager.GM.currentGun.currentMagazine == 0))
+		if (GameManager.GM.currentGun == null)
+		{
+			// Return recoil to zero
+			targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);
+		}
+		else if (!GameManager.GM.currentGun.isFiring || GameManager.GM.currentGun.currentMagazine == 0)
 		{
 			// Return recoil to zero
 			targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);
@@ -62,19 +64,19 @@ public class Recoil : MonoBehaviour
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec1;
 		}
-		else if (movementScript.isGrounded && !movementScript.isStationary && !aiming) // Grounded, moving, not aiming
+		else if (movementScript.isGrounded && !movementScript.isStationary && !GameManager.GM.currentGunAiming) // Grounded, moving, not aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec2;
 		}
-		else if (movementScript.isGrounded && !movementScript.isStationary && aiming) // Grounded, moving, aiming
+		else if (movementScript.isGrounded && !movementScript.isStationary && GameManager.GM.currentGunAiming) // Grounded, moving, aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec3;
 		}
-		else if (movementScript.isGrounded && movementScript.isStationary && !aiming) // Grounded, not moving, not aiming
+		else if (movementScript.isGrounded && movementScript.isStationary && !GameManager.GM.currentGunAiming) // Grounded, not moving, not aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec4;
 		}
-		else if (movementScript.isGrounded && movementScript.isStationary && aiming)  // Grounded, not moving, aiming
+		else if (movementScript.isGrounded && movementScript.isStationary && GameManager.GM.currentGunAiming)  // Grounded, not moving, aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec5;
 		}
@@ -94,5 +96,11 @@ public class Recoil : MonoBehaviour
 	public void DamageFlinch(float flinchMultiplier)
 	{
 		targetRotation += new Vector3(Random.Range(-flinchX, flinchX), Random.Range(-flinchY, flinchY), Random.Range(-flinchZ, flinchZ)) * flinchMultiplier;
+	}
+
+	// Flinch camera when player kicks
+	public void KickFlinch()
+	{
+		targetRotation += new Vector3(-kickFlinch, Random.Range(-kickFlinch * 0.5f, kickFlinch * 0.5f), Random.Range(-kickFlinch * 0.5f, kickFlinch * 0.5f));
 	}
 }

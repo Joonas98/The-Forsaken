@@ -113,6 +113,9 @@ public class Enemy : MonoBehaviour
 		currentHealth = maxHealth;
 		navAgent.speed = movementSpeed;
 		ogMovementSpeed = navAgent.speed;
+
+		healthPercentage = Mathf.Clamp((100 * currentHealth) / maxHealth, 0, 100); // Right HP% at the start
+		UpdateEyeColor(); // Make sure that the eyes are correct at the start
 	}
 
 	private void Start()
@@ -318,10 +321,10 @@ public class Enemy : MonoBehaviour
 
 	public void Heal(int amount)
 	{
-		// Debug.Log("Healing enemy");
 		HandlePopup(amount, DamageType.Healing);
 		currentHealth += amount;
-		healthPercentage = (100 / maxHealth) * currentHealth;
+		if (currentHealth > maxHealth) currentHealth = maxHealth;
+		healthPercentage = Mathf.Clamp((100 * currentHealth) / maxHealth, 0, 100);
 		UpdateEyeColor(); // Enemy health can be seen from eyes
 	}
 

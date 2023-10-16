@@ -63,7 +63,6 @@ public class Gun : Weapon
 	[HideInInspector] public GameObject aimingSpot;
 	[HideInInspector] public Transform casingTransform;
 	public AnimationClip reloadAnimation;
-	public string overrideReloadName;
 	public TextMeshProUGUI spreadText;
 	[HideInInspector] public Camera scopeCam = null;
 	[HideInInspector] public GameObject ImpactEffect;
@@ -121,7 +120,6 @@ public class Gun : Weapon
 		base.Awake();
 		HandlePrefabReferences();
 		HandleSceneReferences();
-		HandleAnimationStrings();
 	}
 
 	private void Start()
@@ -132,7 +130,9 @@ public class Gun : Weapon
 		magazineText.text = magString;
 
 		UpdateFirerate();
-		HandleAnimationStrings();
+
+		// Set shooting animation name if there is one
+		shootAnimationName = hasShootAnimation ? "Shoot " + weaponName : "";
 	}
 
 	// Find some references for the script within the prefab
@@ -145,7 +145,6 @@ public class Gun : Weapon
 		if (muzzleFlashLight == null) muzzleFlashLight = gunTip.GetComponent<Light>();
 		if (aimingSpot == null) aimingSpot = transform.Find("AimSpot").gameObject;
 		if (casingTransform == null) casingTransform = transform.Find("CasingSpot");
-
 		if (muzzleFlashLight != null) isSilenced = false;
 	}
 
@@ -265,12 +264,6 @@ public class Gun : Weapon
 		}
 	}
 
-	private void HandleAnimationStrings()
-	{
-		shootAnimationName = hasShootAnimation ? "Shoot " + weaponName : "";
-		reloadAnimationName = (overrideReloadName == "") ? "Reload " + weaponName : overrideReloadName;
-	}
-
 	public void HandleReloading()
 	{
 		// Reloading
@@ -290,8 +283,8 @@ public class Gun : Weapon
 			shotCounter = reloadTime;
 			audioSource.PlayOneShot(reloadSound);
 
-			if (animator != null && reloadAnimationName != "")
-				animator.Play(reloadAnimationName);
+			if (animator != null && reloadAnimation != null)
+				animator.Play(reloadAnimation.name);
 
 			// Handle ammo correctly
 			if (inventoryScript.GetAmmoCount(ammoType) >= magazineSize)
