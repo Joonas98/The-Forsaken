@@ -21,7 +21,6 @@ public class CanvasManager : MonoBehaviour
 	public string selectedGunName = "Knife";
 	public Sprite defaultGunSprite;
 	public GameObject abilitiesTooltip;
-	public InventoryCanvas inventoryCanvasScript;
 
 	private Player playerScript;
 	private MouseLook lookScript;
@@ -34,7 +33,7 @@ public class CanvasManager : MonoBehaviour
 		if (lookScript == null) lookScript = GameObject.Find("Player").GetComponentInChildren<MouseLook>();
 
 		weaponSwitcherScript.SelectWeapon();
-		inventoryCanvasScript.UpdateTexts();
+		//inventoryCanvasScript.UpdateTexts();
 	}
 
 	void Update()
@@ -42,7 +41,7 @@ public class CanvasManager : MonoBehaviour
 		HandleInputs();
 
 		// Update menus when selecting grenades or objects
-		if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isChoosingObject) inventoryCanvasScript.UpdateTexts();
+		//if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isChoosingObject) inventoryCanvasScript.UpdateTexts();
 	}
 
 	public void HandleInputs()

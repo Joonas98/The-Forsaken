@@ -2,34 +2,36 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Grip : MonoBehaviour
+public class Grip : AttachmentBase
 {
-    public Gun gunScript;
-    public float reloadTimeMultiplier, adsTimeMultiplier, equipTimeMultiplier;
-    public float xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier;
+	[Header("Grip Settings")]
+	public float reloadTimeMultiplier, adsTimeMultiplier, equipTimeMultiplier;
+	public float xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier;
 
-    private void OnValidate()
-    {
-        if (gunScript == null) gunScript = GetComponentInParent<Gun>();
-    }
+	private Gun gunScript;
 
-    private void Awake()
-    {
-        if (gunScript == null) gunScript = GetComponentInParent<Gun>();
-    }
+	private void OnValidate()
+	{
+		if (gunScript == null) gunScript = GetComponentInParent<Gun>();
+	}
 
-    private void OnEnable()
-    {
-        gunScript.AdjustReloadtime(reloadTimeMultiplier);
-        gunScript.AdjustRecoil(xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier);
-        gunScript.AdjustAimspeed(adsTimeMultiplier);
-    }
+	private void Awake()
+	{
+		if (gunScript == null) gunScript = GetComponentInParent<Gun>();
+	}
 
-    private void OnDisable()
-    {
-        gunScript.ResetReloadtime();
-        gunScript.ResetRecoils();
-        gunScript.ResetAimSpeed();
-    }
+	private void OnEnable()
+	{
+		gunScript.AdjustReloadtime(reloadTimeMultiplier);
+		gunScript.AdjustRecoil(xRecoilMultiplier, yRecoilMultiplier, zRecoilMultiplier);
+		gunScript.AdjustAimspeed(adsTimeMultiplier);
+	}
+
+	private void OnDisable()
+	{
+		gunScript.ResetReloadtime();
+		gunScript.ResetRecoils();
+		gunScript.ResetAimSpeed();
+	}
 
 }

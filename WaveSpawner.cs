@@ -7,8 +7,6 @@ using Michsky.UI.MTP;
 // ! Only script to spawn enemies with
 public class WaveSpawner : MonoBehaviour
 {
-	public StyleManager styleManager;
-	public TextMeshProUGUI roundPopup1, roundPopup2;
 	public bool useFloatingSpawn;
 	public int waveCount;
 	public int baseEnemyCount;
@@ -87,10 +85,6 @@ public class WaveSpawner : MonoBehaviour
 				StartCoroutine(SpawnFromAbove(_enemiesToSpawn));
 			}
 			waveNumber++;
-
-			roundPopup1.text = "ROUND " + waveNumber.ToString();
-			roundPopup2.text = "ROUND " + waveNumber.ToString();
-			//   styleManager.Play();
 
 			yield return new WaitForSeconds(waveLenght);
 		}

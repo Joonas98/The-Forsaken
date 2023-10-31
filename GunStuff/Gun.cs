@@ -14,8 +14,9 @@ public class Gun : Weapon
 	public float hipSpread, aimSpread, headshotMultiplier, RPM, reloadTime, knockbackPower, range;
 	[Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
 	[Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
-	//0 = .22 LR, 1 = HK 4.6x30mm, 2 = .357 Magnum, 3 = .45 ACP, 4 = 12 Gauge, 5 = 5.45x39, 6 = 5.56 NATO, 7 = 7.62 NATO, 8 = .50 BMG
-	public int ammoType; // Todo: change ammotype to enum?
+
+	public PlayerInventory.AmmoType gunAmmoType;
+
 	[HideInInspector] public int percentageDamage;
 
 	[Header("Recoil Settings")]
@@ -41,9 +42,9 @@ public class Gun : Weapon
 	public ParticleSystem hitFX, groundFX;
 	public LineRenderer LR;
 	public bool dropCasings;
-	public GameObject casingGO;
 	public float casingDespawnTime = 1f;
 
+	private GameObject casingGO; // Casing gameobject, get it from PlayerInventory
 	private float laserTime = 0.05f;
 	private string reloadAnimationName, shootAnimationName;
 	private bool playedAimSound = false;
@@ -171,6 +172,16 @@ public class Gun : Weapon
 		aimingSpotOG = aimingSpot;
 		recoilOG = recoil;
 		RPMOG = RPM;
+
+		// Set casing gameobject
+		if (gunAmmoType != PlayerInventory.AmmoType.Magnum357)
+		{
+			casingGO = PlayerInventory.instance.GetCasingPrefab(gunAmmoType);
+		}
+		else
+		{
+			casingGO = null;
+		}
 	}
 
 	protected override void OnEnable()
@@ -180,7 +191,7 @@ public class Gun : Weapon
 		// Handle ammo UI 
 		magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
 		magazineText.text = magString;
-		inventoryScript.UpdateTotalAmmoText(ammoType);
+		inventoryScript.UpdateTotalAmmoText(gunAmmoType);
 
 		// Update desired aiming fov to FovController
 		FovController.Instance.fovAim = zoomAmount * FovController.Instance.fovDefault;
@@ -267,17 +278,19 @@ public class Gun : Weapon
 	public void HandleReloading()
 	{
 		// Reloading
-		if (Input.GetKeyDown(KeyCode.R) && !isReloading && currentMagazine != magazineSize && inventoryScript.GetAmmoCount(ammoType) > 0)
+		if (Input.GetKeyDown(KeyCode.R) && !isReloading && currentMagazine != magazineSize && inventoryScript.GetAmmoCount(gunAmmoType) > 0)
 		{
-			if (animator == null) animator = gameObject.GetComponentInChildren<Animator>();
 			isReloading = true;
 
 			// Reset rotation
 			ResetRotation();
 
 			// Adjust reload speed to animation and sound
-			animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / reloadTime);
-			audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / reloadTime);
+			if (reloadAnimation != null)
+			{
+				animator.SetFloat("ReloadSpeedMultiplier", reloadAnimation.length / reloadTime);
+				audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / reloadTime);
+			}
 
 			WeaponSwitcher.CanSwitch(false);
 			shotCounter = reloadTime;
@@ -287,23 +300,23 @@ public class Gun : Weapon
 				animator.Play(reloadAnimation.name);
 
 			// Handle ammo correctly
-			if (inventoryScript.GetAmmoCount(ammoType) >= magazineSize)
+			if (inventoryScript.GetAmmoCount(gunAmmoType) >= magazineSize)
 			{
 				// Debug.Log("Full reload");
 				StartCoroutine(WaitReloadTime(reloadTime, magazineSize));
-				inventoryScript.HandleAmmo(ammoType, currentMagazine - magazineSize);
+				inventoryScript.HandleAmmo(gunAmmoType, currentMagazine - magazineSize);
 			}
-			else if (inventoryScript.GetAmmoCount(ammoType) + currentMagazine >= magazineSize)
+			else if (inventoryScript.GetAmmoCount(gunAmmoType) + currentMagazine >= magazineSize)
 			{
 				// Debug.Log("Stock + clip >= full mag");
 				StartCoroutine(WaitReloadTime(reloadTime, magazineSize));
-				inventoryScript.HandleAmmo(ammoType, currentMagazine - magazineSize);
+				inventoryScript.HandleAmmo(gunAmmoType, currentMagazine - magazineSize);
 			}
-			else if (inventoryScript.GetAmmoCount(ammoType) < magazineSize)
+			else if (inventoryScript.GetAmmoCount(gunAmmoType) < magazineSize)
 			{
 				// Debug.Log("Stock + clip < full mag");
-				StartCoroutine(WaitReloadTime(reloadTime, inventoryScript.GetAmmoCount(ammoType) + currentMagazine));
-				inventoryScript.HandleAmmo(ammoType, inventoryScript.GetAmmoCount(ammoType) * -1);
+				StartCoroutine(WaitReloadTime(reloadTime, inventoryScript.GetAmmoCount(gunAmmoType) + currentMagazine));
+				inventoryScript.HandleAmmo(gunAmmoType, inventoryScript.GetAmmoCount(gunAmmoType) * -1);
 			}
 		}
 	}
@@ -478,21 +491,30 @@ public class Gun : Weapon
 	// Main shooting function
 	public void Shoot(int pelletCount)
 	{
+		// Effects
+		// Play muzzle flash VFX
 		if (muzzleFlash != null) muzzleFlash.Play();
 		else Debug.Log("No muzzle flash reference!");
 
-		int penetrationLeft = penetration;
-		recoilScript.RecoilFire();
-		Invoke(nameof(PlayActionSound), actionDelay);
+		// Action sound like pump shotgun or bolt action rifles
+		if (actionSound != null) Invoke(nameof(PlayActionSound), actionDelay);
 
 		// Play shooting sound
 		if (!isSilenced) audioSource.PlayOneShot(shootSound);
 		else audioSource.PlayOneShot(silencedShootSound);
 
+		// Play shooting animation if we have one
 		if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
-		DropCasing();
 
+		// Drop casing and recoil
+		DropCasing();
+		recoilScript.RecoilFire();
+
+		// Initiate local values
+		int penetrationLeft = penetration;
 		int pelletsLeft = pelletCount;
+
+		// Loop each bullet
 		for (int i = pelletsLeft; i > 0; i--)
 		{
 			float deviation;
@@ -626,7 +648,7 @@ public class Gun : Weapon
 
 	private void DropCasing()
 	{
-		if (!dropCasings) return;
+		if (!dropCasings || casingGO == null) return;
 
 		GameObject newCasing = Instantiate(casingGO, casingTransform.position, transform.rotation * Quaternion.Euler(-90f, 0f, 0f));
 		Rigidbody newCasingRB;

@@ -150,14 +150,18 @@ public class NewAttachmentShop : MonoBehaviour
 		{
 			GameObject attachmentButton = Instantiate(attachmentButtonPrefab, parent);
 
-			// Recursively search for Text component in children
-			TextMeshProUGUI textComponent = FindTextComponentInChildren(attachmentButton.transform);
+			// First text field in the children is the name
+			TextMeshProUGUI nameText = FindTextComponentInChildren(attachmentButton.transform);
 
-			if (textComponent != null)
-			{
-				// Set the text of the Text component to the attachment's name
-				textComponent.text = attachment.name;
-			}
+			// Find the price text field
+			TextMeshProUGUI priceText = attachmentButton.transform.Find("AttachmentPriceText").GetComponent<TextMeshProUGUI>();
+
+			// Find the price text field
+			Image attachmentImage = attachmentButton.transform.Find("AttachmentImage").GetComponent<Image>();
+
+			if (nameText != null) nameText.text = attachment.GetComponent<AttachmentBase>().attachmentName;
+			if (priceText != null) priceText.text = attachment.GetComponent<AttachmentBase>().attachmentPrice.ToString() + "€";
+			if (attachmentImage != null) attachmentImage.sprite = attachment.GetComponent<AttachmentBase>().attachmentSprite;
 		}
 	}
 
@@ -167,12 +171,9 @@ public class NewAttachmentShop : MonoBehaviour
 		if (attachments.Count > 0)
 		{
 			GameObject unequipButton = Instantiate(attachmentButtonPrefab, parent);
-			TextMeshProUGUI textComponent = FindTextComponentInChildren(unequipButton.transform);
+			TextMeshProUGUI nameText = FindTextComponentInChildren(unequipButton.transform);
 
-			if (textComponent != null)
-			{
-				textComponent.text = "Unequip " + attachmentType.ToString(); // Set button text
-			}
+			if (nameText != null) nameText.text = "Unequip " + attachmentType.ToString(); // Set button text
 
 			// Attach a listener to unequip the attachment of this type
 			Button buttonComponent = unequipButton.GetComponent<Button>();

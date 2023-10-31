@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MuzzleDevice : MonoBehaviour
+public class MuzzleDevice : AttachmentBase
 {
+	[Header("Muzzle Device Settings")]
 	public ParticleSystem muzzleEffect;
 	public GameObject muzzleTip;
 	public bool isSilencer; // Useful for disabling muzzle light effect and other applications in future like possible abilities

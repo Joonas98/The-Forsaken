@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
+// 17.10.2023 changing ammotype to enum instead of int
+// This class is now depricated and remade soon
+/*
 public class InventoryCanvas : MonoBehaviour
 {
     public TextMeshProUGUI ammo22LRText, ammoHK46Text, ammo357MagnumText, ammo45ACPText, ammo12GaugeText, ammo545Text, ammo556Text, ammo762Text, ammo50BMGText;
@@ -121,3 +124,4 @@ public class InventoryCanvas : MonoBehaviour
     }
 
 }
+*/

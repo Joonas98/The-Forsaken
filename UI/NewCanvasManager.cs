@@ -15,6 +15,8 @@ public class NewCanvasManager : MonoBehaviour
 	public GameObject pauseCanvas;
 	public GameObject abilityCanvas;
 
+	public AmmoPanel[] ammoPanels;
+
 	// Close modal window when closing menus
 	public Michsky.MUIP.ModalWindowManager confirmPurchaseModalWindow;
 
@@ -123,6 +125,14 @@ public class NewCanvasManager : MonoBehaviour
 	{
 		CloseMenu();
 		PauseGame(false);
+	}
+
+	public void UpdateAmmoMenu()
+	{
+		foreach (AmmoPanel ammopanel in ammoPanels)
+		{
+			ammopanel.UpdateAmmoText();
+		}
 	}
 
 	public void QuitGame()

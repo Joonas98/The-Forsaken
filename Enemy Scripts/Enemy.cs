@@ -129,13 +129,6 @@ public class Enemy : MonoBehaviour
 		animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
 		CalculateSlows();
 		HandleSwinging();
-
-		if (bodyRB.transform.position.y < -50f)
-		{
-			Debug.Log("Enemy bugged out of map, teleporting");
-			bodyRB.position = transform.position;
-			TurnOffRagdoll();
-		}
 	}
 
 	private void FixedUpdate()
