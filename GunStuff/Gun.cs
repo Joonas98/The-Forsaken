@@ -591,7 +591,7 @@ public class Gun : Weapon
 	public void GroundImpactFX(RaycastHit hit)
 	{
 		ParticleSystem groundFXGO = Instantiate(groundFX, hit.point, Quaternion.identity);
-		Destroy(groundFXGO, 2f);
+		Destroy(groundFXGO.gameObject, 2f);
 	}
 
 	// Linerenderer between muzzle and hit point
