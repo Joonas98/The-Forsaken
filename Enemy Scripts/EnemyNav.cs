@@ -5,71 +5,57 @@ using UnityEngine.AI;
 
 public class EnemyNav : MonoBehaviour
 {
-    public Transform targetLocation;
+	public Transform targetLocation;
 
-    [SerializeField] private float onMeshThreshold;
-    private NavMeshAgent navMeshAgent;
-    private GameObject Player;
-    private Enemy enemyScript;
+	[SerializeField] private float onMeshThreshold;
+	private NavMeshAgent navMeshAgent;
+	private GameObject Player;
+	private Enemy enemyScript;
 
-    private void Awake()
-    {
-        enemyScript = GetComponent<Enemy>();
-        GameObject Player = GameObject.Find("Player");
-        targetLocation = Player.transform;
-        navMeshAgent = GetComponent<NavMeshAgent>();
+	private void Awake()
+	{
+		enemyScript = GetComponent<Enemy>();
+		GameObject Player = GameObject.Find("Player");
+		targetLocation = Player.transform;
+		navMeshAgent = GetComponent<NavMeshAgent>();
 
-        if (!IsAgentOnNavMesh(gameObject))
-        {
-            MoveToNavMesh();
-            // Debug.Log("Enemy moved to navmesh");
-        }
-    }
+		if (!IsAgentOnNavMesh(gameObject))
+		{
+			MoveToNavMesh();
+			// Debug.Log("Enemy moved to navmesh");
+		}
+	}
 
-    private void Update()
-    {
-        if (!navMeshAgent.isActiveAndEnabled) return; // Avoid errors when agent is disabled
-        navMeshAgent.destination = targetLocation.position;
+	private void Update()
+	{
+		if (!navMeshAgent.isActiveAndEnabled) return; // Avoid errors when agent is disabled
+		navMeshAgent.SetDestination(targetLocation.position);
+	}
 
-        // Old system, seems to be obsolete as of 7.9.2023
-        //  if (navMeshAgent.remainingDistance < navMeshAgent.stoppingDistance) // Rotate towards player when stoppingDistance is reached
-        //  {
-        //      navMeshAgent.updateRotation = false;
-        //      Vector3 lookPos = targetLocation.position - transform.position;
-        //      lookPos.y = 0;
-        //      Quaternion rotation = Quaternion.LookRotation(lookPos);
-        //      transform.rotation = Quaternion.Slerp(transform.rotation, rotation, 5f);
-        //  }
-        //  else
-        //  {
-        //      if (navMeshAgent.updateRotation != true) navMeshAgent.updateRotation = true;
-        //  }
-    }
+	public bool IsAgentOnNavMesh(GameObject agentObject)
+	{
+		Vector3 agentPosition = agentObject.transform.position;
 
-    public bool IsAgentOnNavMesh(GameObject agentObject)
-    {
-        Vector3 agentPosition = agentObject.transform.position;
+		// Check for nearest point on navmesh to agent, within onMeshThreshold
+		if (NavMesh.SamplePosition(agentPosition, out NavMeshHit hit, onMeshThreshold, NavMesh.AllAreas))
+		{
+			// Check if the positions are vertically aligned
+			if (Mathf.Approximately(agentPosition.x, hit.position.x)
+				&& Mathf.Approximately(agentPosition.z, hit.position.z))
+			{
+				// Lastly, check if object is below navmesh
+				return agentPosition.y >= hit.position.y;
+			}
+		}
+		return false;
+	}
 
-        // Check for nearest point on navmesh to agent, within onMeshThreshold
-        if (NavMesh.SamplePosition(agentPosition, out NavMeshHit hit, onMeshThreshold, NavMesh.AllAreas))
-        {
-            // Check if the positions are vertically aligned
-            if (Mathf.Approximately(agentPosition.x, hit.position.x)
-                && Mathf.Approximately(agentPosition.z, hit.position.z))
-            {
-                // Lastly, check if object is below navmesh
-                return agentPosition.y >= hit.position.y;
-            }
-        }
-        return false;
-    }
-
-    public void MoveToNavMesh()
-    {
-        if (NavMesh.SamplePosition(transform.position, out NavMeshHit myNavHit, 100, -1))
-        {
-            transform.position = myNavHit.position;
-        }
-    }
+	public void MoveToNavMesh()
+	{
+		if (NavMesh.SamplePosition(transform.position, out NavMeshHit myNavHit, 100, -1))
+		{
+			transform.position = myNavHit.position;
+		}
+	}
 
 }

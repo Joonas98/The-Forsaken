@@ -7,13 +7,11 @@ public class NewCanvasManager : MonoBehaviour
 	[Header("Keybinds")]
 	public KeyCode shopKey;
 	public KeyCode pauseKey;
-	public KeyCode abilitiesKey;
 
 	[Header("References")]
 	// The main canvases
 	public GameObject shopCanvas;
 	public GameObject pauseCanvas;
-	public GameObject abilityCanvas;
 
 	public AmmoPanel[] ammoPanels;
 
@@ -33,7 +31,6 @@ public class NewCanvasManager : MonoBehaviour
 	{
 		if (Input.GetKeyDown(shopKey)) ToggleMenu(MenuType.Shop);
 		if (Input.GetKeyDown(pauseKey)) ToggleMenu(MenuType.Pause);
-		if (Input.GetKeyDown(abilitiesKey)) ToggleMenu(MenuType.Abilities);
 	}
 
 	private void ToggleMenu(MenuType menuType)
@@ -67,9 +64,6 @@ public class NewCanvasManager : MonoBehaviour
 			case MenuType.Pause:
 				pauseCanvas.SetActive(true);
 				break;
-			case MenuType.Abilities:
-				abilityCanvas.SetActive(true);
-				break;
 		}
 	}
 
@@ -83,9 +77,6 @@ public class NewCanvasManager : MonoBehaviour
 			case MenuType.Pause:
 				pauseCanvas.SetActive(false);
 				break;
-			case MenuType.Abilities:
-				abilityCanvas.SetActive(false);
-				break;
 		}
 
 		currentMenu = MenuType.None;
@@ -95,7 +86,6 @@ public class NewCanvasManager : MonoBehaviour
 	{
 		shopCanvas.SetActive(false);
 		pauseCanvas.SetActive(false);
-		abilityCanvas.SetActive(false);
 		currentMenu = MenuType.None;
 	}
 

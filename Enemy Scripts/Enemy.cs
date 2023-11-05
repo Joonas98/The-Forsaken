@@ -116,6 +116,9 @@ public class Enemy : MonoBehaviour
 
 		healthPercentage = Mathf.Clamp((100 * currentHealth) / maxHealth, 0, 100); // Right HP% at the start
 		UpdateEyeColor(); // Make sure that the eyes are correct at the start
+
+		// Make sure that the enemy is spawned on navmesh
+		if (enemyNavScript.IsAgentOnNavMesh(gameObject) == false) enemyNavScript.MoveToNavMesh();
 	}
 
 	private void Start()

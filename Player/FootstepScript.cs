@@ -5,7 +5,8 @@ using UnityEngine;
 public class FootstepScript : MonoBehaviour
 {
 	// Script to handle footstep sounds
-	public float stepThreshold, stepVolume;
+	public float stepThreshold;
+	public float walkVolume, runVolume;
 	public PlayerMovement movementScript;
 	public AudioSource audioSource;
 	public AudioClip[] grassSteps;
@@ -19,8 +20,10 @@ public class FootstepScript : MonoBehaviour
 		lastPosition = transform.position;
 	}
 
+	// Use update to figure when player has moved enough to play 
 	private void Update()
 	{
+		// No footsteps midair
 		if (movementScript.isGrounded)
 			distanceTravelled += Vector3.Distance(transform.position, lastPosition);
 		lastPosition = transform.position;
@@ -32,12 +35,18 @@ public class FootstepScript : MonoBehaviour
 		}
 	}
 
+	// Play the SFX, louder when running
 	private void PlayFootstep()
 	{
+		float volume;
+		if (movementScript.isRunning) volume = runVolume;
+		else volume = walkVolume;
+
 		AudioClip clip = GetRandomSFX();
-		audioSource.PlayOneShot(clip);
+		audioSource.PlayOneShot(clip, volume);
 	}
 
+	// Get a random SFX from a list depending on the terrain player is moving on
 	private AudioClip GetRandomSFX()
 	{
 		int terrainTextureIndex = DetectTerrainType();
@@ -53,6 +62,7 @@ public class FootstepScript : MonoBehaviour
 		}
 	}
 
+	// Return index of the terrain type player is on
 	private int DetectTerrainType()
 	{
 		int terrainType = -1;  // Default to unknown terrain type

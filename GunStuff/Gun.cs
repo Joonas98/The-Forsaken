@@ -72,7 +72,7 @@ public class Gun : Weapon
 	[HideInInspector] public Camera mainCamera, weaponCam;
 	[HideInInspector] public BulletHoles bulletHoleScript;
 	[HideInInspector] public bool isFiring = false;
-	[HideInInspector] public bool isReloading = false, isAiming = false;
+	[HideInInspector] public bool isReloading = false, isAiming = false, playingAction = false;
 	[HideInInspector] public bool canAim; // True in update unless mid air etc.
 	[HideInInspector] public float maxZoom = 0.25f; // Scope zoom default value for guns such as AUG that has integrated scope
 	[HideInInspector] public float minZoom = 45f;
@@ -81,7 +81,10 @@ public class Gun : Weapon
 	[HideInInspector] public string magString, totalAmmoString;
 	// public GameObject damagePopupText;
 
-	[SerializeField] private bool hasShootAnimation;
+	[SerializeField] private bool hasShootAnimation; // Is there animation of moving slides, pumping shotgun, bolt action rifles etc.
+	[SerializeField] private bool shootAnimationMovement; // Does the shoot animation include movement or rotation of the weapon (if yes, don't apply rotation during it)
+	[SerializeField] private AnimationClip shootAnimation; // Used purely to get the length of this animation
+
 	private Animator animator;
 	private Recoil recoilScript;
 	//private CanvasManager canvasManagerScript;
@@ -264,10 +267,8 @@ public class Gun : Weapon
 				audioSource.PlayOneShot(unaimSound);
 			}
 			playedAimSound = false;
-			// WeaponSwayAndBob.instance.disableSwayBob = false;
-			//crosshairContents.SetActive(true);
 
-			if (equipped == true && unequipping == false)
+			if (equipped && !unequipping && !playingAction)
 				transform.position = Vector3.Slerp(transform.position, weaponSpot.transform.position, aimSpeed * Time.deltaTime);
 
 			if (equipped && !isReloading)
@@ -346,7 +347,7 @@ public class Gun : Weapon
 		// Fully automatic weapons
 		if (isFiring && !semiAutomatic)
 		{
-			if (shotCounter <= 0 && currentMagazine > 0) //Shooting
+			if (shotCounter <= 0 && currentMagazine > 0) // Shooting
 			{
 				shotCounter = fireRate;
 				Shoot(pelletCount);
@@ -361,6 +362,16 @@ public class Gun : Weapon
 				if (animator != null && shootAnimationName != "") animator.Play(shootAnimationName);
 				audioSource.PlayOneShot(dryFireSound);
 				isFiring = false;
+			}
+
+			// playingAction has to be on true whilst playing animation such as bolt action or pumping shotgun
+			if (shootAnimationMovement && !playingAction && !isReloading)
+			{
+				// Action sound like pump shotgun or bolt action rifles
+				if (actionSound != null) Invoke(nameof(PlayActionSound), actionDelay);
+
+				playingAction = true;
+				StartCoroutine(WaitActionAnimation(shootAnimation.length));
 			}
 		}
 
@@ -384,16 +395,28 @@ public class Gun : Weapon
 				isFiring = false;
 			}
 			hasFired = true;
+
+			// playingAction has to be on true whilst playing animation such as bolt action or pumping shotgun
+			if (shootAnimationMovement && !playingAction && !isReloading)
+			{
+				// Action sound like pump shotgun or bolt action rifles
+				if (actionSound != null) Invoke(nameof(PlayActionSound), actionDelay);
+
+				playingAction = true;
+				StartCoroutine(WaitActionAnimation(shootAnimation.length));
+			}
 		}
 	}
 
-	// Mostly to lerp weapons
+	// Lerp weapon rotation to sprinting angle when conditions are right
 	public void HandleSprinting()
 	{
 		// No rotating if reloading or we have Bullet Ballet ability
 		if (isReloading || AbilityMaster.abilities.Contains(7)) return;
 
-		if (!playerMovementScript.isRunning || !equipped)
+		if (playingAction || !equipped || unequipping) return;
+
+		if (!playerMovementScript.isRunning)
 		{
 			// Return to default gun rotation
 			unsprintLerp += Time.deltaTime;
@@ -495,9 +518,6 @@ public class Gun : Weapon
 		// Play muzzle flash VFX
 		if (muzzleFlash != null) muzzleFlash.Play();
 		else Debug.Log("No muzzle flash reference!");
-
-		// Action sound like pump shotgun or bolt action rifles
-		if (actionSound != null) Invoke(nameof(PlayActionSound), actionDelay);
 
 		// Play shooting sound
 		if (!isSilenced) audioSource.PlayOneShot(shootSound);
@@ -637,6 +657,12 @@ public class Gun : Weapon
 		WeaponSwitcher.CanSwitch(true);
 		audioMixer.SetFloat("WeaponsPitch", 1f); // Reset weapon pitch (it might be changed to match reload speed)
 		isReloading = false;
+	}
+
+	IEnumerator WaitActionAnimation(float r)
+	{
+		yield return new WaitForSeconds(r);
+		playingAction = false;
 	}
 
 	// Invoked after action delay
