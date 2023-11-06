@@ -393,6 +393,78 @@ public class Enemy : MonoBehaviour
 		}
 	}
 
+	public void GetHit(Collider hitCollider, int damageAmount, float headshotMultiplier, int percentageDamage = 0)
+	{
+		// Handle damage logic based on the hit location
+		// You can access the position of the collider using hitCollider.transform.position
+
+		switch (hitCollider.tag)
+		{
+			// HEAD
+			case "Head":
+				TakeDamage(Mathf.RoundToInt(damageAmount * headshotMultiplier), percentageDamage, DamageType.Headshot);
+				DamageLimb(0, Mathf.RoundToInt(damageAmount * headshotMultiplier));
+				if (limbManager != null && GetHealth(0) <= 0) limbManager.RemoveLimb(0);
+				break;
+
+			// LEGS
+			case "UpperLegL":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(2, damageAmount);
+				if (limbManager != null && GetHealth(2) <= 0) limbManager.RemoveLimb(2);
+				break;
+
+			case "UpperLegR":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(4, damageAmount);
+				if (limbManager != null && GetHealth(4) <= 0) limbManager.RemoveLimb(4);
+				break;
+
+			case "LowerLegL":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(1, damageAmount);
+				if (limbManager != null && GetHealth(1) <= 0) limbManager.RemoveLimb(1);
+				break;
+
+			case "LowerLegR":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(3, damageAmount);
+				if (limbManager != null && GetHealth(3) <= 0) limbManager.RemoveLimb(3);
+				break;
+
+			// ARMS
+			case "ArmL":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(7, damageAmount);
+				if (limbManager != null && GetHealth(7) <= 0) limbManager.RemoveLimb(7);
+				break;
+
+			case "ArmR":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(5, damageAmount);
+				if (limbManager != null && GetHealth(5) <= 0) limbManager.RemoveLimb(5);
+				break;
+
+			case "ShoulderL":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(8, damageAmount);
+				if (limbManager != null && GetHealth(8) <= 0) limbManager.RemoveLimb(8);
+				break;
+
+			case "ShoulderR":
+				TakeDamage(damageAmount, percentageDamage);
+				DamageLimb(6, damageAmount);
+				if (limbManager != null && GetHealth(6) <= 0) limbManager.RemoveLimb(6);
+				break;
+
+			// TORSO
+			case "Torso":
+				TakeDamage(damageAmount, percentageDamage);
+				break;
+		}
+	}
+
+
 	public void DamageLimb(int limbIndex, int damage)
 	{
 		limbHealths[limbIndex] -= damage;
