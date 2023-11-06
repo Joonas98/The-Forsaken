@@ -661,7 +661,7 @@ public class Gun : Weapon
 
 	IEnumerator WaitActionAnimation(float r)
 	{
-		yield return new WaitForSeconds(r);
+		yield return new WaitForSeconds(r + 0.05f);
 		playingAction = false;
 	}
 

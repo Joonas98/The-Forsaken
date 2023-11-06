@@ -161,17 +161,29 @@ public class WeaponSwayAndBob : MonoBehaviour
 
 	void CompositePositionRotation()
 	{
-		if (!GameManager.GM.currentGunAiming)
+		if (GameManager.GM.currentGun != null)
 		{
+			if (!GameManager.GM.currentGunAiming /* && !GameManager.GM.currentGun.playingAction && !GameManager.GM.currentGun.isReloading*/)
+			{
+				// Apply sway for non-aiming guns
+				transform.localPosition = Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth);
+				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
+				//Debug.Log("Not aiming");
+			}
+			else
+			{
+				// Return to original spot for aiming guns
+				transform.localPosition = Vector3.Lerp(transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
+				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(new Vector3(0, 0, 0)), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
+				//Debug.Log("Aiming");
+			}
+		}
+		else
+		{
+			// Apply sway for melee weapons when currentGun is null
 			transform.localPosition = Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth);
 			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
-			//Debug.Log("Not aiming");
-		}
-		else // Return to original spot
-		{
-			transform.localPosition = Vector3.Lerp(transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
-			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(new Vector3(0, 0, 0)), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
-			//Debug.Log("Aiming");
+			//Debug.Log("Applying sway");
 		}
 	}
 }

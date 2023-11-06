@@ -18,17 +18,20 @@ public class EnemyNav : MonoBehaviour
 		GameObject Player = GameObject.Find("Player");
 		targetLocation = Player.transform;
 		navMeshAgent = GetComponent<NavMeshAgent>();
+	}
 
+	private void Start()
+	{
 		if (!IsAgentOnNavMesh(gameObject))
 		{
 			MoveToNavMesh();
-			// Debug.Log("Enemy moved to navmesh");
+			Debug.Log("Enemy moved to navmesh");
 		}
 	}
 
-	private void Update()
+	private void FixedUpdate()
 	{
-		if (!navMeshAgent.isActiveAndEnabled) return; // Avoid errors when agent is disabled
+		if (!navMeshAgent.isActiveAndEnabled || !IsAgentOnNavMesh(gameObject)) return; // Avoid errors when agent is disabled
 		navMeshAgent.SetDestination(targetLocation.position);
 	}
 

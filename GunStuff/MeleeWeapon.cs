@@ -144,7 +144,11 @@ public class MeleeWeapon : Weapon
 
 		// Check if hit enemy and get it's script
 		enemyScript = other.GetComponentInParent<Enemy>();
-		if (enemyScript == null) return;
+		if (enemyScript == null)
+		{
+			// audioSource.PlayOneShot(hitFloorSound);
+			return;
+		}
 
 		// Make sure we don't call multiple hits on same enemy
 		if (!attackedEnemies.Contains(enemyScript))
