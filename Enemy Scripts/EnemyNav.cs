@@ -5,19 +5,32 @@ using UnityEngine.AI;
 
 public class EnemyNav : MonoBehaviour
 {
-	public Transform targetLocation;
-
 	[SerializeField] private float onMeshThreshold;
-	private NavMeshAgent navMeshAgent;
-	private GameObject Player;
-	private Enemy enemyScript;
+	private NavMeshAgent navAgent;
+	private EnemyBase enemyBase;
+	private Animator animator;
+	private Transform targetLocation;
+	private GameObject player;
+
+	// Needed for rootmotion navmesh functionality
+	private Vector2 velocity;
+	private Vector2 smoothDeltaPosition;
 
 	private void Awake()
 	{
-		enemyScript = GetComponent<Enemy>();
-		GameObject Player = GameObject.Find("Player");
-		targetLocation = Player.transform;
-		navMeshAgent = GetComponent<NavMeshAgent>();
+		// Set references
+		animator = GetComponent<Animator>();
+		navAgent = GetComponent<NavMeshAgent>();
+		enemyBase = GetComponent<EnemyBase>();
+
+		//  Player reference
+		player = GameObject.Find("Player");
+		targetLocation = player.transform;
+
+		// Root motion
+		animator.applyRootMotion = true;
+		navAgent.updatePosition = false;
+		navAgent.updateRotation = true;
 	}
 
 	private void Start()
@@ -31,8 +44,13 @@ public class EnemyNav : MonoBehaviour
 
 	private void FixedUpdate()
 	{
-		if (!navMeshAgent.isActiveAndEnabled || !IsAgentOnNavMesh(gameObject)) return; // Avoid errors when agent is disabled
-		navMeshAgent.SetDestination(targetLocation.position);
+		if (!navAgent.isActiveAndEnabled || !IsAgentOnNavMesh(gameObject)) return; // Avoid errors when agent is disabled
+		navAgent.SetDestination(targetLocation.position);
+	}
+
+	private void Update()
+	{
+		if (!enemyBase.ragdolling) SynchronizeAnimatorAndAgent();
 	}
 
 	public bool IsAgentOnNavMesh(GameObject agentObject)
@@ -55,9 +73,63 @@ public class EnemyNav : MonoBehaviour
 
 	public void MoveToNavMesh()
 	{
-		if (NavMesh.SamplePosition(transform.position, out NavMeshHit myNavHit, 100, -1))
+		NavMeshHit hit;
+		if (NavMesh.SamplePosition(transform.position, out hit, 2.0f, NavMesh.AllAreas))
 		{
-			transform.position = myNavHit.position;
+			transform.position = hit.position;
+		}
+		else
+		{
+			// If a suitable position isn't found, handle it accordingly
+			Debug.LogWarning("Could not find valid NavMesh position.");
+		}
+	}
+
+	// Root motion stuff
+	private void OnAnimatorMove()
+	{
+		Vector3 rootPosition = animator.rootPosition;
+		rootPosition.y = navAgent.nextPosition.y;
+		transform.position = rootPosition;
+		navAgent.nextPosition = rootPosition;
+	}
+
+	private void SynchronizeAnimatorAndAgent()
+	{
+		Vector3 worldDeltaPosition = navAgent.nextPosition - transform.position;
+		worldDeltaPosition.y = 0;
+
+		float dx = Vector3.Dot(transform.right, worldDeltaPosition);
+		float dy = Vector3.Dot(transform.forward, worldDeltaPosition);
+		Vector2 deltaPosition = new Vector2(dx, dy);
+
+		float smooth = Mathf.Min(1, Time.deltaTime / 0.1f);
+		smoothDeltaPosition = Vector2.Lerp(smoothDeltaPosition, deltaPosition, smooth);
+
+		velocity = smoothDeltaPosition / Time.deltaTime;
+		if (navAgent.remainingDistance <= navAgent.stoppingDistance)
+		{
+			velocity = Vector2.Lerp(
+				Vector2.zero,
+				velocity,
+				navAgent.remainingDistance / navAgent.stoppingDistance
+			);
+		}
+
+		bool shouldMove = velocity.magnitude > 0.5f
+			&& navAgent.remainingDistance > navAgent.stoppingDistance;
+
+		// animator.SetBool("move", shouldMove);
+		animator.SetFloat("Locomotion", velocity.magnitude);
+
+		float deltaMagnitude = worldDeltaPosition.magnitude;
+		if (deltaMagnitude > navAgent.radius / 2f)
+		{
+			transform.position = Vector3.Lerp(
+				animator.rootPosition,
+				navAgent.nextPosition,
+				smooth
+			);
 		}
 	}
 

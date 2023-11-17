@@ -8,6 +8,7 @@ using DamageNumbersPro;
 public class Enemy : MonoBehaviour
 {
 	[Header("Basic variables")]
+	public bool isSpecial; // Non-zombie enemies are special
 	public int moneyReward;
 
 	[Header("Health variables")]
@@ -51,7 +52,7 @@ public class Enemy : MonoBehaviour
 	public NavMeshAgent navAgent;
 	public float standUpMagnitude, standUpDelay;
 	public float movementSpeed;
-	[HideInInspector] public bool isCrawling = false;
+	public bool isCrawling = false;
 
 	[SerializeField] private float crawlingSpeedMultiplier;
 	private float ogMovementSpeed;
@@ -98,14 +99,14 @@ public class Enemy : MonoBehaviour
 
 	private void Awake()
 	{
-		GameManager.GM.enemiesAlive.Add(this);
+		//GameManager.GM.enemiesAlive.Add(this);
 		GameManager.GM.enemiesAliveGos.Add(gameObject);
 
 		player = GameObject.Find("Player");
 		rigidbodies = GetComponentsInChildren<Rigidbody>();
 
 		SetRagdollParts();
-		RandomizeSkins();
+		if (!isSpecial) RandomizeSkins();
 		SetLimbHealth();
 
 		float randomScaling = Random.Range(1.0f, 1.2f); // Default scale is 1.1
@@ -129,9 +130,11 @@ public class Enemy : MonoBehaviour
 	private void Update()
 	{
 		distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
-		animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
 		CalculateSlows();
 		HandleSwinging();
+
+		if (isSpecial && animator != null) animator.SetFloat("Locomotion", navAgent.velocity.magnitude / navAgent.speed);
+		if (!isSpecial && animator != null) animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
 	}
 
 	private void FixedUpdate()
@@ -197,7 +200,7 @@ public class Enemy : MonoBehaviour
 		GameManager.GM.UpdateEnemyCount();
 		GameManager.GM.AdjustMoney(moneyReward);
 		GameManager.GM.ConfirmKillFX();
-		GameManager.GM.enemiesAlive.Remove(this);
+		//GameManager.GM.enemiesAlive.Remove(this);
 		GameManager.GM.enemiesAliveGos.Remove(gameObject);
 	}
 
@@ -298,8 +301,11 @@ public class Enemy : MonoBehaviour
 		healthPercentage = Mathf.Clamp((100 * currentHealth) / maxHealth, 0, 100);
 
 		// Visual updates according to damage
-		newMaterial.SetFloat("_BloodAmount", 1f); // Blood on the skinned mesh renderer
-		UpdateEyeColor(); // Enemy health can be seen from eyes
+		if (!isSpecial)
+		{
+			newMaterial.SetFloat("_BloodAmount", 1f); // Blood on the skinned mesh renderer
+			UpdateEyeColor(); // Enemy health can be seen from eyes
+		}
 
 		// Sometimes make noise when damaged
 		if (!isDead && Random.Range(0, 3) == 1)
@@ -655,6 +661,7 @@ public class Enemy : MonoBehaviour
 
 	public void StartCrawling()
 	{
+		if (isSpecial) return;
 		// When any of part of the leg is destroyed, the zombie becomes a crawler
 		isCrawling = true;
 		animator.Play("Start Crawling");
@@ -727,6 +734,7 @@ public class Enemy : MonoBehaviour
 
 	public void UpdateEyeColor()
 	{
+		if (isSpecial) return;
 		Color eyeColor;
 
 		// Adjust eye color according to possible debuffs

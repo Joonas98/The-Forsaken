@@ -17,7 +17,7 @@ public class WaveSpawner : MonoBehaviour
 	public float floatingHeight = 500f;
 	public Transform[] spawnPoints;
 	public ParticleSystem[] spawnParticleSystems;
-	public GameObject enemyPrefab;
+	public GameObject zombiePrefab, minotaurPrefab;
 	public AudioSource audioSource;
 	public AudioClip waveStartSound;
 	public LayerMask groundLayer;
@@ -56,10 +56,34 @@ public class WaveSpawner : MonoBehaviour
 					Vector3 spawnPosition = hit.point;
 
 					// Call the SpawnFromCamera function to spawn an enemy at the hit point
-					SpawnDirect(spawnPosition);
+					SpawnDirect(spawnPosition, zombiePrefab);
 				}
 			}
 		}
+
+		if (Input.GetKeyDown(KeyCode.Y))
+		{
+			// Create a ray from the camera's position and forward direction
+			Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
+
+			// Create a RaycastHit variable to store information about the hit point
+			RaycastHit hit;
+
+			// Perform the raycast
+			if (Physics.Raycast(ray, out hit))
+			{
+				// Check if the ray hit something
+				if (hit.collider != null)
+				{
+					// Get the point where the ray hit
+					Vector3 spawnPosition = hit.point;
+
+					// Call the SpawnFromCamera function to spawn an enemy at the hit point
+					SpawnDirect(spawnPosition, minotaurPrefab);
+				}
+			}
+		}
+
 	}
 
 	private void LateUpdate()
@@ -98,7 +122,7 @@ public class WaveSpawner : MonoBehaviour
 			Vector3 positionToSpawn = spawnParticleSystems[randomNumber].transform.position;
 			if (!spawnParticleSystems[randomNumber].isPlaying) spawnParticleSystems[randomNumber].Play();
 
-			GameObject newGO = Instantiate(enemyPrefab, positionToSpawn, Quaternion.identity);
+			GameObject newGO = Instantiate(zombiePrefab, positionToSpawn, Quaternion.identity);
 			GameManager.GM.enemyCount++;
 			GameManager.GM.UpdateEnemyCount();
 
@@ -106,10 +130,10 @@ public class WaveSpawner : MonoBehaviour
 		}
 	}
 
-	public void SpawnDirect(Vector3 spawnLocation)
+	public void SpawnDirect(Vector3 spawnLocation, GameObject enemyType)
 	{
 		// Instantiate the enemy prefab at the specified spawn location
-		Instantiate(enemyPrefab, spawnLocation, Quaternion.identity);
+		Instantiate(enemyType, spawnLocation, Quaternion.identity);
 		GameManager.GM.enemyCount++;
 		GameManager.GM.UpdateEnemyCount();
 	}
@@ -135,7 +159,7 @@ public class WaveSpawner : MonoBehaviour
 			{
 				spawnPosition = new Vector3(hitInfo.point.x, hitInfo.point.y, hitInfo.point.z);
 
-				GameObject newGO = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+				GameObject newGO = Instantiate(zombiePrefab, spawnPosition, Quaternion.identity);
 				GameManager.GM.enemyCount++;
 				GameManager.GM.UpdateEnemyCount();
 

@@ -28,7 +28,7 @@ public class GameManager : MonoBehaviour
 	public static GameManager GM;
 
 	[Header("Various Lists / Arrays")]
-	public List<Enemy> enemiesAlive = new List<Enemy>();
+	public List<EnemyBase> enemiesAlive = new List<EnemyBase>();
 	public List<GameObject> enemiesAliveGos = new List<GameObject>();
 
 	[Header("Settings")]
