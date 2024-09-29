@@ -10,7 +10,7 @@ public class RagdollManager : MonoBehaviour
 	public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
 
 	private Animator animator;
-	private EnemyBase enemyBaseScript;
+	private Enemy enemyScript;
 	private NavMeshAgent navAgent;
 	private EnemyNav navScript;
 	private List<Collider> ragdollParts = new List<Collider>();
@@ -23,7 +23,7 @@ public class RagdollManager : MonoBehaviour
 	{
 		// Get Script references
 		animator = GetComponent<Animator>();
-		enemyBaseScript = GetComponent<EnemyBase>();
+		enemyScript = GetComponent<Enemy>();
 		navAgent = GetComponent<NavMeshAgent>();
 		navScript = GetComponent<EnemyNav>();
 
@@ -40,7 +40,7 @@ public class RagdollManager : MonoBehaviour
 	private void CheckRagdollMagnitude()
 	{
 		// Don't calculate magnitude on non-ragdolling or dead enemies
-		if (!enemyBaseScript.ragdolling || enemyBaseScript.isDead) return;
+		if (!enemyScript.ragdolling || enemyScript.isDead) return;
 
 		// When magnitude has been low enough for certain time, stand up
 		if (bodyRB.velocity.magnitude < standUpMagnitude && !standCountdownActive)
@@ -76,9 +76,9 @@ public class RagdollManager : MonoBehaviour
 
 	public void TurnOnRagdoll()
 	{
-		if (enemyBaseScript.ragdolling) return;
+		if (enemyScript.ragdolling) return;
 		Debug.Log("Turning on ragdoll");
-		enemyBaseScript.ragdolling = true;
+		enemyScript.ragdolling = true;
 
 		foreach (Rigidbody rb in rigidbodies)
 		{
@@ -103,9 +103,9 @@ public class RagdollManager : MonoBehaviour
 
 	public void TurnOffRagdoll()
 	{
-		if (enemyBaseScript.isDead || !enemyBaseScript.ragdolling) return;
+		if (enemyScript.isDead || !enemyScript.ragdolling) return;
 		Debug.Log("Turning off ragdoll");
-		enemyBaseScript.ragdolling = false;
+		enemyScript.ragdolling = false;
 
 		foreach (Rigidbody rb in rigidbodies)
 		{
@@ -134,7 +134,7 @@ public class RagdollManager : MonoBehaviour
 
 	private void ContinueAfterRagdoll()
 	{
-		if (enemyBaseScript.ragdolling) return;
+		if (enemyScript.ragdolling) return;
 		navScript.MoveToNavMesh();
 		if (!navAgent.isActiveAndEnabled) navAgent.enabled = true;
 		navAgent.isStopped = false;

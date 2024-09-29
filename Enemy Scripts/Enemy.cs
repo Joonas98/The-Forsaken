@@ -53,6 +53,7 @@ public class Enemy : MonoBehaviour
 	public float standUpMagnitude, standUpDelay;
 	public float movementSpeed;
 	public bool isCrawling = false;
+	public bool ragdolling = false;
 
 	[SerializeField] private float crawlingSpeedMultiplier;
 	private float ogMovementSpeed;
@@ -82,7 +83,7 @@ public class Enemy : MonoBehaviour
 	public AudioClip[] randomSounds;
 
 	// Various privates
-	private bool canAttack = true, canSwing = true, ragdolling = false;
+	private bool canAttack = true, canSwing = true;
 	private bool standCountdownActive = false;
 	private float countdown = 0f;
 	private float distanceToPlayer;
@@ -470,7 +471,6 @@ public class Enemy : MonoBehaviour
 		}
 	}
 
-
 	public void DamageLimb(int limbIndex, int damage)
 	{
 		limbHealths[limbIndex] -= damage;
@@ -583,7 +583,6 @@ public class Enemy : MonoBehaviour
 			playerScript.TakeDamage(damage);
 			canAttack = false;
 			PlayerMovement playerMovement = playerScript.GetComponent<PlayerMovement>();
-			// playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
 			playerMovement.ApplySpeedEffect(0.50f, 0.5f);
 			StartCoroutine(AttackCooldown());
 		}

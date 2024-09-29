@@ -103,7 +103,7 @@ public class PlayerMovement : MonoBehaviour
 	private void Start()
 	{
 		canRun = true;
-		initialYOffset = legHud.position.y - mainCamera.transform.position.y;
+		//initialYOffset = legHud.position.y - mainCamera.transform.position.y; // Needed if leg hud is used
 		movementSpeedEffects = new MovementSpeedEffect[9]; // Maximum of 9 slow effects should be enough 
 	}
 
@@ -278,9 +278,9 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 		// Leg HUD needs to be adjusted too, or it's bouncing annoyingly
-		float newY = mainCamera.transform.position.y + initialYOffset;
-		Vector3 newPosition = new Vector3(legHud.position.x, newY, legHud.position.z);
-		legHud.position = newPosition;
+		// float newY = mainCamera.transform.position.y + initialYOffset;
+		// Vector3 newPosition = new Vector3(legHud.position.x, newY, legHud.position.z);
+		// legHud.position = newPosition;
 	}
 
 	private void FallingSymbol()

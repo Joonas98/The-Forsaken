@@ -6,7 +6,9 @@ using UnityEngine.UI;
 public class HitmarkAndCrosshair : MonoBehaviour
 {
 	// 5.10.2023 new combined script to handle hitmarkers and crosshair
+	[Header("References")]
 	public static HitmarkAndCrosshair instance;
+	public GameObject crosshairImageGO;
 
 	[Header("Settings")]
 	public bool useHitmarker;
@@ -21,6 +23,11 @@ public class HitmarkAndCrosshair : MonoBehaviour
 		{
 			Destroy(gameObject);
 		}
+	}
+
+	private void Update()
+	{
+		UpdateCrosshair();
 	}
 
 	public void Hitmarker(Vector3 hitPosition, bool isHeadshot)
@@ -38,6 +45,12 @@ public class HitmarkAndCrosshair : MonoBehaviour
 			StartCoroutine(FadeImage(hitImage, isHeadshot));
 			StartCoroutine(DisableDelay(hitmark));
 		}
+	}
+
+	public void UpdateCrosshair()
+	{
+		if (GameManager.GM.currentGunAiming) crosshairImageGO.SetActive(false);
+		else crosshairImageGO.SetActive(true);
 	}
 
 	IEnumerator FadeImage(Image image, bool headshot)

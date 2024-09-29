@@ -29,6 +29,13 @@ public class MeleeWeapon : Weapon
 	public AudioClip[] swingSounds;
 	public AudioClip hitFloorSound;
 
+	[Header("Newer system for melee")]
+	public Transform cameraTransform;  // The player's camera (or the player model)
+	public int penetrationAmount = 3; // How many enemies each attack can damage
+	public float attackRange = 1.0f;    // The forward distance of the attack
+	public float attackRadius = 0.5f;   // The width of the capsule
+	public LayerMask enemyLayers;
+
 	protected override void Awake()
 	{
 		base.Awake();
@@ -36,7 +43,7 @@ public class MeleeWeapon : Weapon
 		totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
 		animator = GetComponent<Animator>();
 
-		GameObject CrosshairCanvas = GameObject.Find("CrossHairCanvas");
+		cameraTransform = Camera.main.transform;
 	}
 
 	protected override void OnEnable()
@@ -52,19 +59,19 @@ public class MeleeWeapon : Weapon
 		base.Update();
 		HandleInputs();
 
-		if (canAttack && attacking && equipped)
-		{
-			int randomSwingClip = Random.Range(0, swingSounds.Length);
-			audioSource.PlayOneShot(swingSounds[randomSwingClip]);
-			StartCoroutine(Attack(false));
-		}
-
-		if (canAttack && attackingSecondary && equipped)
-		{
-			int randomSwingClip = Random.Range(0, swingSounds.Length);
-			audioSource.PlayOneShot(swingSounds[randomSwingClip]);
-			StartCoroutine(Attack(true));
-		}
+		//if (canAttack && attacking && equipped)
+		//{
+		//	int randomSwingClip = Random.Range(0, swingSounds.Length);
+		//	audioSource.PlayOneShot(swingSounds[randomSwingClip]);
+		//	StartCoroutine(Attack(false));
+		//}
+		//
+		//if (canAttack && attackingSecondary && equipped)
+		//{
+		//	int randomSwingClip = Random.Range(0, swingSounds.Length);
+		//	audioSource.PlayOneShot(swingSounds[randomSwingClip]);
+		//	StartCoroutine(Attack(true));
+		//}
 
 		if (equipped && !unequipping && !attacking && !attackingSecondary && canAttack)
 		{
@@ -74,25 +81,37 @@ public class MeleeWeapon : Weapon
 
 	public void HandleInputs()
 	{
+		// Prevent attacking while doing other actions
 		if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) return;
 
 		if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack)
 		{
-			attacking = true;
-		}
-		else if (Input.GetButtonUp("Fire1"))
-		{
-			attacking = false;
+			Attack();
+			canAttack = false;
 		}
 
-		if (Input.GetButtonDown("Fire2") && Time.timeScale > 0 && canAttack)
+		if (Input.GetButtonUp("Fire1"))
 		{
-			attackingSecondary = true;
+			canAttack = true;
 		}
-		else if (Input.GetButtonUp("Fire2"))
-		{
-			attackingSecondary = false;
-		}
+
+		//	if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack)
+		//	{
+		//		attacking = true;
+		//	}
+		//	else if (Input.GetButtonUp("Fire1"))
+		//	{
+		//		attacking = false;
+		//	}
+		//
+		//	if (Input.GetButtonDown("Fire2") && Time.timeScale > 0 && canAttack)
+		//	{
+		//		attackingSecondary = true;
+		//	}
+		//	else if (Input.GetButtonUp("Fire2"))
+		//	{
+		//		attackingSecondary = false;
+		//	}
 	}
 
 	public override void EquipWeapon()
@@ -107,7 +126,7 @@ public class MeleeWeapon : Weapon
 		base.UnequipWeapon();
 	}
 
-	IEnumerator Attack(bool secondaryAttack)
+	/*IEnumerator Attack(bool secondaryAttack)
 	{
 		if (!secondaryAttack)
 		{
@@ -135,10 +154,11 @@ public class MeleeWeapon : Weapon
 			attackedEnemies.Clear();
 			canAttack = true;
 		}
-	}
+	} */
 
 	private void OnTriggerEnter(Collider other)
 	{
+		/*
 		// We can hit enemies only when in animation
 		if (!IsAnimationPlaying(attackAnimations[0].name) && !IsAnimationPlaying(attackAnimations[1].name) && !IsAnimationPlaying(attackAnimations[2].name)) return;
 
@@ -174,6 +194,7 @@ public class MeleeWeapon : Weapon
 			if (!attackedEnemies.Contains(enemyScript))
 				attackedEnemies.Add(enemyScript);
 		}
+		*/
 	}
 
 	private bool IsAnimationPlaying(string animationName)
@@ -184,4 +205,43 @@ public class MeleeWeapon : Weapon
 		// Check if the Animator is currently playing the animation state
 		return animator.GetCurrentAnimatorStateInfo(0).shortNameHash == animationHash;
 	}
+
+	private void Attack()
+	{
+		// 29.9.2024 New way of attacking 
+		Vector3 point1 = cameraTransform.position;  // Start point of the capsule cast
+		Vector3 point2 = cameraTransform.position + cameraTransform.forward * attackRange;  // End point of the attack range
+
+		RaycastHit[] hits = Physics.CapsuleCastAll(point1, point2, attackRadius, cameraTransform.forward, attackRange, enemyLayers);
+		animator.Play(attackAnimations[0].name);
+
+		if (hits.Length > 0)
+		{
+			List<Enemy> hitEnemies = new List<Enemy>();  // To track which enemies have been hit
+			int enemiesHit = 0;
+
+			foreach (RaycastHit hit in hits)
+			{
+				Debug.Log("Foreach triggered");
+				Collider hitCollider = hit.collider;
+				Enemy enemy = hitCollider.GetComponentInParent<Enemy>();
+
+				// Ensure the object hit is an enemy and we haven't hit them already
+				if (enemy != null && !hitEnemies.Contains(enemy))
+				{
+					// Call GetHit only if we haven't hit this enemy yet
+					Debug.Log("Applying melee hit");
+					enemy.GetHit(hitCollider, damage, headshotMultiplier);
+					audioSource.PlayOneShot(stabSounds[0]);
+
+					hitEnemies.Add(enemy);  // Mark this enemy as hit
+					enemiesHit++;  // Increment the counter for enemies hit
+
+					// If we've hit the maximum number of enemies, stop
+					if (enemiesHit >= penetrationAmount) break;
+				}
+			}
+		}
+	}
+
 }

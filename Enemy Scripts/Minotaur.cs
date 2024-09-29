@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Minotaur : EnemyBase
 {
-
+	/*
 	#region Update Functions
 	override protected void OnValidate()
 	{
@@ -28,5 +28,5 @@ public class Minotaur : EnemyBase
 	}
 	#endregion
 
-
+	*/
 }

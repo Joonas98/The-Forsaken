@@ -7,7 +7,8 @@ public class EnemyNav : MonoBehaviour
 {
 	[SerializeField] private float onMeshThreshold;
 	private NavMeshAgent navAgent;
-	private EnemyBase enemyBase;
+	// private EnemyBase enemyBase;
+	private Enemy enemy;
 	private Animator animator;
 	private Transform targetLocation;
 	private GameObject player;
@@ -21,7 +22,8 @@ public class EnemyNav : MonoBehaviour
 		// Set references
 		animator = GetComponent<Animator>();
 		navAgent = GetComponent<NavMeshAgent>();
-		enemyBase = GetComponent<EnemyBase>();
+		// enemyBase = GetComponent<EnemyBase>();
+		enemy = GetComponent<Enemy>();
 
 		//  Player reference
 		player = GameObject.Find("Player");
@@ -50,7 +52,8 @@ public class EnemyNav : MonoBehaviour
 
 	private void Update()
 	{
-		if (!enemyBase.ragdolling) SynchronizeAnimatorAndAgent();
+		SynchronizeAnimatorAndAgent();
+		// Debug.Log("Enemy speed: " + navAgent.speed.ToString());
 	}
 
 	public bool IsAgentOnNavMesh(GameObject agentObject)
@@ -77,6 +80,7 @@ public class EnemyNav : MonoBehaviour
 		if (NavMesh.SamplePosition(transform.position, out hit, 2.0f, NavMesh.AllAreas))
 		{
 			transform.position = hit.position;
+			Debug.Log("Moved an enemy to navmesh");
 		}
 		else
 		{
@@ -86,16 +90,18 @@ public class EnemyNav : MonoBehaviour
 	}
 
 	// Root motion stuff
-	private void OnAnimatorMove()
-	{
-		Vector3 rootPosition = animator.rootPosition;
-		rootPosition.y = navAgent.nextPosition.y;
-		transform.position = rootPosition;
-		navAgent.nextPosition = rootPosition;
-	}
+	//private void OnAnimatorMove()
+	//{
+	//	Vector3 rootPosition = animator.rootPosition;
+	//	rootPosition.y = navAgent.nextPosition.y;
+	//	transform.position = rootPosition;
+	//	navAgent.nextPosition = rootPosition;
+	//}
 
 	private void SynchronizeAnimatorAndAgent()
 	{
+		if (enemy.ragdolling) return;
+
 		Vector3 worldDeltaPosition = navAgent.nextPosition - transform.position;
 		worldDeltaPosition.y = 0;
 
@@ -116,11 +122,11 @@ public class EnemyNav : MonoBehaviour
 			);
 		}
 
-		bool shouldMove = velocity.magnitude > 0.5f
-			&& navAgent.remainingDistance > navAgent.stoppingDistance;
+		//bool shouldMove = velocity.magnitude > 0.5f
+		//	&& navAgent.remainingDistance > navAgent.stoppingDistance;
 
-		// animator.SetBool("move", shouldMove);
-		animator.SetFloat("Locomotion", velocity.magnitude);
+		//animator.SetBool("move", shouldMove);
+		//animator.SetFloat("Locomotion", velocity.magnitude);
 
 		float deltaMagnitude = worldDeltaPosition.magnitude;
 		if (deltaMagnitude > navAgent.radius / 2f)

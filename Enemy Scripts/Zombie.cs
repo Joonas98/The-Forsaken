@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Zombie : EnemyBase
 {
-
+	/*
 
 	#region Update Functions
 	override protected void OnValidate()
@@ -27,4 +27,5 @@ public class Zombie : EnemyBase
 		base.Update();
 	}
 	#endregion
+	*/
 }

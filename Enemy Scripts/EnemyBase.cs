@@ -6,7 +6,7 @@ using DamageNumbersPro;
 
 public class EnemyBase : MonoBehaviour
 {
-	[Header("Basics")]
+	/*[Header("Basics")]
 	public int moneyReward;
 	public enum EnemyType
 	{
@@ -171,5 +171,5 @@ public class EnemyBase : MonoBehaviour
 		GameManager.GM.enemiesAlive.Remove(this);
 		GameManager.GM.enemiesAliveGos.Remove(gameObject);
 	}
-
+	*/
 }

@@ -30,7 +30,7 @@ public class Grenade : MonoBehaviour
 
 	public MeshRenderer meshRenderer;
 
-	private List<EnemyBase> damagedEnemies = new List<EnemyBase>();
+	private List<Enemy> damagedEnemies = new List<Enemy>();
 
 	void Start()
 	{
@@ -84,7 +84,7 @@ public class Grenade : MonoBehaviour
 				rb.AddExplosionForce(explosionForce, transform.position - upVector, explosionRadius);
 			}
 
-			EnemyBase enemy = nearbyObject.GetComponentInParent<EnemyBase>();
+			Enemy enemy = nearbyObject.GetComponentInParent<Enemy>();
 			if (enemy != null)
 			{
 				if (!damagedEnemies.Contains(enemy))
@@ -99,7 +99,8 @@ public class Grenade : MonoBehaviour
 
 					//  if (activateRagdoll) enemy.TurnOnRagdoll();
 					// New ragdoll script
-					if (activateRagdoll) enemy.GetComponent<RagdollManager>().TurnOnRagdoll();
+					//if (activateRagdoll) enemy.GetComponent<RagdollManager>().TurnOnRagdoll();
+					if (enemy != null) enemy.TurnOnRagdoll();
 
 					// Damage limbs
 					LimbManager limbScript = enemy.GetComponent<LimbManager>();
