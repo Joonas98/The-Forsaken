@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 // New universal sway and weapon bob system 8.5.2023
@@ -71,18 +69,26 @@ public class WeaponSwayAndBob : MonoBehaviour
 	{
 		GetInput();
 		// When choosing grenades or objects, mouse is used for selection -> sway during selection is annoying bug
-		if (disableSwayBob || GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) return;
-
-		if (sway && !disableSwayBob) Sway();
-		if (swayRotation && !disableSwayBob) SwayRotation();
-		if (bobOffset && !disableSwayBob) BobOffset();
-		if (bobRotation && !disableSwayBob) BobRotation();
-
-		if (mover.isRunning)
-			multiplier = runningMultiplier;
+		if (disableSwayBob || GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject)
+		{
+			swayPos = Vector3.zero;
+			bobPosition = Vector3.zero;
+			swayEulerRot = Vector3.zero;
+			bobEulerRotation = Vector3.zero;
+		}
 		else
-			multiplier = defaultMultiplier;
+		{
+			if (sway) Sway();
+			if (swayRotation) SwayRotation();
+			if (bobOffset) BobOffset();
+			if (bobRotation) BobRotation();
+		}
 
+		// Handle running
+		if (mover.isRunning) multiplier = runningMultiplier;
+		else multiplier = defaultMultiplier;
+
+		// Do the lerps themselves at the end
 		CompositePositionRotation();
 	}
 
@@ -107,12 +113,6 @@ public class WeaponSwayAndBob : MonoBehaviour
 		// Get mouse movement input
 		lookInput.x = Input.GetAxis("Mouse X");
 		lookInput.y = Input.GetAxis("Mouse Y");
-	}
-
-	public void ReturnToOriginal() // Return to original position and rotation
-	{
-		transform.localPosition = new Vector3(0, 0, 0);
-		transform.localRotation = Quaternion.Euler(new Vector3(0, 0, 0));
 	}
 
 	void Sway() // Mouse movement -> position change
@@ -148,42 +148,19 @@ public class WeaponSwayAndBob : MonoBehaviour
 		bobEulerRotation.z = (walkInput != Vector2.zero ? multiplier.z * curveCos * walkInput.x : 0);
 	}
 
-	// TODO: add bob and sway to axis Y movement like jump and fall
-	// void FallOffset()
-	// {
-	//     fallPosition.y = -(_currentVelocity.Value.y * _travelLimitFall.y);
-	// }
-	//
-	// void FallRotatio()
-	// {
-	//     fallEulerRot.x = (_currentVelocity.Value.y * _fallMultiplier);
-	// }
-
 	void CompositePositionRotation()
 	{
-		if (GameManager.GM.currentGun != null)
+		if (disableSwayBob || (GameManager.GM.currentGun != null && GameManager.GM.currentGunAiming))
 		{
-			if (!GameManager.GM.currentGunAiming /* && !GameManager.GM.currentGun.playingAction && !GameManager.GM.currentGun.isReloading*/)
-			{
-				// Apply sway for non-aiming guns
-				transform.localPosition = Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth);
-				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
-				//Debug.Log("Not aiming");
-			}
-			else
-			{
-				// Return to original spot for aiming guns
-				transform.localPosition = Vector3.Lerp(transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
-				transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(new Vector3(0, 0, 0)), Time.deltaTime * GameManager.GM.currentGun.aimSpeed);
-				//Debug.Log("Aiming");
-			}
+			// Lert towards zero
+			transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * smooth);
+			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(Vector3.zero) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
 		}
 		else
 		{
-			// Apply sway for melee weapons when currentGun is null
+			// Apply sway
 			transform.localPosition = Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth);
 			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
-			//Debug.Log("Applying sway");
 		}
 	}
 }

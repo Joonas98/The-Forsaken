@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -80,7 +78,6 @@ public class EnemyNav : MonoBehaviour
 		if (NavMesh.SamplePosition(transform.position, out hit, 2.0f, NavMesh.AllAreas))
 		{
 			transform.position = hit.position;
-			Debug.Log("Moved an enemy to navmesh");
 		}
 		else
 		{

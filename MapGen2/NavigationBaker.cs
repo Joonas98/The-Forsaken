@@ -6,6 +6,8 @@ using System.Linq;
 
 public class NavigationBaker : MonoBehaviour
 {
+    // 4.10.2024 Deprecated and removed
+    /*
     public NavigationBaker navigationBakerScript;
 
     public NavMeshSurface[] surfaces;
@@ -25,5 +27,5 @@ public class NavigationBaker : MonoBehaviour
             surfaces[i].BuildNavMesh();
         }
     }
-
+    */
 }

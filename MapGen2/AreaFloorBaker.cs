@@ -6,6 +6,8 @@ using System.Collections.Generic;
 
 public class AreaFloorBaker : MonoBehaviour
 {
+    // 4.10.2024 Deprecated and removed 
+    /*
     [SerializeField]
     private NavMeshSurface[] Surfaces;
     [SerializeField]
@@ -121,4 +123,5 @@ public class AreaFloorBaker : MonoBehaviour
     {
         OnNavMeshUpdate?.Invoke(new Bounds(WorldAnchor, NavMeshSize));
     }
+    */
 }

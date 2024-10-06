@@ -1,11 +1,11 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Weapon : MonoBehaviour
 {
 	// 18.6.23 Class created, inherited by Gun.cs and MeleeWeapon.cs
 	[Header("Weapon class")]
+	public bool isMelee;
 	public string weaponName;
 	public int weaponPrice;
 	public Sprite weaponSprite; // Image of the weapon
@@ -38,14 +38,6 @@ public class Weapon : MonoBehaviour
 	{
 		HandleSwitchingLerps();
 	}
-
-	// private void OnGUI()
-	// {
-	//     GUIStyle myStyle = new GUIStyle();
-	//     myStyle.fontSize = 12;
-	//     GUI.Label(new Rect(500, 0, 80, 20), equipLerp.ToString() + " = equip", myStyle);
-	//     GUI.Label(new Rect(500, 20, 80, 20), unequipLerp.ToString() + " = unequip", myStyle);
-	// }
 
 	protected virtual void OnEnable()
 	{

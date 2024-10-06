@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class VisualRecoil : MonoBehaviour
@@ -14,6 +12,7 @@ public class VisualRecoil : MonoBehaviour
 
 	private void Update()
 	{
+		// Note, this is only for guns, not melee weapons
 		if (GameManager.GM.currentGun == null) return;
 		aiming = GameManager.GM.currentGunAiming;
 		targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, Time.deltaTime * GameManager.GM.currentGun.vireReturn);

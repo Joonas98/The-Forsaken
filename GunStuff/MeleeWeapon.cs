@@ -1,28 +1,19 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class MeleeWeapon : Weapon
 {
 	[Header("Melee Weapon Settings")]
 	public AnimationClip[] attackAnimations;
 
-	[SerializeField] private float attackDuration;
-	[SerializeField] private float secondaryAttackDuration;
+	private readonly string magString = "Melee";
+	private readonly string totalAmmoString = "Unlimited ammo";
 	[SerializeField] private int damage, damageSecondary;
 	[SerializeField] private float headshotMultiplier;
 	[SerializeField] private ParticleSystem bloodFX;
-	private bool attacking = false;
-	private bool attackingSecondary = false;
-	private bool canAttack = true;
-	private bool mirroredNext = false; // Alternate with normal and mirrored slash
-	private string magString = "Melee";
-	private string totalAmmoString = "Unlimited ammo";
 	private Animator animator;
-	private Enemy enemyScript;
 	private TextMeshProUGUI magazineText, totalAmmoText;
-	private List<Enemy> attackedEnemies = new List<Enemy>();
 
 	[Header("Audio")]
 	public AudioClip[] stabSounds;
@@ -34,7 +25,14 @@ public class MeleeWeapon : Weapon
 	public int penetrationAmount = 3; // How many enemies each attack can damage
 	public float attackRange = 1.0f;    // The forward distance of the attack
 	public float attackRadius = 0.5f;   // The width of the capsule
+	public float attackRate = 1.0f;     // Time between attacks in seconds (e.g., 1.0s for 1 attack per second)
+	public float windupPercentage = 0.3f;   // Windup portion of the animation (e.g., 30% of the animation)
 	public LayerMask enemyLayers;
+
+	private float attackCooldown = 0f;  // Cooldown timer to handle attack intervals
+	private bool isAttacking = false;   // Tracks if we're currently in the middle of an attack
+	public bool readyToAttack; // Is weapon ready for attacking
+	private float currentWindupTime = 0f;   // Time until the CapsuleCast should be triggered
 
 	protected override void Awake()
 	{
@@ -57,104 +55,27 @@ public class MeleeWeapon : Weapon
 	protected override void Update()
 	{
 		base.Update();
-		HandleInputs();
+		HandleAttacking();
 
-		//if (canAttack && attacking && equipped)
+		// When weapon is equipped and not attacking, make sure to return to correct position
+		//if (equipped && !unequipping && readyToAttack)
 		//{
-		//	int randomSwingClip = Random.Range(0, swingSounds.Length);
-		//	audioSource.PlayOneShot(swingSounds[randomSwingClip]);
-		//	StartCoroutine(Attack(false));
+		//	Debug.Log("Melee lerping");
+		//	transform.SetPositionAndRotation(Vector3.Lerp(transform.position, weaponSpot.transform.position, 5f * Time.deltaTime), Quaternion.Lerp(transform.rotation, weaponSpot.transform.rotation, 5f * Time.deltaTime));
 		//}
-		//
-		//if (canAttack && attackingSecondary && equipped)
-		//{
-		//	int randomSwingClip = Random.Range(0, swingSounds.Length);
-		//	audioSource.PlayOneShot(swingSounds[randomSwingClip]);
-		//	StartCoroutine(Attack(true));
-		//}
-
-		if (equipped && !unequipping && !attacking && !attackingSecondary && canAttack)
-		{
-			transform.SetPositionAndRotation(Vector3.Lerp(transform.position, weaponSpot.transform.position, 5f * Time.deltaTime), Quaternion.Lerp(transform.rotation, weaponSpot.transform.rotation, 5f * Time.deltaTime));
-		}
-	}
-
-	public void HandleInputs()
-	{
-		// Prevent attacking while doing other actions
-		if (GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) return;
-
-		if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack)
-		{
-			Attack();
-			canAttack = false;
-		}
-
-		if (Input.GetButtonUp("Fire1"))
-		{
-			canAttack = true;
-		}
-
-		//	if (Input.GetButtonDown("Fire1") && Time.timeScale > 0 && canAttack)
-		//	{
-		//		attacking = true;
-		//	}
-		//	else if (Input.GetButtonUp("Fire1"))
-		//	{
-		//		attacking = false;
-		//	}
-		//
-		//	if (Input.GetButtonDown("Fire2") && Time.timeScale > 0 && canAttack)
-		//	{
-		//		attackingSecondary = true;
-		//	}
-		//	else if (Input.GetButtonUp("Fire2"))
-		//	{
-		//		attackingSecondary = false;
-		//	}
 	}
 
 	public override void EquipWeapon()
 	{
 		base.EquipWeapon();
-		animator.SetFloat("StabSpeedMultiplier", attackAnimations[0].length / attackDuration);
-		animator.SetFloat("SlashSpeedMultiplier", attackAnimations[1].length / secondaryAttackDuration);
+		// TODO: Update animations to scale with attackrate changes
+		//animator.SetFloat("StabSpeedMultiplier", attackAnimations[0].length / attackRate);
 	}
 
 	public override void UnequipWeapon()
 	{
 		base.UnequipWeapon();
 	}
-
-	/*IEnumerator Attack(bool secondaryAttack)
-	{
-		if (!secondaryAttack)
-		{
-			animator.Play(attackAnimations[0].name);
-			canAttack = false;
-			yield return new WaitForSeconds(attackDuration);
-			attackedEnemies.Clear();
-			canAttack = true;
-		}
-		else
-		{
-			if (!mirroredNext)
-			{
-				animator.Play(attackAnimations[1].name);
-				mirroredNext = true;
-			}
-			else
-			{
-				animator.Play(attackAnimations[2].name);
-				mirroredNext = false;
-			}
-
-			canAttack = false;
-			yield return new WaitForSeconds(secondaryAttackDuration);
-			attackedEnemies.Clear();
-			canAttack = true;
-		}
-	} */
 
 	private void OnTriggerEnter(Collider other)
 	{
@@ -206,42 +127,104 @@ public class MeleeWeapon : Weapon
 		return animator.GetCurrentAnimatorStateInfo(0).shortNameHash == animationHash;
 	}
 
-	private void Attack()
+	private void HandleAttacking()
 	{
-		// 29.9.2024 New way of attacking 
-		Vector3 point1 = cameraTransform.position;  // Start point of the capsule cast
-		Vector3 point2 = cameraTransform.position + cameraTransform.forward * attackRange;  // End point of the attack range
-
-		RaycastHit[] hits = Physics.CapsuleCastAll(point1, point2, attackRadius, cameraTransform.forward, attackRange, enemyLayers);
-		animator.Play(attackAnimations[0].name);
-
-		if (hits.Length > 0)
+		if (Time.time >= attackCooldown)
 		{
-			List<Enemy> hitEnemies = new List<Enemy>();  // To track which enemies have been hit
-			int enemiesHit = 0;
+			readyToAttack = true;
+			WeaponSwayAndBob.instance.disableSwayBob = false;
+		}
+		else
+		{
+			readyToAttack = false;
+			WeaponSwayAndBob.instance.disableSwayBob = true;
+		}
 
-			foreach (RaycastHit hit in hits)
+		// Check if we can start a new attack
+		if (Input.GetButton("Fire1") && readyToAttack)
+		{
+			// Start the attack
+			StartAttack();
+		}
+
+		// Handle ongoing attack timing
+		if (isAttacking)
+		{
+			// Check if it's time to perform the CapsuleCast (windup is complete)
+			if (Time.time >= currentWindupTime)
 			{
-				Debug.Log("Foreach triggered");
-				Collider hitCollider = hit.collider;
-				Enemy enemy = hitCollider.GetComponentInParent<Enemy>();
-
-				// Ensure the object hit is an enemy and we haven't hit them already
-				if (enemy != null && !hitEnemies.Contains(enemy))
-				{
-					// Call GetHit only if we haven't hit this enemy yet
-					Debug.Log("Applying melee hit");
-					enemy.GetHit(hitCollider, damage, headshotMultiplier);
-					audioSource.PlayOneShot(stabSounds[0]);
-
-					hitEnemies.Add(enemy);  // Mark this enemy as hit
-					enemiesHit++;  // Increment the counter for enemies hit
-
-					// If we've hit the maximum number of enemies, stop
-					if (enemiesHit >= penetrationAmount) break;
-				}
+				Attack();
+				isAttacking = false;  // Attack is done
 			}
 		}
 	}
 
+	private void StartAttack()
+	{
+		// Reset the cooldown timer to delay the next attack
+		attackCooldown = Time.time + attackRate;
+
+		// Calculate the windup timing based on the attack rate and windup percentage
+		float windupDuration = attackRate * windupPercentage;
+		currentWindupTime = Time.time + windupDuration;
+
+		// Trigger the attack animation (this assumes the animation duration matches the attack rate)
+		animator.Play(attackAnimations[0].name);
+
+		// Mark that the player is currently in an attack state
+		isAttacking = true;
+	}
+
+	private void Attack()
+	{
+		// Capsule cast from the player's position forward to check for hit enemies
+		Vector3 point1 = cameraTransform.position;  // Start point of the capsule cast
+		Vector3 point2 = cameraTransform.position + cameraTransform.forward * attackRange;  // End point of the attack range
+
+		RaycastHit[] hits = Physics.CapsuleCastAll(point1, point2, attackRadius, cameraTransform.forward, attackRange, enemyLayers);
+
+		// If there are hits, handle damaging enemies
+		if (hits.Length > 0)
+		{
+			List<Enemy> hitEnemies = new List<Enemy>();  // Track enemies that have been hit
+			int enemiesHit = 0;
+
+			foreach (RaycastHit hit in hits)
+			{
+				Collider hitCollider = hit.collider;
+				Enemy enemy = hitCollider.GetComponentInParent<Enemy>();
+
+				// Ensure the object is an enemy and hasn't been hit yet in this attack
+				if (enemy != null && !hitEnemies.Contains(enemy))
+				{
+					// Apply damage to the enemy (calls your existing GetHit function)
+					enemy.GetHit(hitCollider, damage, headshotMultiplier);
+
+					// Add the enemy to the list of hit enemies
+					hitEnemies.Add(enemy);
+					enemiesHit++;  // Increment the number of enemies hit
+
+					// If we've hit the maximum number of enemies, stop the loop
+					if (enemiesHit >= penetrationAmount) break;
+				}
+			}
+
+			// Play the appropriate sound effect based on whether enemies were hit
+			if (enemiesHit > 0)
+			{
+				audioSource.PlayOneShot(stabSounds[0]);  // Play the hit sound
+			}
+			else
+			{
+				int randomSwingClip = Random.Range(0, swingSounds.Length);
+				audioSource.PlayOneShot(swingSounds[randomSwingClip]);  // Play the swing sound
+			}
+		}
+		else
+		{
+			// Play a swing sound if nothing was hit
+			int randomSwingClip = Random.Range(0, swingSounds.Length);
+			audioSource.PlayOneShot(swingSounds[randomSwingClip]);
+		}
+	}
 }
