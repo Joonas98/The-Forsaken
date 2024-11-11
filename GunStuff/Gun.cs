@@ -1,9 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
 using UnityEngine.Audio;
 
 public class Gun : Weapon
@@ -12,8 +11,8 @@ public class Gun : Weapon
 	public bool semiAutomatic;
 	public int pelletCount, penetration, damage, magazineSize;
 	public float hipSpread, aimSpread, headshotMultiplier, RPM, reloadTime, knockbackPower, range;
-	[Tooltip("Should be more than 1. High = faster")] [SerializeField] public float aimSpeed;
-	[Tooltip("Should be 0-1. Low = more zoom")] [SerializeField] public float zoomAmount;
+	[Tooltip("Should be more than 1. High = faster")][SerializeField] public float aimSpeed;
+	[Tooltip("Should be 0-1. Low = more zoom")][SerializeField] public float zoomAmount;
 
 	public PlayerInventory.AmmoType gunAmmoType;
 
@@ -78,8 +77,6 @@ public class Gun : Weapon
 	[HideInInspector] public float minZoom = 45f;
 	[HideInInspector] public int currentMagazine;
 	[HideInInspector] public int shotsLeft;
-	[HideInInspector] public string magString, totalAmmoString;
-	// public GameObject damagePopupText;
 
 	[SerializeField] private bool hasShootAnimation; // Is there animation of moving slides, pumping shotgun, bolt action rifles etc.
 	[SerializeField] private bool shootAnimationMovement; // Does the shoot animation include movement or rotation of the weapon (if yes, don't apply rotation during it)
@@ -87,13 +84,12 @@ public class Gun : Weapon
 
 	private Animator animator;
 	private Recoil recoilScript;
-	//private CanvasManager canvasManagerScript;
-	private TextMeshProUGUI magazineText;
-	private float shotCounter, fireRate;
-	private bool hasFired = false;
-	private GameObject crosshairContents;
 	private PlayerMovement playerMovementScript;
 	private PlayerInventory inventoryScript;
+	private GameObject crosshairContents;
+
+	private float shotCounter, fireRate;
+	private bool hasFired = false;
 	private float sprintLerp, unsprintLerp; // Timers to handle lerping
 	private float currentSpread;
 
@@ -130,9 +126,8 @@ public class Gun : Weapon
 	{
 		shotsLeft = pelletCount;
 		currentMagazine = magazineSize;
-		magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
-		magazineText.text = magString;
 
+		AmmoHUD.Instance.UpdateAllAmmoUI(currentMagazine, magazineSize);
 		UpdateFirerate();
 
 		// Set shooting animation name if there is one
@@ -161,8 +156,6 @@ public class Gun : Weapon
 		inventoryScript = GetComponentInParent<PlayerInventory>();
 		playerMovementScript = GetComponentInParent<PlayerMovement>();
 
-		// weaponCam = GameObject.Find("WeaponCamera").GetComponent<Camera>();
-		magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
 		equipTrans = GameObject.Find("EquipTrans").transform;
 		crosshairContents = GameObject.Find("CrosshairPanel");
 
@@ -192,8 +185,8 @@ public class Gun : Weapon
 		base.OnEnable();
 
 		// Handle ammo UI 
-		magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
-		magazineText.text = magString;
+		AmmoHUD.Instance.UpdateAllAmmoUI(currentMagazine, magazineSize);
+
 		inventoryScript.UpdateTotalAmmoText(gunAmmoType);
 
 		// Update desired aiming fov to FovController
@@ -353,8 +346,7 @@ public class Gun : Weapon
 				Shoot(pelletCount);
 				vireScript.Recoil();
 				--currentMagazine;
-				magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
-				magazineText.text = magString;
+				AmmoHUD.Instance.UpdateAmmoUI(currentMagazine);
 			}
 			else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire automatic
 			{
@@ -384,8 +376,7 @@ public class Gun : Weapon
 				Shoot(pelletCount);
 				vireScript.Recoil();
 				--currentMagazine;
-				magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
-				magazineText.text = magString;
+				AmmoHUD.Instance.UpdateAmmoUI(currentMagazine);
 			}
 			else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire semi auto
 			{
@@ -652,8 +643,7 @@ public class Gun : Weapon
 	{
 		yield return new WaitForSeconds(r + 0.05f); // Wait the reload time + small extra to avoid bugs
 		currentMagazine = ammoAmount;
-		magString = currentMagazine.ToString() + " / " + magazineSize.ToString();
-		magazineText.text = magString;
+		AmmoHUD.Instance.UpdateAmmoUI(currentMagazine);
 		WeaponSwitcher.CanSwitch(true);
 		audioMixer.SetFloat("WeaponsPitch", 1f); // Reset weapon pitch (it might be changed to match reload speed)
 		isReloading = false;
