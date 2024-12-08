@@ -1,11 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+	public static GameManager GM;
+
 	[Header("UI Stuff")]
 	public Color roundTextColorEnemies;
 	public Color roundTextColorClear;
@@ -25,7 +25,6 @@ public class GameManager : MonoBehaviour
 	public Recoil recoil;
 	public VisualRecoil vire;
 	public Player playerScript;
-	public static GameManager GM;
 
 	[Header("Various Lists / Arrays")]
 	public List<EnemyBase> enemiesAlive = new List<EnemyBase>();
@@ -155,13 +154,11 @@ public class GameManager : MonoBehaviour
 			aimingSymbol.SetActive(false);
 		}
 
-		// Functionality for underdog ability
-		if (AbilityMaster.abilities.Contains(3))
+		if (AbilityMaster.instance.HasAbility("Underdog"))
 		{
 			if (GetCurrentGun() == null) return;
 			GetCurrentGun().RPM = GetCurrentGun().RPMOG * (1f + (enemyCount / 100f));
 			GetCurrentGun().UpdateFirerate();
-			// Debug.Log("New firerate: " + GetCurrentGun().RPMOG * ((1f + enemyCount / 100f)));
 		}
 	}
 

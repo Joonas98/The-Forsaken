@@ -3,28 +3,23 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Global holder for ability data
 public class AbilityMaster : MonoBehaviour
 {
-	// Statics
 	public static AbilityMaster instance = null;
-	public static List<int> abilities = new List<int>(); // IDs of owned abilities
-
-	// Monos
 	public GameObject player;
+	public GameObject abilityHUDPrefab;
+	public Transform activeParent, automaticParent, passiveParent; // Each type has their own HUD lists
 
-	[Tooltip("This original instances of abilities")]
-	public List<Ability> abilitiesList = new List<Ability>();
+	[Tooltip("Hotkeys assigned to Active abilities in order")]
 	public List<KeyCode> keycodesList = new List<KeyCode>();
-
-	public GameObject abilityPrefab;
-	public Transform abilitiesParent;
-
-	private List<int> ownedAbilities = new List<int>();
 	private int hotkeyIndex = 0;
+
+	// Set of owned abilities - using a HashSet for O(1) lookups
+	public static HashSet<string> ownedAbilities = new HashSet<string>();
 
 	private void Awake()
 	{
+		// Singleton pattern
 		if (instance == null)
 		{
 			DontDestroyOnLoad(gameObject);
@@ -38,67 +33,112 @@ public class AbilityMaster : MonoBehaviour
 
 	private void Start()
 	{
-		abilities.Clear();
+		// Clear owned abilities at the start if desired
+		ownedAbilities.Clear();
 	}
 
-	public void AddAbility(int abilityNumber)
+	/// <summary>
+	/// Adds a new ability if not already owned.
+	/// Creates and configures its UI representation.
+	/// Assigns a hotkey if it's an active ability.
+	/// </summary>
+	/// <param name="ability">The Ability ScriptableObject reference</param>
+	public void AddAbility(Ability ability)
 	{
-		if (abilities.Contains(abilityNumber)) return;
-		//  ownedAbilities.Add(abilityNumber);
-		abilities.Add(abilityNumber);
+		if (ownedAbilities.Contains(ability.name))
+			return; // Already owned
 
+		ownedAbilities.Add(ability.name);
+
+		// Add AbilityHolder to the player so the ability can function at runtime
 		AbilityHolder abilityHolder = player.AddComponent<AbilityHolder>();
-		abilityHolder.ability = abilitiesList[abilityNumber];
-		GameObject newAbility = Instantiate(abilityPrefab);
-		newAbility.transform.SetParent(abilitiesParent, false);
+		abilityHolder.ability = ability;
 
-		Image[] abilityImages = newAbility.GetComponentsInChildren<Image>();
+		GameObject newAbilityHUD;
+
+		switch (ability.abilityType)
+		{
+			case Ability.AbilityType.Active:
+				newAbilityHUD = Instantiate(abilityHUDPrefab, activeParent, false);
+				break;
+			case Ability.AbilityType.Automatic:
+				newAbilityHUD = Instantiate(abilityHUDPrefab, automaticParent, false);
+				break;
+			case Ability.AbilityType.Passive:
+				newAbilityHUD = Instantiate(abilityHUDPrefab, passiveParent, false);
+				break;
+
+			default:
+				newAbilityHUD = Instantiate(abilityHUDPrefab, activeParent, false);
+				Debug.LogError("Instantiated ability type not recognized");
+				break;
+		}
+
+		// Update HUD images with the ability's sprite
+		Image[] abilityImages = newAbilityHUD.GetComponentsInChildren<Image>();
 		foreach (Image img in abilityImages)
 		{
-			img.sprite = abilitiesList[abilityNumber].picture;
+			img.sprite = ability.picture;
 		}
-		abilityImages[0].sprite = null;
 
-		abilityHolder.abilityImage = abilityImages[2];
-		abilityHolder.backgroundImage = abilityImages[0];
+		// Assign references in AbilityHolder
+		abilityHolder.abilityImage = abilityImages.Length > 1 ? abilityImages[1] : null;
+		//abilityHolder.backgroundImage = abilityImages.Length > 0 ? abilityImages[0] : null;
 
-		// Assign hotkeys to active abilities and display the hotkey
-		TextMeshProUGUI hotkeyText = newAbility.GetComponentInChildren<TextMeshProUGUI>();
-		if (abilitiesList[abilityNumber].GetPassiveType() == false) // If not passive ability
+		// Find hotkey text and set accordingly
+		TextMeshProUGUI hotkeyText = newAbilityHUD.GetComponentInChildren<TextMeshProUGUI>();
+		if (hotkeyText != null)
 		{
-			if (hotkeyIndex <= keycodesList.Count)
+			if (ability.abilityType == Ability.AbilityType.Active)
 			{
-				abilityHolder.key = keycodesList[hotkeyIndex];
-				hotkeyText.text = keycodesList[hotkeyIndex].ToString();
-				hotkeyIndex++;
+				// Assign next available hotkey if we have one
+				if (hotkeyIndex < keycodesList.Count)
+				{
+					abilityHolder.key = keycodesList[hotkeyIndex];
+					hotkeyText.text = keycodesList[hotkeyIndex].ToString();
+					hotkeyIndex++;
+				}
+				else
+				{
+					Debug.Log("Out of ability hotkeys");
+					hotkeyText.text = "";
+				}
+
+				// Active abilities: put them at the front
+				newAbilityHUD.transform.SetAsFirstSibling();
 			}
 			else
 			{
-				Debug.Log("Out of ability hotkeys");
-			}
+				// Passive and ActivePassive do not get hotkeys
+				hotkeyText.text = "";
 
-			// Set the new ability as the first child under abilitiesParent
-			newAbility.transform.SetAsFirstSibling();
-		}
-		else
-		{
-			hotkeyText.text = ""; // No hotkey on passives
-								  // Set the new ability as the last child under abilitiesParent
-			newAbility.transform.SetAsLastSibling();
+				// Non-active abilities: put them at the end
+				newAbilityHUD.transform.SetAsLastSibling();
+			}
 		}
 	}
 
-
-	public string GetAbilityDescription(int abilityNumber)
+	public string GetAbilityDescription(Ability ability)
 	{
-		if (abilitiesList[abilityNumber] != null)
+		if (ownedAbilities.Contains(ability.name))
 		{
-			return abilitiesList[abilityNumber].abilityDescription;
+			return ability.abilityDescription;
 		}
 		else
 		{
-			Debug.Log("Ability number: " + abilityNumber + " was not found!");
+			Debug.Log($"Ability {ability.name} is not owned!");
 			return null;
 		}
 	}
+
+	public bool HasAbility(string name)
+	{
+		return ownedAbilities.Contains(name);
+	}
+
+	public void DebugTesting()
+	{
+		Debug.Log("Called method");
+	}
+
 }

@@ -127,7 +127,7 @@ public class Gun : Weapon
 		shotsLeft = pelletCount;
 		currentMagazine = magazineSize;
 
-		AmmoHUD.Instance.UpdateAllAmmoUI(currentMagazine, magazineSize);
+		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
 		UpdateFirerate();
 
 		// Set shooting animation name if there is one
@@ -185,7 +185,7 @@ public class Gun : Weapon
 		base.OnEnable();
 
 		// Handle ammo UI 
-		AmmoHUD.Instance.UpdateAllAmmoUI(currentMagazine, magazineSize);
+		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
 
 		inventoryScript.UpdateTotalAmmoText(gunAmmoType);
 
@@ -318,7 +318,7 @@ public class Gun : Weapon
 	public void HandleShooting()
 	{
 		// Shooting
-		if (Input.GetButton("Fire1") && ((unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold || AbilityMaster.abilities.Contains(7)))
+		if (Input.GetButton("Fire1") && ((unsprintLerp * sprintLerpMultiplier * aimSpeed) > unsprintLerpThreshold || AbilityMaster.instance.HasAbility("Centaur")))
 		{
 			isFiring = true;
 		}
@@ -328,8 +328,8 @@ public class Gun : Weapon
 			hasFired = false;
 		}
 
-		// Check if the player is running without the "Bullet Ballet" ability
-		if (playerMovementScript.isRunning && !AbilityMaster.abilities.Contains(7))
+		// Check if the player is running without the "Centaur" ability
+		if (playerMovementScript.isRunning && !AbilityMaster.instance.HasAbility("Centaur"))
 		{
 			// Prevent firing while running
 			isFiring = false;
@@ -346,7 +346,7 @@ public class Gun : Weapon
 				Shoot(pelletCount);
 				vireScript.Recoil();
 				--currentMagazine;
-				AmmoHUD.Instance.UpdateAmmoUI(currentMagazine);
+				AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
 			}
 			else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire automatic
 			{
@@ -376,7 +376,7 @@ public class Gun : Weapon
 				Shoot(pelletCount);
 				vireScript.Recoil();
 				--currentMagazine;
-				AmmoHUD.Instance.UpdateAmmoUI(currentMagazine);
+				AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
 			}
 			else if (shotCounter <= 0 && currentMagazine <= 0) // Dry fire semi auto
 			{
@@ -403,7 +403,7 @@ public class Gun : Weapon
 	public void HandleSprinting()
 	{
 		// No rotating if reloading or we have Bullet Ballet ability
-		if (isReloading || AbilityMaster.abilities.Contains(7)) return;
+		if (isReloading || AbilityMaster.instance.HasAbility("Centaur")) return;
 
 		if (playingAction || !equipped || unequipping) return;
 
@@ -484,13 +484,14 @@ public class Gun : Weapon
 			}
 
 			// Torso Punch ability
-			if (AbilityMaster.abilities.Contains(6) && hit.collider.CompareTag("Torso"))
+			if (AbilityMaster.instance.HasAbility("Torso Punch") && hit.collider.CompareTag("Torso"))
 			{
 				if (UnityEngine.Random.value < 0.25f) // 25% chance
 				{
 					if (enemy.isDead) return;
 					enemy.TurnOnRagdoll();
-					audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
+					// TODO FIX DUE TO ABILITY REWORK 7.12.2024
+					//audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
 				}
 			}
 
@@ -643,7 +644,7 @@ public class Gun : Weapon
 	{
 		yield return new WaitForSeconds(r + 0.05f); // Wait the reload time + small extra to avoid bugs
 		currentMagazine = ammoAmount;
-		AmmoHUD.Instance.UpdateAmmoUI(currentMagazine);
+		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
 		WeaponSwitcher.CanSwitch(true);
 		audioMixer.SetFloat("WeaponsPitch", 1f); // Reset weapon pitch (it might be changed to match reload speed)
 		isReloading = false;
@@ -685,8 +686,6 @@ public class Gun : Weapon
 	public void RefreshGun()
 	{
 		UpdateFirerate();
-		// If we own the viper venom ability, adjust percentage damage
-		if (AbilityMaster.abilities.Contains(2)) percentageDamage = 5;
 	}
 
 	// Adjust values from other scripts

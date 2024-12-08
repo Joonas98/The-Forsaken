@@ -9,10 +9,11 @@ public class WeaponSwayAndBob : MonoBehaviour
 	public static WeaponSwayAndBob instance;
 	public PlayerMovement mover;
 	public float returnSpeed;
+	public Transform playerCameraTransform; // Assign this to the player's camera
 
 	[Header("Enable Components")]
 	public bool disableSwayBob;
-	public bool sway;
+	public bool swayOffset;
 	public bool swayRotation;
 	public bool bobOffset;
 	public bool bobRotation;
@@ -35,7 +36,7 @@ public class WeaponSwayAndBob : MonoBehaviour
 	float curveCos { get => Mathf.Cos(speedCurve); }
 
 	public Vector3 travelLimit = Vector3.one * 0.025f; // Max limits of travel from movement
-	public Vector3 bobLimit = Vector3.one * 0.01f; // Limit travel from bobbing over time
+	public Vector3 bobLimit = Vector3.one * 0.025f; // Limit travel from bobbing over time
 	Vector3 bobPosition;
 
 	public float bobExaggeration;
@@ -52,17 +53,19 @@ public class WeaponSwayAndBob : MonoBehaviour
 	public float offsetDistance;
 
 	// Important privates for multiple functions
-	Vector2 walkInput;
-	Vector2 lookInput;
-	float inputMagnitude;
-	float verticalMovement;
 	private Vector3 previousPosition;
+	private Vector3 previousRotation;
+	private Vector2 walkInput;
+	private Vector2 lookInput;
+	private float inputMagnitude;
+	private float verticalMovement;
+
 
 	private void Awake()
 	{
 		instance = this;
 		defaultMultiplier = multiplier;
-		previousPosition = transform.position;
+		previousPosition = mover.transform.position;
 	}
 
 	void Update()
@@ -78,7 +81,7 @@ public class WeaponSwayAndBob : MonoBehaviour
 		}
 		else
 		{
-			if (sway) Sway();
+			if (swayOffset) SwayOffset();
 			if (swayRotation) SwayRotation();
 			if (bobOffset) BobOffset();
 			if (bobRotation) BobRotation();
@@ -101,27 +104,34 @@ public class WeaponSwayAndBob : MonoBehaviour
 		inputMagnitude = walkInput.magnitude;
 
 		// Y velocity from rigibody
-		verticalMovement = Mathf.Abs((transform.position - previousPosition).y); // Calculate the vertical movement based on position changes
+		verticalMovement = (transform.position - previousPosition).y; // Calculate the vertical movement based on position changes
 		previousPosition = transform.position;
 
 		// This fixes diagonal movement BobOffset
-		if (inputMagnitude > 1f)
-		{
-			walkInput /= inputMagnitude;
-		}
+		//if (inputMagnitude > 1f)
+		//{
+		//	walkInput /= inputMagnitude;
+		//}
 
 		// Get mouse movement input
 		lookInput.x = Input.GetAxis("Mouse X");
 		lookInput.y = Input.GetAxis("Mouse Y");
 	}
 
-	void Sway() // Mouse movement -> position change
+	void SwayOffset() // Player rotation -> position change
 	{
-		Vector3 invertLook = lookInput * -step;
-		invertLook.x = Mathf.Clamp(invertLook.x, -maxStepDistance, maxStepDistance);
-		invertLook.y = Mathf.Clamp(invertLook.y, -maxStepDistance, maxStepDistance);
+		// Calculate the difference in player rotation between frames
+		Vector3 rotationDifference = playerCameraTransform.eulerAngles - previousRotation;
 
-		swayPos = invertLook;
+		// Normalize and apply the step and maxStepDistance as before
+		Vector3 adjustedRotation = new Vector3(-rotationDifference.y, -rotationDifference.x, 0) * step;
+		adjustedRotation.x = Mathf.Clamp(adjustedRotation.x, -maxStepDistance, maxStepDistance);
+		adjustedRotation.y = Mathf.Clamp(adjustedRotation.y, -maxStepDistance, maxStepDistance);
+
+		swayPos = adjustedRotation;
+
+		// Store current rotation for the next frame comparison
+		previousRotation = playerCameraTransform.eulerAngles;
 	}
 
 	void SwayRotation() // Mouse movement -> rotation change (roll, pitch, yaw)
@@ -136,8 +146,8 @@ public class WeaponSwayAndBob : MonoBehaviour
 	{
 		speedCurve += Time.deltaTime * (mover.isGrounded ? inputMagnitude * bobExaggeration : 1f) + 0.01f;
 
-		bobPosition.x = (curveCos * bobLimit.x * (mover.isGrounded ? 1 : 0)) - (walkInput.x * travelLimit.x);
-		bobPosition.y = (curveSin * bobLimit.y) * verticalMovement * 5f;
+		bobPosition.x = (curveCos * bobLimit.x) - (walkInput.x * travelLimit.x);
+		bobPosition.y = bobLimit.y * verticalMovement * 5f;
 		bobPosition.z = -(walkInput.y * travelLimit.z);
 	}
 
@@ -152,15 +162,15 @@ public class WeaponSwayAndBob : MonoBehaviour
 	{
 		if (disableSwayBob || (GameManager.GM.currentGun != null && GameManager.GM.currentGunAiming))
 		{
-			// Lert towards zero
-			transform.localPosition = Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * smooth);
-			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(Vector3.zero) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
+			// Lerp towards zero
+			transform.SetLocalPositionAndRotation(Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * smooth),
+			Quaternion.Lerp(transform.localRotation, Quaternion.Euler(Vector3.zero) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot));
 		}
 		else
 		{
 			// Apply sway
-			transform.localPosition = Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth);
-			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot);
+			transform.SetLocalPositionAndRotation(Vector3.Lerp(transform.localPosition, swayPos + bobPosition, Time.deltaTime * smooth),
+			Quaternion.Lerp(transform.localRotation, Quaternion.Euler(swayEulerRot) * Quaternion.Euler(bobEulerRotation), Time.deltaTime * smoothRot));
 		}
 	}
 }

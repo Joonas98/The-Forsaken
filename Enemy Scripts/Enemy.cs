@@ -1,9 +1,8 @@
+using DamageNumbersPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
-using TMPro;
-using DamageNumbersPro;
 
 public class Enemy : MonoBehaviour
 {
@@ -290,7 +289,9 @@ public class Enemy : MonoBehaviour
 		// If optional percentageAmount was given, add % based damage to the actual damage
 		if (percentageAmount > 0)
 		{
-			var hpPercentage = (100 / maxHealth) * percentageAmount;
+			// Use float arithmetic to avoid truncation
+			float hpPercentageFloat = (maxHealth * percentageAmount) / 100f;
+			int hpPercentage = Mathf.RoundToInt(hpPercentageFloat);
 			damage += hpPercentage;
 		}
 
@@ -333,6 +334,8 @@ public class Enemy : MonoBehaviour
 
 	public void GetShot(RaycastHit hit, int damageAmount, int percentageDamage = 0)
 	{
+		if (AbilityMaster.instance.HasAbility("Viper Venom")) percentageDamage += 5;
+
 		EnemyImpactFX(hit.point, hit.normal);
 		switch (hit.collider.tag)
 		{

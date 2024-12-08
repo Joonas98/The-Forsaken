@@ -1,14 +1,15 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class WeaponSwitcher : MonoBehaviour
 {
 	public int selectedWeapon;
 	public static bool canSwitchWeapon = true;
 	public Weapon currentWeapon;
-	public GameObject weaponsPanel;
+
+	// Parents for UI weapon panels
+	// Remember that the actual objects are under this class' GO
+	public Transform storeParent, hudParent;
 
 	public static WeaponSwitcher instance; // Singleton reference
 
@@ -119,7 +120,6 @@ public class WeaponSwitcher : MonoBehaviour
 				SelectWeapon();
 			}
 		}
-
 	}
 
 	public void SelectWeapon()
@@ -156,13 +156,40 @@ public class WeaponSwitcher : MonoBehaviour
 
 		// Handle highlight for HUD
 		if (handledPanel != null) handledPanel.highlightObject.SetActive(false);
-		handledPanel = weaponsPanel.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();
+		handledPanel = hudParent.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();
 		handledPanel.highlightObject.SetActive(true);
 	}
 
 	public static void CanSwitch(bool boolean)
 	{
 		canSwitchWeapon = boolean;
+	}
+
+	public void MoveWeaponLeft(GameObject weapon)
+	{
+		int currentIndex = weapon.transform.GetSiblingIndex();
+		if (currentIndex > 0)
+		{
+			// Move it left in the Weapon Switcher
+			weapon.transform.SetSiblingIndex(currentIndex - 1);
+
+			// Also move the corresponding weapon in the Store UI and HUD UI
+			storeParent.GetChild(currentIndex).SetSiblingIndex(currentIndex - 1);
+			hudParent.GetChild(currentIndex).SetSiblingIndex(currentIndex - 1);
+		}
+	}
+
+	public void MoveWeaponRight(GameObject weapon)
+	{
+		int currentIndex = weapon.transform.GetSiblingIndex();
+		int maxIndex = transform.childCount - 1;
+		if (currentIndex < maxIndex)
+		{
+			weapon.transform.SetSiblingIndex(currentIndex + 1);
+
+			storeParent.GetChild(currentIndex).SetSiblingIndex(currentIndex + 1);
+			hudParent.GetChild(currentIndex).SetSiblingIndex(currentIndex + 1);
+		}
 	}
 
 	IEnumerator UnequipTimer()
@@ -172,5 +199,4 @@ public class WeaponSwitcher : MonoBehaviour
 		SelectWeapon();
 		canSwitchWeapon = true;
 	}
-
 }

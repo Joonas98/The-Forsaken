@@ -2,8 +2,12 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+	public static PlayerMovement instance;
+
 	[Header("Variables")]
-	public float speed;
+	public float walkingSpeed;
+	private float _currentSpeed; // Backing field
+	public float CurrentSpeed => _currentSpeed; // Read-only property
 	public float runningSpeed, slopeSpeed, gravity, jumpHeight;
 	private float runThreshold = 5f; // If controller.velocity.magnitude is less than this, can't be running
 
@@ -12,11 +16,11 @@ public class PlayerMovement : MonoBehaviour
 	public AudioClip[] jumpSounds;
 
 	[Header("Headbob")]
-	[SerializeField] private float walkBobSpeed = 14f;
-	[SerializeField] private float walkBobAmount = 0.05f;
-	[SerializeField] private float sprintBobSpeed = 18f;
-	[SerializeField] private float sprintBobAmount = 0.1f;
+	[SerializeField] private AnimationCurve bobAmountCurve = AnimationCurve.Linear(0, 0, 1, 1); // Default linear
+	[SerializeField] private AnimationCurve bobSpeedCurve = AnimationCurve.Linear(0, 1, 1, 2);  // Default linear
+
 	[SerializeField] private float bobReturnSpeed = 0.25f; // How fast to return -> 0, 0, 0 when not bobbing
+	[SerializeField] private float bobMaxSpeed = 15f; // What movement speed gives the max of bob curve
 	private float defaultYPos = 0;
 	private float bobTimer;
 
@@ -91,7 +95,9 @@ public class PlayerMovement : MonoBehaviour
 
 	private void Awake()
 	{
-		ogSpeed = speed;
+		instance = this;
+
+		ogSpeed = walkingSpeed;
 		ogRunningspeed = runningSpeed;
 		runningSymbol = GameObject.Find("RunningSymbol");
 		if (runningSymbol != null) runningSymbol.SetActive(false);
@@ -114,20 +120,25 @@ public class PlayerMovement : MonoBehaviour
 		HandleHeadbob();
 		FallingSymbol();
 
-		if (lastPosition != transform.position)
+		if (lastPosition != transform.position) isStationary = false;
+		else isStationary = true;
+
+		if (Time.timeScale == 0)
 		{
-			isStationary = false;
+			_currentSpeed = 0f; // Reset when paused
+			return;
 		}
-		else
-		{
-			isStationary = true;
-		}
+
+		// Calculate movement speed
+		float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
+		_currentSpeed = (transform.position - lastPosition).magnitude / deltaTime;
+
 		lastPosition = transform.position;
 	}
 
 	private void OnGUI()
 	{
-		// GUI.Label(new Rect(300, 300, 80, 20), speed.ToString());
+		GUI.Label(new Rect(300, 300, 80, 20), CurrentSpeed.ToString());
 	}
 
 	private void HandleMovement()
@@ -139,7 +150,12 @@ public class PlayerMovement : MonoBehaviour
 
 		if (!isSliding)
 		{
+			// Combine input directions
 			moveDirection = transform.right * x + transform.forward * z;
+
+			// Normalize the direction vector to prevent faster diagonal movement
+			if (moveDirection.magnitude > 1f)
+				moveDirection = moveDirection.normalized;
 		}
 		else
 		{
@@ -148,14 +164,16 @@ public class PlayerMovement : MonoBehaviour
 			goto skipMovement;
 		}
 
+		// Apply movement speed
 		if (!isRunning)
 		{
-			controller.Move(speed * Time.deltaTime * moveDirection);
+			controller.Move(walkingSpeed * Time.deltaTime * moveDirection);
 		}
 		else
 		{
 			controller.Move(runningSpeed * Time.deltaTime * moveDirection);
 		}
+
 	skipMovement:;
 	}
 
@@ -236,10 +254,10 @@ public class PlayerMovement : MonoBehaviour
 		}
 
 		// Calculate the effective movement speed
-		speed = ogSpeed * cumulativeSpeedPercentage;
+		walkingSpeed = ogSpeed * cumulativeSpeedPercentage;
 		runningSpeed = ogRunningspeed * cumulativeSpeedPercentage;
 
-		if (speed < 0f) speed = 0f;
+		if (walkingSpeed < 0f) walkingSpeed = 0f;
 		if (runningSpeed < 0f) runningSpeed = 0f;
 	}
 
@@ -258,27 +276,40 @@ public class PlayerMovement : MonoBehaviour
 		}
 	}
 
-	private void HandleHeadbob() // Base from video: https://www.youtube.com/watch?v=_c5IoF1op4E
+	private void HandleHeadbob()
 	{
-		if (!isGrounded || isStationary) // Disable sway, return to original position if stationary or mid-air
+		if (Time.timeScale == 0.0f) return;
+
+		// Use a clamped deltaTime to avoid NaN errors
+		float deltaTime = Mathf.Max(Time.deltaTime, 0.001f);
+
+		// Disable bobbing and return to original position if stationary or mid-air
+		if (!isGrounded || CurrentSpeed < 0.1f)
 		{
-			mainCamera.transform.localPosition =
-				 Vector3.MoveTowards(mainCamera.transform.localPosition, new Vector3(0, 0, 0), Time.deltaTime * bobReturnSpeed);
-			bobTimer = 0;
+			mainCamera.transform.localPosition = Vector3.MoveTowards(
+				mainCamera.transform.localPosition,
+				new Vector3(0, defaultYPos, 0),
+				deltaTime * bobReturnSpeed
+			);
+			bobTimer = 0; // Reset bob timer when stationary
 		}
-		else if (Mathf.Abs(moveDirection.x) > 0.1f || Mathf.Abs(moveDirection.z) > 0.1f)
+		else
 		{
-			bobTimer += Time.deltaTime * (isRunning ? sprintBobSpeed : walkBobSpeed);
+			// Use movement speed directly for bob speed and amount
+			float normalizedSpeed = Mathf.Clamp01(CurrentSpeed / bobMaxSpeed); // Normalize speed between 0 and 1
+			float dynamicBobSpeed = bobSpeedCurve.Evaluate(normalizedSpeed); // Evaluate speed curve
+			float dynamicBobAmount = bobAmountCurve.Evaluate(normalizedSpeed); // Evaluate amount curve
+
+			// Update the bob timer based on dynamic speed
+			bobTimer += deltaTime * dynamicBobSpeed;
+
+			// Apply the bobbing effect
 			mainCamera.transform.localPosition = new Vector3(
 				mainCamera.transform.localPosition.x,
-				defaultYPos + Mathf.Sin(bobTimer) * (isRunning ? sprintBobAmount : walkBobAmount),
-				mainCamera.transform.localPosition.z);
+				defaultYPos + Mathf.Sin(bobTimer) * dynamicBobAmount,
+				mainCamera.transform.localPosition.z
+			);
 		}
-
-		// Leg HUD needs to be adjusted too, or it's bouncing annoyingly
-		// float newY = mainCamera.transform.position.y + initialYOffset;
-		// Vector3 newPosition = new Vector3(legHud.position.x, newY, legHud.position.z);
-		// legHud.position = newPosition;
 	}
 
 	private void FallingSymbol()
@@ -310,4 +341,8 @@ public class PlayerMovement : MonoBehaviour
 		}
 	}
 
+	public void Dash(float dashSpeed, float dashDuration)
+	{
+
+	}
 }
