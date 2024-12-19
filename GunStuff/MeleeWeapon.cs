@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
 
 public class MeleeWeapon : Weapon
@@ -7,13 +6,10 @@ public class MeleeWeapon : Weapon
 	[Header("Melee Weapon Settings")]
 	public AnimationClip[] attackAnimations;
 
-	private readonly string magString = "Melee";
-	private readonly string totalAmmoString = "Unlimited ammo";
 	[SerializeField] private int damage, damageSecondary;
 	[SerializeField] private float headshotMultiplier;
 	[SerializeField] private ParticleSystem bloodFX;
 	private Animator animator;
-	private TextMeshProUGUI magazineText, totalAmmoText;
 
 	[Header("Audio")]
 	public AudioClip[] stabSounds;
@@ -37,8 +33,8 @@ public class MeleeWeapon : Weapon
 	protected override void Awake()
 	{
 		base.Awake();
-		magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
-		totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
+		//magazineText = GameObject.Find("MagazineNumbers").GetComponent<TextMeshProUGUI>();
+		//totalAmmoText = GameObject.Find("TotalAmmo").GetComponent<TextMeshProUGUI>();
 		animator = GetComponent<Animator>();
 
 		cameraTransform = Camera.main.transform;
@@ -47,8 +43,7 @@ public class MeleeWeapon : Weapon
 	protected override void OnEnable()
 	{
 		base.OnEnable();
-		magazineText.text = magString;
-		totalAmmoText.text = totalAmmoString;
+		AmmoHUD.Instance.DisableHUD();
 		EquipWeapon();
 	}
 
@@ -132,12 +127,12 @@ public class MeleeWeapon : Weapon
 		if (Time.time >= attackCooldown)
 		{
 			readyToAttack = true;
-			WeaponSwayAndBob.instance.disableSwayBob = false;
+			//WeaponSwayAndBob.instance.disableSwayBob = false;
 		}
 		else
 		{
 			readyToAttack = false;
-			WeaponSwayAndBob.instance.disableSwayBob = true;
+			//WeaponSwayAndBob.instance.disableSwayBob = true;
 		}
 
 		// Check if we can start a new attack
@@ -177,54 +172,117 @@ public class MeleeWeapon : Weapon
 
 	private void Attack()
 	{
-		// Capsule cast from the player's position forward to check for hit enemies
-		Vector3 point1 = cameraTransform.position;  // Start point of the capsule cast
-		Vector3 point2 = cameraTransform.position + cameraTransform.forward * attackRange;  // End point of the attack range
+		Vector3 point1 = cameraTransform.position;
+		Vector3 point2 = cameraTransform.position + cameraTransform.forward * attackRange;
 
 		RaycastHit[] hits = Physics.CapsuleCastAll(point1, point2, attackRadius, cameraTransform.forward, attackRange, enemyLayers);
 
-		// If there are hits, handle damaging enemies
 		if (hits.Length > 0)
 		{
-			List<Enemy> hitEnemies = new List<Enemy>();  // Track enemies that have been hit
+			List<Enemy> hitEnemies = new List<Enemy>();
 			int enemiesHit = 0;
+
+			// Group hits by enemy
+			Dictionary<Enemy, List<RaycastHit>> enemyHits = new Dictionary<Enemy, List<RaycastHit>>();
 
 			foreach (RaycastHit hit in hits)
 			{
-				Collider hitCollider = hit.collider;
-				Enemy enemy = hitCollider.GetComponentInParent<Enemy>();
+				Enemy enemy = hit.collider.GetComponentInParent<Enemy>();
+				if (enemy == null) continue;
 
-				// Ensure the object is an enemy and hasn't been hit yet in this attack
-				if (enemy != null && !hitEnemies.Contains(enemy))
+				if (!enemyHits.ContainsKey(enemy))
 				{
-					// Apply damage to the enemy (calls your existing GetHit function)
-					enemy.GetHit(hitCollider, damage, headshotMultiplier);
+					enemyHits[enemy] = new List<RaycastHit>();
+				}
+				enemyHits[enemy].Add(hit);
+			}
 
-					// Add the enemy to the list of hit enemies
+			// Priority of detected colliders
+			// Makes melee hits feel more responsive on the intended target
+			Dictionary<string, int> hitPriority = new Dictionary<string, int>
+		{
+			{ "Head", 0 },       // highest priority
+			{ "ArmL", 1 },
+			{ "ArmR", 1 },
+			{ "LowerLegL", 1 },
+			{ "LowerLegR", 1 },
+			{ "ShoulderL", 2 },
+			{ "ShoulderR", 2 },
+			{ "UpperLegL", 2 },
+			{ "UpperLegR", 2 },
+			{ "Torso", 3 }       // lowest priority
+        };
+
+			foreach (var kvp in enemyHits)
+			{
+				Enemy enemy = kvp.Key;
+				List<RaycastHit> enemyCollisions = kvp.Value;
+
+				// Find the best hit based on priority
+				RaycastHit bestHit = enemyCollisions[0];
+				int bestPriority = int.MaxValue;
+
+				foreach (RaycastHit h in enemyCollisions)
+				{
+					string tag = h.collider.tag;
+					if (!hitPriority.ContainsKey(tag))
+					{
+						// If not found in priority dict, treat as low priority
+						continue;
+					}
+
+					int currentPriority = hitPriority[tag];
+					// If this hit has higher priority (lower number), choose it
+					if (currentPriority < bestPriority)
+					{
+						bestPriority = currentPriority;
+						bestHit = h;
+					}
+					else if (currentPriority == bestPriority)
+					{
+						// If same priority, compare distances. Prefer the closer hit.
+						if (h.distance < bestHit.distance)
+						{
+							bestHit = h;
+						}
+					}
+				}
+
+				// Now we have the best hit for this enemy
+				if (!hitEnemies.Contains(enemy))
+				{
+					// Check if the chosen hit is a head hit
+					float finalDamage = damage;
+					if (bestHit.collider.CompareTag("Head"))
+					{
+						finalDamage = Mathf.RoundToInt(damage * headshotMultiplier);
+					}
+
+					enemy.GetShot(bestHit, (int)finalDamage, 0);
 					hitEnemies.Add(enemy);
-					enemiesHit++;  // Increment the number of enemies hit
+					enemiesHit++;
 
-					// If we've hit the maximum number of enemies, stop the loop
-					if (enemiesHit >= penetrationAmount) break;
+					if (enemiesHit >= penetrationAmount)
+						break;
 				}
 			}
 
-			// Play the appropriate sound effect based on whether enemies were hit
+			// Play appropriate sound
 			if (enemiesHit > 0)
 			{
-				audioSource.PlayOneShot(stabSounds[0]);  // Play the hit sound
+				audioSource.PlayOneShot(stabSounds[0]);
 			}
 			else
 			{
 				int randomSwingClip = Random.Range(0, swingSounds.Length);
-				audioSource.PlayOneShot(swingSounds[randomSwingClip]);  // Play the swing sound
+				audioSource.PlayOneShot(swingSounds[randomSwingClip]);
 			}
 		}
 		else
 		{
-			// Play a swing sound if nothing was hit
 			int randomSwingClip = Random.Range(0, swingSounds.Length);
 			audioSource.PlayOneShot(swingSounds[randomSwingClip]);
 		}
 	}
+
 }

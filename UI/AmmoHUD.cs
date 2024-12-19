@@ -30,6 +30,9 @@ public class AmmoHUD : MonoBehaviour
 
 	public void UpdateAmmoHUD(int currentAmmo, int maxAmmoCount)
 	{
+		// E.g. switching from melee weapon to gun
+		if (!gameObject.activeInHierarchy) gameObject.SetActive(true);
+
 		currentAmmoPercentage = (float)currentAmmo / (float)maxAmmoCount;
 		currentAmmoText.text = currentAmmo.ToString();
 		maxAmmoText.text = maxAmmoCount.ToString();
@@ -47,6 +50,11 @@ public class AmmoHUD : MonoBehaviour
 
 		// Magazine filled, reload etc.
 		if (currentAmmo == maxAmmoCount) StartCoroutine(PulseText(maxAmmoText, 0.2f, 1.4f));
+	}
+
+	public void DisableHUD()
+	{
+		gameObject.SetActive(false);
 	}
 
 	public IEnumerator PulseText(TextMeshProUGUI text, float duration = 0.1f, float maxScale = 1.2f)

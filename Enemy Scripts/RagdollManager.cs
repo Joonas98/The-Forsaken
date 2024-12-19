@@ -43,17 +43,17 @@ public class RagdollManager : MonoBehaviour
 		if (!enemyScript.ragdolling || enemyScript.isDead) return;
 
 		// When magnitude has been low enough for certain time, stand up
-		if (bodyRB.velocity.magnitude < standUpMagnitude && !standCountdownActive)
+		if (bodyRB.linearVelocity.magnitude < standUpMagnitude && !standCountdownActive)
 		{
 			countdown = Time.time;
 			standCountdownActive = true;
 		}
-		else if (bodyRB.velocity.magnitude > standUpMagnitude)
+		else if (bodyRB.linearVelocity.magnitude > standUpMagnitude)
 		{
 			standCountdownActive = false;
 		}
 
-		if (Time.time > countdown && bodyRB.velocity.magnitude < standUpMagnitude)
+		if (Time.time > countdown && bodyRB.linearVelocity.magnitude < standUpMagnitude)
 		{
 			TurnOffRagdoll();
 		}

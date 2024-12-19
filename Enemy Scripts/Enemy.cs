@@ -163,17 +163,17 @@ public class Enemy : MonoBehaviour
 	{
 		if (!ragdolling || isDead) return;
 		// When magnitude has been low enough for certain time, stand up
-		if (bodyRB.velocity.magnitude < standUpMagnitude && ragdolling && !standCountdownActive)
+		if (bodyRB.linearVelocity.magnitude < standUpMagnitude && ragdolling && !standCountdownActive)
 		{
 			countdown = Time.time;
 			standCountdownActive = true;
 		}
-		else if (bodyRB.velocity.magnitude > standUpMagnitude && ragdolling)
+		else if (bodyRB.linearVelocity.magnitude > standUpMagnitude && ragdolling)
 		{
 			standCountdownActive = false;
 		}
 
-		if (Time.time > countdown + standUpDelay && bodyRB.velocity.magnitude < standUpMagnitude)
+		if (Time.time > countdown + standUpDelay && bodyRB.linearVelocity.magnitude < standUpMagnitude)
 		{
 			TurnOffRagdoll();
 		}
@@ -190,10 +190,10 @@ public class Enemy : MonoBehaviour
 		navAgent.speed = 0;
 		enemyNavScript.enabled = false;
 
-		bodyRB.velocity = new Vector3(0, 0, 0);
+		bodyRB.linearVelocity = new Vector3(0, 0, 0);
 		foreach (Rigidbody rb in rigidbodies) // Otherwise gameobjects keep moving forever
 		{
-			rb.velocity = new Vector3(0, 0, 0);
+			rb.linearVelocity = new Vector3(0, 0, 0);
 		}
 
 		GameManager.GM.enemyCount--;
@@ -334,66 +334,58 @@ public class Enemy : MonoBehaviour
 
 	public void GetShot(RaycastHit hit, int damageAmount, int percentageDamage = 0)
 	{
-		if (AbilityMaster.instance.HasAbility("Viper Venom")) percentageDamage += 5;
+		if (AbilityMaster.instance.HasAbility("Viper Venom"))
+			percentageDamage += 5;
 
 		EnemyImpactFX(hit.point, hit.normal);
+
+		// Helper for limb hits
+		void HandleLimbHit(LimbManager.Limb limb, int dmg, int pct)
+		{
+			TakeDamage(dmg, pct);
+			DamageLimb(limb, dmg);
+			if (limbManager != null && GetHealth(limb) <= 0)
+			{
+				limbManager.RemoveLimb(limb);
+			}
+		}
+
 		switch (hit.collider.tag)
 		{
 			// HEAD
 			case "Head":
 				TakeDamage(damageAmount, percentageDamage, DamageType.Headshot);
-				DamageLimb(0, damageAmount);
-				if (limbManager != null && GetHealth(0) <= 0) limbManager.RemoveLimb(0);
+				DamageLimb(LimbManager.Limb.Head, damageAmount);
+				if (limbManager != null && GetHealth(LimbManager.Limb.Head) <= 0)
+					limbManager.RemoveLimb(LimbManager.Limb.Head);
 				break;
 
 			// LEGS
 			case "UpperLegL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(2, damageAmount);
-				if (limbManager != null && GetHealth(2) <= 0) limbManager.RemoveLimb(2);
+				HandleLimbHit(LimbManager.Limb.LeftUpperLeg, damageAmount, percentageDamage);
 				break;
-
 			case "UpperLegR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(4, damageAmount);
-				if (limbManager != null && GetHealth(4) <= 0) limbManager.RemoveLimb(4);
+				HandleLimbHit(LimbManager.Limb.RightUpperLeg, damageAmount, percentageDamage);
 				break;
-
 			case "LowerLegL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(1, damageAmount);
-				if (limbManager != null && GetHealth(1) <= 0) limbManager.RemoveLimb(1);
+				HandleLimbHit(LimbManager.Limb.LeftLowerLeg, damageAmount, percentageDamage);
 				break;
-
 			case "LowerLegR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(3, damageAmount);
-				if (limbManager != null && GetHealth(3) <= 0) limbManager.RemoveLimb(3);
+				HandleLimbHit(LimbManager.Limb.RightLowerLeg, damageAmount, percentageDamage);
 				break;
 
 			// ARMS
 			case "ArmL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(7, damageAmount);
-				if (limbManager != null && GetHealth(7) <= 0) limbManager.RemoveLimb(7);
+				HandleLimbHit(LimbManager.Limb.LeftArm, damageAmount, percentageDamage);
 				break;
-
 			case "ArmR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(5, damageAmount);
-				if (limbManager != null && GetHealth(5) <= 0) limbManager.RemoveLimb(5);
+				HandleLimbHit(LimbManager.Limb.RightArm, damageAmount, percentageDamage);
 				break;
-
 			case "ShoulderL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(8, damageAmount);
-				if (limbManager != null && GetHealth(8) <= 0) limbManager.RemoveLimb(8);
+				HandleLimbHit(LimbManager.Limb.LeftShoulder, damageAmount, percentageDamage);
 				break;
-
 			case "ShoulderR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(6, damageAmount);
-				if (limbManager != null && GetHealth(6) <= 0) limbManager.RemoveLimb(6);
+				HandleLimbHit(LimbManager.Limb.RightShoulder, damageAmount, percentageDamage);
 				break;
 
 			// TORSO
@@ -405,78 +397,68 @@ public class Enemy : MonoBehaviour
 
 	public void GetHit(Collider hitCollider, int damageAmount, float headshotMultiplier, int percentageDamage = 0)
 	{
-		// Handle damage logic based on the hit location
-		// You can access the position of the collider using hitCollider.transform.position
+		// Helper function for limb hits to avoid repetition
+		void HandleLimbHit(LimbManager.Limb limb, int dmg, int pct)
+		{
+			TakeDamage(dmg, pct);
+			DamageLimb(limb, dmg);
+			if (limbManager != null && GetHealth(limb) <= 0)
+			{
+				limbManager.RemoveLimb(limb);
+			}
+		}
 
 		switch (hitCollider.tag)
 		{
-			// HEAD
+			// HEAD - Special case with headshot multiplier
 			case "Head":
-				TakeDamage(Mathf.RoundToInt(damageAmount * headshotMultiplier), percentageDamage, DamageType.Headshot);
-				DamageLimb(0, Mathf.RoundToInt(damageAmount * headshotMultiplier));
-				if (limbManager != null && GetHealth(0) <= 0) limbManager.RemoveLimb(0);
+				{
+					int finalDamage = Mathf.RoundToInt(damageAmount * headshotMultiplier);
+					TakeDamage(finalDamage, percentageDamage, DamageType.Headshot);
+					DamageLimb(LimbManager.Limb.Head, finalDamage);  // Neck enum represents head area
+					if (limbManager != null && GetHealth(LimbManager.Limb.Head) <= 0)
+						limbManager.RemoveLimb(LimbManager.Limb.Head);
+				}
 				break;
 
 			// LEGS
 			case "UpperLegL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(2, damageAmount);
-				if (limbManager != null && GetHealth(2) <= 0) limbManager.RemoveLimb(2);
+				HandleLimbHit(LimbManager.Limb.LeftUpperLeg, damageAmount, percentageDamage);
 				break;
-
 			case "UpperLegR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(4, damageAmount);
-				if (limbManager != null && GetHealth(4) <= 0) limbManager.RemoveLimb(4);
+				HandleLimbHit(LimbManager.Limb.RightUpperLeg, damageAmount, percentageDamage);
 				break;
-
 			case "LowerLegL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(1, damageAmount);
-				if (limbManager != null && GetHealth(1) <= 0) limbManager.RemoveLimb(1);
+				HandleLimbHit(LimbManager.Limb.LeftLowerLeg, damageAmount, percentageDamage);
 				break;
-
 			case "LowerLegR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(3, damageAmount);
-				if (limbManager != null && GetHealth(3) <= 0) limbManager.RemoveLimb(3);
+				HandleLimbHit(LimbManager.Limb.RightLowerLeg, damageAmount, percentageDamage);
 				break;
 
 			// ARMS
 			case "ArmL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(7, damageAmount);
-				if (limbManager != null && GetHealth(7) <= 0) limbManager.RemoveLimb(7);
+				HandleLimbHit(LimbManager.Limb.LeftArm, damageAmount, percentageDamage);
 				break;
-
 			case "ArmR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(5, damageAmount);
-				if (limbManager != null && GetHealth(5) <= 0) limbManager.RemoveLimb(5);
+				HandleLimbHit(LimbManager.Limb.RightArm, damageAmount, percentageDamage);
 				break;
-
 			case "ShoulderL":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(8, damageAmount);
-				if (limbManager != null && GetHealth(8) <= 0) limbManager.RemoveLimb(8);
+				HandleLimbHit(LimbManager.Limb.LeftShoulder, damageAmount, percentageDamage);
 				break;
-
 			case "ShoulderR":
-				TakeDamage(damageAmount, percentageDamage);
-				DamageLimb(6, damageAmount);
-				if (limbManager != null && GetHealth(6) <= 0) limbManager.RemoveLimb(6);
+				HandleLimbHit(LimbManager.Limb.RightShoulder, damageAmount, percentageDamage);
 				break;
 
-			// TORSO
+			// TORSO - No limb removal, just normal damage
 			case "Torso":
 				TakeDamage(damageAmount, percentageDamage);
 				break;
 		}
 	}
 
-	public void DamageLimb(int limbIndex, int damage)
+	public void DamageLimb(LimbManager.Limb limb, int damage)
 	{
-		limbHealths[limbIndex] -= damage;
+		limbHealths[(int)limb] -= damage;
 	}
 
 	// Get enemy health
@@ -489,6 +471,12 @@ public class Enemy : MonoBehaviour
 	public int GetHealth(int limbIndex)
 	{
 		return limbHealths[limbIndex];
+	}
+
+	// Get limb health with Limb enum
+	public int GetHealth(LimbManager.Limb limb)
+	{
+		return limbHealths[(int)limb];
 	}
 
 	private void SetRagdollParts()

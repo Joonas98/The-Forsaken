@@ -1,7 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class Recoil : MonoBehaviour
 {
@@ -32,25 +30,23 @@ public class Recoil : MonoBehaviour
 
 	void Update()
 	{
-		if (GameManager.GM.currentGun == null)
-		{
-			// Return recoil to zero
-			targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);
-		}
-		else if (!GameManager.GM.currentGun.isFiring || GameManager.GM.currentGun.currentMagazine == 0)
-		{
-			// Return recoil to zero
-			targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, returnSpeed * Time.deltaTime);
-		}
-		else
-		{
-			// Apply recoil
-			targetRotation = Vector3.Lerp(targetRotation, new Vector3(targetRotation.x, 0, 0), returnSpeed * Time.deltaTime);
-		}
+		// Always lerp recoil back to zero.
+		// If the player is firing, you'd increment targetRotation somewhere else (e.g., in Fire()).
+		targetRotation = Vector3.Lerp(
+			targetRotation,
+			Vector3.zero,
+			returnSpeed * Time.deltaTime
+		);
 
-		currentRotation = Vector3.Slerp(currentRotation, targetRotation, snappiness * Time.fixedDeltaTime);
+		// Smoothly apply recoil over time
+		currentRotation = Vector3.Slerp(
+			currentRotation,
+			targetRotation,
+			snappiness * Time.fixedDeltaTime
+		);
 		transform.localRotation = Quaternion.Euler(currentRotation);
 	}
+
 
 	private void LateUpdate()
 	{

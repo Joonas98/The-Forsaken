@@ -127,9 +127,6 @@ public class Gun : Weapon
 		shotsLeft = pelletCount;
 		currentMagazine = magazineSize;
 
-		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
-		UpdateFirerate();
-
 		// Set shooting animation name if there is one
 		shootAnimationName = hasShootAnimation ? "Shoot " + weaponName : "";
 	}
@@ -186,11 +183,11 @@ public class Gun : Weapon
 
 		// Handle ammo UI 
 		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
-
 		inventoryScript.UpdateTotalAmmoText(gunAmmoType);
 
 		// Update desired aiming fov to FovController
 		FovController.Instance.fovAim = zoomAmount * FovController.Instance.fovDefault;
+
 
 		RefreshGun();
 		EquipWeapon(); // Animations etc. when equipping weapon
