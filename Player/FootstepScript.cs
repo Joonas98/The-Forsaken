@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class FootstepScript : MonoBehaviour
@@ -51,15 +49,15 @@ public class FootstepScript : MonoBehaviour
 	{
 		int terrainTextureIndex = DetectTerrainType();
 
-		switch (terrainTextureIndex)
+		return terrainTextureIndex switch
 		{
-			case 0: // Grass
-				return grassSteps[UnityEngine.Random.Range(0, grassSteps.Length)];
-			case 1:  // Rock
-				return rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)];
-			default: // Default
-				return rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)];
-		}
+			// Grass
+			0 => grassSteps[UnityEngine.Random.Range(0, grassSteps.Length)],
+			// Rock
+			1 => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
+			// Default
+			_ => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
+		};
 	}
 
 	// Return index of the terrain type player is on

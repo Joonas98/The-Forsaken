@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class NewWeaponShop : MonoBehaviour
 {
@@ -25,6 +23,10 @@ public class NewWeaponShop : MonoBehaviour
 
 	public Michsky.MUIP.ModalWindowManager modalManager; // Used for confirmation of purchase
 	public Michsky.MUIP.ButtonManager confirmPurchaseButton;
+
+	// Due to the UI framework being a bit shit and messy, the purchase confirmation window takes a while to close.
+	// This boolean prevents a bug where user can hit "confirm" multiple times, buying the weapon multiple times.
+	private bool confirmPressed = false;
 
 	private void Awake()
 	{
@@ -61,6 +63,12 @@ public class NewWeaponShop : MonoBehaviour
 	// Main purchase function
 	public void PurchaseWeapon(GameObject purchasedWeapon)
 	{
+		if (confirmPressed) return;
+		confirmPressed = true;
+
+		// Deduct the price from the player's money
+		GameManager.GM.AdjustMoney(-purchasedWeapon.GetComponent<Weapon>().weaponPrice);
+
 		// Instantiate and set parent to the purchased weapon
 		GameObject newWeapon = Instantiate(purchasedWeapon, equipTrans.position, equipTrans.transform.rotation); // Set the correct position and rotation
 		newWeapon.transform.parent = WeaponSwitcher.instance.transform; // Set the correct parent
@@ -99,6 +107,8 @@ public class NewWeaponShop : MonoBehaviour
 
 	public void UpdateConfirmationModalWindow(GameObject weaponPrefab)
 	{
+		confirmPressed = false;
+
 		// Get the script reference to access name and price
 		Weapon weaponScript = weaponPrefab.GetComponent<Weapon>();
 

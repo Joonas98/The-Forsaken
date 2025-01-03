@@ -76,7 +76,6 @@ public class Gun : Weapon
 	[HideInInspector] public float maxZoom = 0.25f; // Scope zoom default value for guns such as AUG that has integrated scope
 	[HideInInspector] public float minZoom = 45f;
 	[HideInInspector] public int currentMagazine;
-	[HideInInspector] public int shotsLeft;
 
 	[SerializeField] private bool hasShootAnimation; // Is there animation of moving slides, pumping shotgun, bolt action rifles etc.
 	[SerializeField] private bool shootAnimationMovement; // Does the shoot animation include movement or rotation of the weapon (if yes, don't apply rotation during it)
@@ -120,12 +119,12 @@ public class Gun : Weapon
 		base.Awake();
 		HandlePrefabReferences();
 		HandleSceneReferences();
+		currentMagazine = magazineSize;
 	}
 
 	private void Start()
 	{
-		shotsLeft = pelletCount;
-		currentMagazine = magazineSize;
+		RefreshGun();
 
 		// Set shooting animation name if there is one
 		shootAnimationName = hasShootAnimation ? "Shoot " + weaponName : "";

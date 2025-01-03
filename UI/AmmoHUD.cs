@@ -100,5 +100,4 @@ public class AmmoHUD : MonoBehaviour
 		// Reset the scale to the original at the end
 		sprite.rectTransform.localScale = originalScaleBar;
 	}
-
 }

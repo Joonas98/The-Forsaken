@@ -158,6 +158,10 @@ public class WeaponSwitcher : MonoBehaviour
 		if (handledPanel != null) handledPanel.highlightObject.SetActive(false);
 		handledPanel = hudParent.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();
 		handledPanel.highlightObject.SetActive(true);
+
+		// Update the ammo hud
+		if (currentGun != null)
+			AmmoHUD.Instance.UpdateAmmoHUD(currentGun.currentMagazine, currentGun.magazineSize);
 	}
 
 	public static void CanSwitch(bool boolean)

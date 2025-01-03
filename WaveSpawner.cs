@@ -1,12 +1,10 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
-using Michsky.UI.MTP;
 
 // ! Only script to spawn enemies with
 public class WaveSpawner : MonoBehaviour
 {
+	public bool debug;
 	public bool useFloatingSpawn;
 	public int waveCount;
 	public int baseEnemyCount;
@@ -163,7 +161,7 @@ public class WaveSpawner : MonoBehaviour
 				GameManager.GM.enemyCount++;
 				GameManager.GM.UpdateEnemyCount();
 
-				if (GameManager.GM.useSpawnDebug)
+				if (debug)
 				{
 					Debug.Log("Spawned at: " + spawnPosition);
 					Debug.DrawRay(new Vector3(randomPoint.x, transform.position.y, randomPoint.y), -transform.up * 1000, Color.green, 15.0f);
@@ -172,7 +170,7 @@ public class WaveSpawner : MonoBehaviour
 			}
 			else
 			{
-				if (GameManager.GM.useSpawnDebug)
+				if (debug)
 				{
 					Debug.Log("Spawn ray missed");
 					Debug.DrawRay(new Vector3(randomPoint.x, transform.position.y, randomPoint.y), -transform.up * 1000, Color.red, 15.0f);

@@ -52,9 +52,7 @@ public class LimbManager : MonoBehaviour
 		{
 			case Limb.Head:
 				// Decapitation effect
-				var decapFXInstance = Instantiate(decapitationFX, limbObject.transform.position, limbObject.transform.rotation);
-				decapFXInstance.transform.parent = limbObject.transform;
-				Destroy(decapFXInstance.gameObject, decapitationFX.main.duration + 1f);
+				decapitationFX.Play();
 
 				// Scale the neck object
 				limbObject.transform.localScale = Vector3.zero;

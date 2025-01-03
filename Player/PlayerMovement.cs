@@ -138,7 +138,7 @@ public class PlayerMovement : MonoBehaviour
 
 	private void OnGUI()
 	{
-		GUI.Label(new Rect(300, 300, 80, 20), CurrentSpeed.ToString());
+		//GUI.Label(new Rect(300, 300, 80, 20), CurrentSpeed.ToString());
 	}
 
 	private void HandleMovement()

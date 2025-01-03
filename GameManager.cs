@@ -9,7 +9,6 @@ public class GameManager : MonoBehaviour
 	[Header("UI Stuff")]
 	public Color roundTextColorEnemies;
 	public Color roundTextColorClear;
-	public TextMeshProUGUI[] gunDebugTexts, recoilDebugTexts, vireDebugTexts; // Textfields for debug information
 	public TextMeshProUGUI enemiesText, roundsText, moneyText, moneyTextShop; // Info texts
 
 	[SerializeField] private TextMeshProUGUI timerTexts;
@@ -18,7 +17,7 @@ public class GameManager : MonoBehaviour
 	// GameObjects
 	public GameObject playerGO;
 	public GameObject weaponHolster, aimingSymbol;
-	public GameObject gunDebugObjects, recoilDebugObjects, vireDebugObjects;
+
 	// Scripts
 	public Weapon currentWeapon;
 	public Gun currentGun;
@@ -29,10 +28,6 @@ public class GameManager : MonoBehaviour
 	[Header("Various Lists / Arrays")]
 	public List<EnemyBase> enemiesAlive = new List<EnemyBase>();
 	public List<GameObject> enemiesAliveGos = new List<GameObject>();
-
-	[Header("Settings")]
-	public bool useGunDebug;
-	public bool useRecoilDebug, useVireDebug, useSpawnDebug, useEnemyDebug;
 
 	[Header("Audio")]
 	public AudioSource playerAS;
@@ -61,9 +56,6 @@ public class GameManager : MonoBehaviour
 		}
 
 		weaponHolster = GameObject.Find("WeaponHolster"); // 6.5.23 WeaponSwitcher can be now referenced as WeaponSwitcher.instance
-		if (!useVireDebug) Destroy(vireDebugObjects);
-		if (!useGunDebug) Destroy(gunDebugObjects);
-		if (!useRecoilDebug) Destroy(recoilDebugObjects);
 	}
 
 	private void Start()
@@ -76,7 +68,6 @@ public class GameManager : MonoBehaviour
 	private void Update()
 	{
 		HandleKeybinds();
-		HandleDebugs();
 		HandleAbilities();
 		if (currentGun != null) currentGunAiming = currentGun.isAiming;
 	}
@@ -106,40 +97,6 @@ public class GameManager : MonoBehaviour
 			{
 				enemy.GetComponent<Enemy>().Die();
 			}
-		}
-	}
-
-	public void HandleDebugs()
-	{
-		// To update debugging text fields
-		if (useGunDebug)
-		{
-			if (currentGun == null) return;
-			gunDebugTexts[0].text = "Name: " + currentGun.weaponName;
-			gunDebugTexts[1].text = "Dmg: " + currentGun.damage.ToString();
-			gunDebugTexts[2].text = "Pellets: " + currentGun.pelletCount.ToString();
-			gunDebugTexts[3].text = "Penetr: " + currentGun.penetration.ToString();
-			gunDebugTexts[4].text = "RPM: " + currentGun.RPM.ToString();
-		}
-
-		if (useRecoilDebug)
-		{
-			recoilDebugTexts[0].text = "X: " + currentGun.recoil.x.ToString();
-			recoilDebugTexts[1].text = "Y: " + currentGun.recoil.y.ToString();
-			recoilDebugTexts[2].text = "Z: " + currentGun.recoil.z.ToString();
-			recoilDebugTexts[3].text = "Snp: " + recoil.snappiness.ToString();
-			recoilDebugTexts[4].text = "Rtn: " + recoil.returnSpeed.ToString();
-			recoilDebugTexts[5].text = "RecMP: " + recoil.recoilMultiplier.ToString();
-		}
-
-		if (useVireDebug)
-		{
-			vireDebugTexts[0].text = "VRX: " + currentGun.vire.x.ToString();
-			vireDebugTexts[1].text = "VRY: " + currentGun.vire.y.ToString();
-			vireDebugTexts[2].text = "VRZ: " + currentGun.vire.z.ToString();
-			vireDebugTexts[3].text = "VRKB: " + currentGun.vireKick.ToString();
-			vireDebugTexts[4].text = "VRSnap: " + currentGun.vireSnap.ToString();
-			vireDebugTexts[5].text = "VRRtrn: " + currentGun.vireReturn.ToString();
 		}
 	}
 

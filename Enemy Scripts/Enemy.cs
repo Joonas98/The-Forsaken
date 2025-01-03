@@ -14,17 +14,22 @@ public class Enemy : MonoBehaviour
 	public int maxHealth;
 	[HideInInspector] public int currentHealth, healthPercentage;
 	[HideInInspector] public bool isDead = false;
+	[Tooltip("Delay after dying to removal")] public float despawnTime;
 
 	private int[] limbHealths = new int[9];
 	private float limbMinHealthPercentage = 0.2f;
 	private float limbMaxHealthPercentage = 0.5f;
 
-	[Header("Attack variables")]
-	public int damage;
-	[Tooltip("Attack CD when hit")] public float attackCooldown;
-	[Tooltip("Attack CD when missed")] public float swingCooldown;
-	[Tooltip("Delay after dying to removal")] public float despawnTime;
-	[Tooltip("How close to player to start swinging")] public float attackDistance;
+	[Header("Attack Settings")]
+	public float attackDistance = 2f;      // The distance within which the enemy can attack
+	public float attackAnimationTime = 1.0f; // Total duration of the attack animation
+	public float attackHitTime = 0.5f;     // When damage is applied during the animation
+	public int damage = 20;
+	public float slowAmount = 0.5f; // Hitting the player slows them down
+	public float slowDuration = 0.5f;
+
+	private bool canAttack = true;
+	private bool isAttacking = false;
 
 	[Header("References")]
 	public LimbManager limbManager;
@@ -82,7 +87,6 @@ public class Enemy : MonoBehaviour
 	public AudioClip[] randomSounds;
 
 	// Various privates
-	private bool canAttack = true, canSwing = true;
 	private bool standCountdownActive = false;
 	private float countdown = 0f;
 	private float distanceToPlayer;
@@ -566,86 +570,88 @@ public class Enemy : MonoBehaviour
 		navAgent.isStopped = false;
 	}
 
-	public void Attack(Player playerScript)
+	private void HandleSwinging()
 	{
-		if (isDead || ragdolling) return;
-		if (canAttack)
+		if (distanceToPlayer < attackDistance && canAttack && !isAttacking)
 		{
-			playerScript.TakeDamage(damage);
-			canAttack = false;
-			PlayerMovement playerMovement = playerScript.GetComponent<PlayerMovement>();
-			playerMovement.ApplySpeedEffect(0.50f, 0.5f);
-			StartCoroutine(AttackCooldown());
+			// Start the attack
+			StartCoroutine(AttackRoutine());
 		}
 	}
 
-	public void HandleSwinging()
+	private IEnumerator AttackRoutine()
 	{
-		if (isDead || ragdolling) return;
-		if (distanceToPlayer < attackDistance && canSwing) // Try to attack
+		if (isDead || ragdolling)
+			yield break;
+
+		isAttacking = true;   // We are in the middle of an attack
+		canAttack = false;    // Disallow immediate re-attack
+
+		// Optionally play random attack sound (only sometimes)
+		if (!isDead && !ragdolling && Random.Range(0, 3) == 1)
 		{
-			if (!isCrawling)
+			int raIndex = Random.Range(0, attackSounds.Length);
+			audioSource.PlayOneShot(attackSounds[raIndex]);
+		}
+
+		// Choose the correct animation
+		// E.g., different anim if crawling or mirrored
+		if (!isCrawling)
+		{
+			if (Random.value < 0.5f)
 			{
-				if (Random.value < 0.5f)
-				{
-					if (Random.Range(0, 3) == 1)
-					{
-						int raIndex = Random.Range(0, attackSounds.Length);
-						audioSource.PlayOneShot(attackSounds[raIndex]);
-					}
-					animator.Play("Attack");
-					canSwing = false;
-					StartCoroutine(WaitSwing(swingCooldown));
-				}
-				else
-				{
-					if (Random.Range(0, 3) == 1)
-					{
-						int raIndex = Random.Range(0, attackSounds.Length);
-						audioSource.PlayOneShot(attackSounds[raIndex]);
-					}
-					animator.Play("Attack Mirrored");
-					canSwing = false;
-					StartCoroutine(WaitSwing(swingCooldown));
-				}
+				animator.Play("Attack");
 			}
 			else
 			{
-				if (Random.value < 0.5f)
-				{
-					if (Random.Range(0, 3) == 1)
-					{
-						int raIndex = Random.Range(0, attackSounds.Length);
-						audioSource.PlayOneShot(attackSounds[raIndex]);
-					}
-					animator.Play("Attack Crawl");
-					canSwing = false;
-					StartCoroutine(WaitSwing(swingCooldown));
-				}
-				else
-				{
-					if (Random.Range(0, 3) == 1)
-					{
-						int raIndex = Random.Range(0, attackSounds.Length);
-						audioSource.PlayOneShot(attackSounds[raIndex]);
-					}
-					animator.Play("Attack Crawl Mirrored");
-					canSwing = false;
-					StartCoroutine(WaitSwing(swingCooldown));
-				}
+				animator.Play("Attack Mirrored");
 			}
 		}
-	}
+		else
+		{
+			if (Random.value < 0.5f)
+			{
+				animator.Play("Attack Crawl");
+			}
+			else
+			{
+				animator.Play("Attack Crawl Mirrored");
+			}
+		}
 
-	IEnumerator WaitSwing(float time)
-	{
-		yield return new WaitForSeconds(time);
-		canSwing = true;
-	}
+		// Wait until the "hit moment" in the animation
+		yield return new WaitForSeconds(attackHitTime);
 
-	IEnumerator AttackCooldown()
-	{
-		yield return new WaitForSeconds(attackCooldown);
+		// Check again if still alive and not ragdolling
+		if (isDead || ragdolling)
+		{
+			isAttacking = false;
+			yield break;
+		}
+
+		// Check distance again, in case the player moved
+		distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+		if (distanceToPlayer < attackDistance && !isDead && !ragdolling)
+		{
+			// Apply damage
+			GameManager.GM.playerScript.TakeDamage(damage);
+
+			// Optionally slow player down or apply some effect
+			PlayerMovement playerMovement = GameManager.GM.playerScript.GetComponent<PlayerMovement>();
+			playerMovement.ApplySpeedEffect(0.50f, 0.5f);
+		}
+
+		// Now wait for the rest of the animation to finish
+		yield return new WaitForSeconds(attackAnimationTime - attackHitTime);
+
+		// Final check
+		if (isDead || ragdolling)
+		{
+			yield break;
+		}
+
+		// Attack is done, allow next attack
+		isAttacking = false;
 		canAttack = true;
 	}
 
@@ -743,7 +749,6 @@ public class Enemy : MonoBehaviour
 		eyeMaterialL.SetColor("_EmissionColor", eyeColor * eyeEmissionIntensity);
 	}
 
-
 	private void RandomizeSkins()
 	{
 		// 18.6.23 All zombies are 1 prefab and the skin is randomized on awake
@@ -779,5 +784,4 @@ public class Enemy : MonoBehaviour
 	{
 		crimsonDamageCurrent = 0;
 	}
-
 }
