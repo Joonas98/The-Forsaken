@@ -1,18 +1,37 @@
-using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class Player : MonoBehaviour
 {
+	public static Player instance;
+
 	[Header("Player Settings")]
-	[HideInInspector] public int currentHealth;
+	[HideInInspector] public float currentHealth;
 	public int maxHealth;
-	public int regenationAmount;
-	public float regenationDelay, regenationDelayAfterDamage;
-	public float sensitivity;
-	public float maxBloom, maxVignette, maxChromaticAberration, maxGrain;
+	public float healPerSecond;
+	public float regenationDelayAfterDamage;
+	public bool regenerating;
+
+	// Time when we last took damage
+	private float lastDamageTime;
+
+	[Header("Sisu")]
+	public int maxSisu;               // Maximum Sisu (used as an integer for costs/display)
+	public float currentSisu;         // Now a float for smooth regeneration
+	public float sisuRegenRate;       // Sisu regained per second (for continuous, smooth regeneration)
+	public Image sisuSlider;
+
+	// UI related stuff for Sisu text
+	private float sisuUITextUpdateTimer = 0f;
+	private float sisuUITextUpdateInterval = 0.1f; // Update text every 0.1 seconds
+
+	public TextMeshProUGUI sisuText, sisuTextRaw;
+
+	[Header("Visuals")]
+	public float maxBloom;
+	public float maxVignette, maxChromaticAberration, maxGrain;
 
 	[Header("Other Stuff")]
 	public Camera mainCamera;
@@ -25,17 +44,9 @@ public class Player : MonoBehaviour
 	public Animator animator;
 
 	private string healthString, healthStringRaw;
-	private Vector3 spawnLocation;
-	private bool regenerating = true;
+	// This is used only for UI display purposes (as a percentage)
 	private float currentHPPercentage = 100f;
 	private PlayerMovement playerMovement;
-
-	[Header("FOV Settings")]
-	public float normalFov;
-	public float runningFov;
-	public float fovTransitionSpeed; // How fast fov changes from normal to running etc.
-
-	private float targetFov;
 
 	[Header("Audio")]
 	public AudioSource playerAS;
@@ -54,24 +65,44 @@ public class Player : MonoBehaviour
 
 	private void Awake()
 	{
-		spawnLocation = transform.position;
+		instance = this; // Ensure singleton instance exists ASAP
+	}
+
+	private void Start()
+	{
 		currentHealth = maxHealth;
+		currentSisu = maxSisu;  // Start full
 		UpdateHealthUI();
+		UpdateSisuUI(true);
 
-		if (runningSymbol != null) runningSymbol.SetActive(false);
+		if (runningSymbol != null)
+			runningSymbol.SetActive(false);
+
 		kickTimeStamp = Time.time + kickCooldown;
-
 		playerMovement = GetComponent<PlayerMovement>();
 
-		targetFov = normalFov;
-		mainCamera.fieldOfView = normalFov;
-		weaponCamera.fieldOfView = normalFov;
+		// (No coroutine is used for Sisu anymore.)
 	}
 
 	void Update()
 	{
-		CalculateRegen();
 		HandleInputs();
+		HandleHealing();
+
+		// --- Continuous Sisu regeneration (smooth update) ---
+		if (currentSisu < maxSisu)
+		{
+			currentSisu = Mathf.Min(currentSisu + sisuRegenRate * Time.deltaTime, maxSisu);
+			UpdateSisuUI();
+		}
+
+		// Update Sisu text at the desired interval
+		sisuUITextUpdateTimer += Time.deltaTime;
+		if (sisuUITextUpdateTimer >= sisuUITextUpdateInterval)
+		{
+			sisuUITextUpdateTimer = 0f; // Reset timer
+			UpdateSisuUI(true);
+		}
 	}
 
 	private void HandleInputs()
@@ -79,16 +110,16 @@ public class Player : MonoBehaviour
 		if (Input.GetKeyDown(KeyCode.F) && kickTimeStamp <= Time.time)
 		{
 			kickTimeStamp = Time.time + kickCooldown;
-			// playerMovement.StartCoroutine(playerMovement.TemporarySpeedChange(0.25f, 0.5f));
 			playerMovement.ApplySpeedEffect(kickPlayerSlow, kickPlayerSlowDuration);
 			Invoke("Kick", 0.15f);
 		}
-		if (kickTimeStamp <= Time.time) kickSymbol.SetActive(true);
+		if (kickTimeStamp <= Time.time)
+			kickSymbol.SetActive(true);
 	}
 
 	private void OnGUI()
 	{
-		// GUI.Label(new Rect(500, 500, 80, 20), targetFov.ToString());
+		// Example: GUI.Label(new Rect(500, 500, 80, 20), targetFov.ToString());
 	}
 
 	public void Kick()
@@ -124,17 +155,18 @@ public class Player : MonoBehaviour
 
 	public void TakeDamage(int amount, float flinchMultiplier = 1f)
 	{
-		regenerating = false;
-		StopAllCoroutines();
+		// Apply damage and ensure we don't drop below 0
+		currentHealth = Mathf.Clamp(currentHealth - amount, 0, maxHealth);
+		// Reset the healing delay timer
+		lastDamageTime = Time.time;
 
-		if (currentHealth - amount <= 0) currentHealth = 0;
-		else currentHealth -= amount;
-
-		StartCoroutine(Regenerate());
-		currentHPPercentage = currentHealth * 1.0f / maxHealth * 1.0f * 100f; // 80 / 100 = 0.8
-
-		float currentHPPercentagePP = 1f - (currentHPPercentage / 100f); // 1 - 0.8 = 0.2
-		damagePPScript.UpdateDamagePP(maxBloom * currentHPPercentagePP, maxVignette * currentHPPercentagePP, maxChromaticAberration * currentHPPercentagePP, maxGrain * currentHPPercentagePP);
+		// Update UI and effects
+		float currentHPPercentage = (currentHealth / maxHealth) * 100f;
+		float currentHPPercentagePP = 1f - (currentHPPercentage / 100f);
+		damagePPScript.UpdateDamagePP(maxBloom * currentHPPercentagePP,
+									  maxVignette * currentHPPercentagePP,
+									  maxChromaticAberration * currentHPPercentagePP,
+									  maxGrain * currentHPPercentagePP);
 
 		UpdateHealthUI();
 
@@ -143,75 +175,90 @@ public class Player : MonoBehaviour
 			int rindex = Random.Range(0, damageGrunts.Length);
 			playerAS.PlayOneShot(damageGrunts[rindex]);
 		}
+
 		regenSymbol.SetActive(false);
 		Recoil.Instance.DamageFlinch(flinchMultiplier);
 	}
 
+	// This method applies instant healing (e.g. from a health pickup)
 	public void Heal(int amount)
 	{
-		if (currentHealth >= maxHealth)
+		currentHealth = Mathf.Min(currentHealth + amount, maxHealth);
+		UpdateHealthUI();
+	}
+
+	// Smooth healing over time (applied each frame) after a delay since the last damage
+	private void HandleHealing()
+	{
+		bool canHeal = Time.time >= lastDamageTime + regenationDelayAfterDamage && currentHealth < maxHealth;
+
+		if (canHeal)
 		{
-			currentHealth = maxHealth;
+			if (!regenerating)
+			{
+				regenerating = true;
+				regenSymbol.SetActive(true);
+			}
+
+			currentHealth += healPerSecond * Time.deltaTime;
+			if (currentHealth >= maxHealth)
+			{
+				currentHealth = maxHealth;
+				regenerating = false;
+				regenSymbol.SetActive(false);
+			}
+			UpdateHealthUI();
 		}
 		else
 		{
-			currentHealth += amount;
-			currentHPPercentage = currentHealth * 1.0f / maxHealth * 1.0f * 100f; // 80 / 100 = 0.8
-
-			if (currentHealth >= maxHealth)
-				currentHealth = maxHealth;
-
-			float currentHPPercentagePP = 1f - (currentHPPercentage / 100f); // 1 - 0.8 = 0.2
-			damagePPScript.UpdateDamagePP(maxBloom * currentHPPercentagePP, maxVignette * currentHPPercentagePP, maxChromaticAberration * currentHPPercentagePP, maxGrain * currentHPPercentagePP);
-
-			UpdateHealthUI();
+			if (regenerating)
+			{
+				regenerating = false;
+				regenSymbol.SetActive(false);
+			}
 		}
 	}
 
 	public void UpdateHealthUI()
 	{
+		currentHPPercentage = (currentHealth / maxHealth) * 100f;
 		float clampedValue = Mathf.Clamp(Mathf.Round(currentHPPercentage), 0f, 100f);
 		healthString = clampedValue.ToString() + "%";
 		healthText.text = healthString;
 
-		healthStringRaw = currentHealth.ToString() + " / " + maxHealth.ToString();
+		healthStringRaw = Mathf.FloorToInt(currentHealth).ToString() + " / " + maxHealth.ToString();
 		healthTextRaw.text = healthStringRaw;
 
-		healthSlider.fillAmount = currentHPPercentage / 100;
-		healthSlider.color = healthGradient.Evaluate(1f - currentHPPercentage / 100);
+		healthSlider.fillAmount = currentHPPercentage / 100f;
+		healthSlider.color = healthGradient.Evaluate(1f - currentHPPercentage / 100f);
 	}
 
-	public void CalculateRegen()
+	#region Sisu
+	/// <summary>
+	/// Adjusts the current Sisu by a given integer amount.
+	/// (When spending or adding Sisu, you work with int values.)
+	/// </summary>
+	public void UpdateSisu(int amount)
 	{
-		if (regenerating)
+		currentSisu = Mathf.Clamp(currentSisu + amount, 0, maxSisu);
+		UpdateSisuUI();
+	}
+
+	/// <summary>
+	/// Updates the Sisu slider (and optionally text). The slider is updated smoothly
+	/// using the continuous float currentSisu value, but the displayed text shows an int.
+	/// </summary>
+	public void UpdateSisuUI(bool updateText = false)
+	{
+		if (sisuSlider)
 		{
-			regenerating = false;
-			StartCoroutine(RegenerationDelay());
+			sisuSlider.fillAmount = currentSisu / maxSisu;
 		}
 
-		if (currentHealth >= maxHealth)
+		if (sisuTextRaw && updateText)
 		{
-			regenSymbol.SetActive(false);
-		}
-
-	}
-
-	IEnumerator RegenerationDelay()
-	{
-		yield return new WaitForSeconds(regenationDelay);
-		Heal(regenationAmount);
-		regenerating = true;
-	}
-
-	IEnumerator Regenerate()
-	{
-		yield return new WaitForSeconds(regenationDelayAfterDamage);
-		if (currentHPPercentage < 100f)
-		{
-			playerAS.PlayOneShot(regenSound, 2f);
-			regenSymbol.SetActive(true);
-			regenerating = true;
+			sisuTextRaw.text = Mathf.FloorToInt(currentSisu) + " / " + maxSisu;
 		}
 	}
-
+	#endregion
 }

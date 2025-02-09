@@ -9,6 +9,7 @@ public class FootstepScript : MonoBehaviour
 	public AudioSource audioSource;
 	public AudioClip[] grassSteps;
 	public AudioClip[] rockSteps;
+	public AudioClip[] sandSteps;
 
 	private float distanceTravelled = 0;
 	private Vector3 lastPosition;
@@ -55,66 +56,59 @@ public class FootstepScript : MonoBehaviour
 			0 => grassSteps[UnityEngine.Random.Range(0, grassSteps.Length)],
 			// Rock
 			1 => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
+			// Rock2
+			2 => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
+			// Sand
+			3 => sandSteps[UnityEngine.Random.Range(0, sandSteps.Length)],
 			// Default
 			_ => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
 		};
 	}
 
-	// Return index of the terrain type player is on
+	// Return the dominant texture index at the player's current position on the terrain
 	private int DetectTerrainType()
 	{
-		int terrainType = -1;  // Default to unknown terrain type
-
-		// Cast a ray down
-		RaycastHit hit;
-		if (Physics.Raycast(transform.position, Vector3.down, out hit, 5f))
+		// Cast a ray down from the player's position
+		if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, 5f))
 		{
 			Terrain terrain = hit.collider.GetComponent<Terrain>();
-
 			if (terrain != null)
 			{
-				// Convert hit point to local terrain coordinates
-				Vector3 terrainLocalPos = terrain.transform.InverseTransformPoint(hit.point);
 				TerrainData terrainData = terrain.terrainData;
 
-				// Calculate the normalized position on the terrain
+				// Convert the hit point to the terrain's local coordinates
+				Vector3 terrainLocalPos = terrain.transform.InverseTransformPoint(hit.point);
+
+				// Normalize the local coordinates relative to the terrain size
 				float normX = terrainLocalPos.x / terrainData.size.x;
-				float normY = terrainLocalPos.z / terrainData.size.z;
+				float normZ = terrainLocalPos.z / terrainData.size.z;
 
-				// Calculate the position on the alpha map
+				// Calculate the corresponding position on the alpha map (splat map)
 				int mapX = (int)(normX * terrainData.alphamapWidth);
-				int mapY = (int)(normY * terrainData.alphamapHeight);
+				int mapZ = (int)(normZ * terrainData.alphamapHeight);
 
-				// Get the alpha map data at that point
-				float[,,] splatmapData = terrainData.GetAlphamaps(mapX, mapY, 1, 1);
+				// Retrieve the alpha map data at that point
+				float[,,] splatmapData = terrainData.GetAlphamaps(mapX, mapZ, 1, 1);
 
 				// Determine the dominant texture index
 				int dominantTextureIndex = 0;
 				float maxAlpha = 0f;
-
-				for (int i = 0; i < splatmapData.GetLength(2); i++)
+				int numTextures = splatmapData.GetLength(2);
+				for (int i = 0; i < numTextures; i++)
 				{
-					if (splatmapData[0, 0, i] > maxAlpha)
+					float alpha = splatmapData[0, 0, i];
+					if (alpha > maxAlpha)
 					{
-						maxAlpha = splatmapData[0, 0, i];
+						maxAlpha = alpha;
 						dominantTextureIndex = i;
 					}
 				}
 
-				// Determine the terrain type based on the dominant texture index
-				if (dominantTextureIndex == 0 || dominantTextureIndex == 1)
-				{
-					// Grass terrain
-					terrainType = 0;
-				}
-				else if (dominantTextureIndex == 2 || dominantTextureIndex == 3)
-				{
-					// Rock terrain
-					terrainType = 1;
-				}
+				return dominantTextureIndex;
 			}
 		}
-		return terrainType;
-	}
 
+		// Return -1 if no terrain was hit
+		return -1;
+	}
 }
