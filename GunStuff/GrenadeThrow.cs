@@ -1,128 +1,101 @@
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class GrenadeThrow : MonoBehaviour
 {
-    // Variables
-    public KeyCode selectGrenadeKey, throwGrenadeKey;
-    public float throwForce;
-    public float throwForceImpact;
-    public float grenadeSelectionTimeSlow; // Slow time down when selecting grenade
-    [HideInInspector] public int selectedGrenade = 0; // 0 = normal, 1 = impact, 2 = incendiary
+	// Variables
+	public float throwForce;
+	public float throwForceImpact;
+	public Transform throwingPosition;
+	public float grenadeSelectionTimeSlow; // Slow time down when selecting grenade
+	[HideInInspector] public int selectedGrenade = 0; // 0 = normal, 1 = impact, 2 = incendiary
 
-    public GameObject normalGrenadePrefab, impactGrenadePrefab, incendiaryGrenadePrefab;
-    public GameObject selectionMenu;
-    public PlayerInventory inventoryScript;
-    public static GrenadeThrow instance;
-    public bool selectingGrenade = false;
+	public GameObject normalGrenadePrefab, impactGrenadePrefab, incendiaryGrenadePrefab;
+	public GameObject selectionMenu;
+	public static GrenadeThrow instance;
 
-    [Header("UI & UX")]
-    public Image[] grenadePanels;
-    public Color defaultColor, highlightColor;
+	[Header("UI")]
+	public Image[] grenadePanels;
+	public Color defaultColor, highlightColor;
 
-    public Image grenadeImageHUD;
-    public Sprite[] grenadeSprites;
-    public TextMeshProUGUI changeNadeTMP, throwNadeTMP;
+	public Image grenadeImageHUD;
+	public Sprite[] grenadeSprites;
+	public TextMeshProUGUI changeNadeTMP, throwNadeTMP;
 
-    private void OnValidate()
-    {
-        changeNadeTMP.text = selectGrenadeKey.ToString();
-        throwNadeTMP.text = throwGrenadeKey.ToString();
-    }
+	private void Awake()
+	{
+		if (instance == null)
+		{
+			instance = this;
+		}
+		else if (instance != this)
+		{
+			Destroy(instance);
+		}
+		SelectGrenade(0);
+	}
 
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-        }
-        else if (instance != this)
-        {
-            Destroy(instance);
-        }
-        SelectGrenade(0);
-    }
+	private void Start()
+	{
+		changeNadeTMP.text = KeybindManager.Instance.selectionMenuKey.ToString();
+		throwNadeTMP.text = KeybindManager.Instance.throwGrenadeKey.ToString();
+	}
 
-    private void Update()
-    {
-        HandleInputs();
-    }
+	private void Update()
+	{
+		HandleInputs();
+	}
 
-    private void HandleInputs()
-    {
-        if (Time.timeScale <= 0) return; // Game paused
+	private void HandleInputs()
+	{
+		if (Time.timeScale <= 0) return; // Game paused
 
-        if (Input.GetKey(selectGrenadeKey) && !ObjectPlacing.instance.isChoosingObject)
-        {
-            if (!selectingGrenade)
-            {
-                selectionMenu.SetActive(true);
-                selectingGrenade = true;
-                MouseLook.instance.canRotate = false;
-                Cursor.lockState = CursorLockMode.None;
-                Time.timeScale = grenadeSelectionTimeSlow;
-            }
-        }
-        else
-        {
-            if (selectingGrenade)
-            {
-                selectionMenu.SetActive(false);
-                selectingGrenade = false;
-                MouseLook.instance.canRotate = true;
-                Cursor.lockState = CursorLockMode.Locked;
-                Time.timeScale = 1f;
-            }
-        }
+		if (Input.GetKeyDown(KeybindManager.Instance.throwGrenadeKey))
+		{
+			ThrowGrenade();
+		}
+	}
 
-        if (Input.GetKeyDown(throwGrenadeKey))
-        {
-            ThrowGrenade();
-        }
-    }
+	public void ThrowGrenade()
+	{
+		if (PlayerInventory.instance.GetGrenadeCount(selectedGrenade) <= 0) return;
+		GameObject newGrenade;
+		switch (selectedGrenade)
+		{
+			case 0:
+				newGrenade = Instantiate(normalGrenadePrefab, throwingPosition.position, Camera.main.transform.rotation);
+				break;
 
-    public void ThrowGrenade()
-    {
-        if (inventoryScript.GetGrenadeCount(selectedGrenade) <= 0) return;
-        GameObject newGrenade;
-        switch (selectedGrenade)
-        {
-            case 0:
-                newGrenade = Instantiate(normalGrenadePrefab, transform.position, transform.rotation);
-                break;
+			case 1:
+				newGrenade = Instantiate(impactGrenadePrefab, throwingPosition.position, Camera.main.transform.rotation);
+				break;
 
-            case 1:
-                newGrenade = Instantiate(impactGrenadePrefab, transform.position, transform.rotation);
-                break;
+			case 2:
+				newGrenade = Instantiate(incendiaryGrenadePrefab, throwingPosition.position, Camera.main.transform.rotation);
+				break;
 
-            case 2:
-                newGrenade = Instantiate(incendiaryGrenadePrefab, transform.position, transform.rotation);
-                break;
+			case 3:
+				newGrenade = Instantiate(normalGrenadePrefab, throwingPosition.position, Camera.main.transform.rotation);
+				break;
 
-            case 3:
-                newGrenade = Instantiate(normalGrenadePrefab, transform.position, transform.rotation);
-                break;
+			default:
+				newGrenade = Instantiate(normalGrenadePrefab, throwingPosition.position, Camera.main.transform.rotation);
+				break;
+		}
 
-            default:
-                newGrenade = Instantiate(normalGrenadePrefab, transform.position, transform.rotation);
-                break;
-        }
+		Rigidbody rb = newGrenade.GetComponent<Rigidbody>();
+		rb.AddForce(transform.forward * throwForce);
 
-        Rigidbody rb = newGrenade.GetComponent<Rigidbody>();
-        rb.AddForce(transform.forward * throwForce);
+		PlayerInventory.instance.HandleGrenades(selectedGrenade, -1);
+	}
 
-        inventoryScript.HandleGrenades(selectedGrenade, -1);
-    }
+	public void SelectGrenade(int index)
+	{
+		grenadePanels[selectedGrenade].color = defaultColor; // Previous selection to default color
+		grenadePanels[index].color = highlightColor; // Highlight new selection
+		selectedGrenade = index; // Update selectedGrenade variable for other uses
 
-    public void SelectGrenade(int index)
-    {
-        grenadePanels[selectedGrenade].color = defaultColor; // Previous selection to default color
-        grenadePanels[index].color = highlightColor; // Highlight new selection
-        selectedGrenade = index; // Update selectedGrenade variable for other uses
-
-        grenadeImageHUD.sprite = grenadeSprites[index];
-    }
+		grenadeImageHUD.sprite = grenadeSprites[index];
+	}
 }

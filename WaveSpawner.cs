@@ -31,12 +31,12 @@ public class WaveSpawner : MonoBehaviour
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(KeyCode.I))
+		if (Input.GetKeyDown(KeybindManager.Instance.spawnWave))
 		{
 			StartCoroutine(StartWaves());
 		}
 
-		if (Input.GetKeyDown(KeyCode.O))
+		if (Input.GetKeyDown(KeybindManager.Instance.spawnSingleEnemy))
 		{
 			// Create a ray from the camera's position and forward direction
 			Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
@@ -58,30 +58,6 @@ public class WaveSpawner : MonoBehaviour
 				}
 			}
 		}
-
-		if (Input.GetKeyDown(KeyCode.Y))
-		{
-			// Create a ray from the camera's position and forward direction
-			Ray ray = Camera.main.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2, 0));
-
-			// Create a RaycastHit variable to store information about the hit point
-			RaycastHit hit;
-
-			// Perform the raycast
-			if (Physics.Raycast(ray, out hit))
-			{
-				// Check if the ray hit something
-				if (hit.collider != null)
-				{
-					// Get the point where the ray hit
-					Vector3 spawnPosition = hit.point;
-
-					// Call the SpawnFromCamera function to spawn an enemy at the hit point
-					SpawnDirect(spawnPosition, minotaurPrefab);
-				}
-			}
-		}
-
 	}
 
 	private void LateUpdate()

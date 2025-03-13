@@ -107,7 +107,7 @@ public class Player : MonoBehaviour
 
 	private void HandleInputs()
 	{
-		if (Input.GetKeyDown(KeyCode.F) && kickTimeStamp <= Time.time)
+		if (Input.GetKeyDown(KeybindManager.Instance.kickKey) && kickTimeStamp <= Time.time)
 		{
 			kickTimeStamp = Time.time + kickCooldown;
 			playerMovement.ApplySpeedEffect(kickPlayerSlow, kickPlayerSlowDuration);

@@ -129,7 +129,7 @@ public class PlayerMovement : MonoBehaviour
 		_currentSpeed = (transform.position - lastPosition).magnitude / deltaTime;
 		lastPosition = transform.position;
 
-		if (Input.GetKeyDown(KeyCode.T))
+		if (Input.GetKeyDown(KeybindManager.Instance.maxSisu))
 		{
 			ApplySpeedEffect(5, 5);
 			Player.instance.UpdateSisu(Player.instance.maxSisu);

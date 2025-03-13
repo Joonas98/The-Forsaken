@@ -1,142 +1,108 @@
-using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using static ObjectPlacing;
 
 public class ObjectPlacing : MonoBehaviour
 {
-    [Header("Variables")]
-    public float rotationSpeed;
-    [System.Serializable]
-    public struct PlacingInfo
-    {
-        public GameObject aimerPrefab;
-        public GameObject prefab;
+	[Header("Variables")]
+	public float rotationSpeed;
+	[System.Serializable]
+	public struct PlacingInfo
+	{
+		public GameObject aimerPrefab;
+		public GameObject prefab;
 
-        public float maxAllowedAngle;
-        public float minAllowedAngle;
+		public float maxAllowedAngle;
+		public float minAllowedAngle;
 	}
 
-    public List<PlacingInfo> placingObjects;
-    public KeyCode placingModeHotkey, choosingMenuHotkey;
-    public Color validPlacementColor, invalidPlacementColor;
-    public Color defaultColor, highlightColor;
-    [HideInInspector] public static ObjectPlacing instance;
-    public bool isPlacing = false;
-    public bool isChoosingObject = false;
+	public List<PlacingInfo> placingObjects;
+	public Color validPlacementColor, invalidPlacementColor;
+	public Color defaultColor, highlightColor;
+	[HideInInspector] public static ObjectPlacing instance;
+	public bool isPlacing = false;
 
-    [Header("UI & UX")]
-    public GameObject choosingMenu;
-    public Image[] objectPanels;
-    public Image selectedImageHUD;
-    public Sprite[] objectSprites;
-    public float objectSelectionTimeSlow;
-    public TextMeshProUGUI placeHotkeyTMP, changeHotkeyTMP;
+	[Header("UI")]
+	public Image[] objectPanels;
+	public Image selectedImageHUD;
+	public Sprite[] objectSprites;
+	public TextMeshProUGUI placeHotkeyTMP, changeHotkeyTMP;
 
-    private RaycastHit hit;
-    private GameObject activeAimer;
-    private GameObject placingObject;
-    private int chosenObjectIndex = 0;
+	private RaycastHit hit;
+	private GameObject activeAimer;
+	private GameObject placingObject;
+	private int chosenObjectIndex = 0;
 
-    private void OnValidate()
-    {
-        placeHotkeyTMP.text = placingModeHotkey.ToString();
-        changeHotkeyTMP.text = choosingMenuHotkey.ToString();
-    }
+	private void Awake()
+	{
+		if (instance == null)
+		{
+			instance = this;
+		}
+		else if (instance != this)
+		{
+			Destroy(instance);
+		}
+		ChooseObject(0);
 
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-        }
-        else if (instance != this)
-        {
-            Destroy(instance);
-        }
-        ChooseObject(0);
-    }
+		//placeHotkeyTMP.text = KeybindManager.Instance.placeObjectKey.ToString();
+		//changeHotkeyTMP.text = KeybindManager.Instance.selectionMenuKey.ToString();
+	}
 
-    void Update()
-    {
-        if (Time.timeScale == 0.0f) return;
-        HandleInputs();
-        HandlePlacement(placingObjects[chosenObjectIndex]);
-    }
+	void Update()
+	{
+		if (Time.timeScale == 0.0f) return;
+		HandleInputs();
+		HandlePlacement(placingObjects[chosenObjectIndex]);
+	}
 
-    public void ChooseObject(int index)
-    {
-        objectPanels[chosenObjectIndex].color = defaultColor;
-        objectPanels[index].color = highlightColor;
-        chosenObjectIndex = index;
-        selectedImageHUD.sprite = objectSprites[index];
-    }
+	public void ChooseObject(int index)
+	{
+		objectPanels[chosenObjectIndex].color = defaultColor;
+		objectPanels[index].color = highlightColor;
+		chosenObjectIndex = index;
+		selectedImageHUD.sprite = objectSprites[index];
+	}
 
-    private void HandleInputs()
-    {
-        if (Time.timeScale <= 0) return; // Game paused
+	private void HandleInputs()
+	{
+		if (Time.timeScale <= 0) return; // Game paused
 
-        // Open object selection menu
-        if (Input.GetKey(choosingMenuHotkey) && !GrenadeThrow.instance.selectingGrenade)
-        {
-            if (!isChoosingObject)
-            {
-                choosingMenu.SetActive(true);
-                isChoosingObject = true;
-                MouseLook.instance.canRotate = false;
-                Cursor.lockState = CursorLockMode.None;
-                Time.timeScale = objectSelectionTimeSlow;
-                if (isPlacing) StopPlacing();
-            }
-        }
-        else // Close object selection menu
-        {
-            if (isChoosingObject)
-            {
-                choosingMenu.SetActive(false);
-                isChoosingObject = false;
-                MouseLook.instance.canRotate = true;
-                Cursor.lockState = CursorLockMode.Locked;
-                Time.timeScale = 1f;
-            }
-        }
+		// Handle object placement
+		if (Input.GetKeyDown(KeybindManager.Instance.placeObjectKey))
+		{
+			if (!isPlacing)
+			{
+				StartPlacing(placingObjects[chosenObjectIndex]);  // Use the chosen object index
+			}
+			else
+			{
+				StopPlacing();
+			}
+		}
+	}
 
-        // Handle object placement
-        if (Input.GetKeyDown(placingModeHotkey))
-        {
-            if (!isPlacing)
-            {
-                StartPlacing(placingObjects[chosenObjectIndex]);  // Use the chosen object index
-            }
-            else
-            {
-                StopPlacing();
-            }
-        }
-    }
+	private void StartPlacing(PlacingInfo placingInfo)
+	{
+		if (placingInfo.aimerPrefab == null)
+		{
+			Debug.LogError("Aimer Prefab is null for the chosen object!");
+			return;
+		}
 
-    private void StartPlacing(PlacingInfo placingInfo)
-    {
-        if (placingInfo.aimerPrefab == null)
-        {
-            Debug.LogError("Aimer Prefab is null for the chosen object!");
-            return;
-        }
+		activeAimer = Instantiate(placingInfo.aimerPrefab, Vector3.zero, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
+		isPlacing = true;
+		placingObject = placingInfo.prefab;
+	}
 
-        activeAimer = Instantiate(placingInfo.aimerPrefab, Vector3.zero, Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0));
-        isPlacing = true;
-        placingObject = placingInfo.prefab;
-    }
-
-    private void StopPlacing()
-    {
-        if (activeAimer != null) Destroy(activeAimer);
-        isPlacing = false;
-        placingObject = null;
-        if (!isChoosingObject) MouseLook.instance.canRotate = true; // Bug prevention
-    }
+	public void StopPlacing()
+	{
+		if (activeAimer != null) Destroy(activeAimer);
+		isPlacing = false;
+		placingObject = null;
+		//if (!isChoosingObject) MouseLook.instance.canRotate = true; // Bug prevention
+	}
 
 	private void HandlePlacement(PlacingInfo placingInfo)
 	{
@@ -194,14 +160,14 @@ public class ObjectPlacing : MonoBehaviour
 		Vector3 placementPosition = placementTransform.position;
 		Ray ray = new Ray(placementPosition, Vector3.down);
 
-        // !!! Known issue, for some objects, the ray hits aimer object rather than aimed surface
-        // Stills works fine right now for currently implemented objects 16.9.2023
+		// !!! Known issue, for some objects, the ray hits aimer object rather than aimed surface
+		// Stills works fine right now for currently implemented objects 16.9.2023
 		if (Physics.Raycast(ray, out RaycastHit hit))
 		{
 			float angle = Vector3.Angle(ray.direction, hit.normal);
 			if (angle > placingObjects[chosenObjectIndex].maxAllowedAngle)
 			{
-               // Debug.Log("Placement not allowed, aimed angle is: " + angle);
+				// Debug.Log("Placement not allowed, aimed angle is: " + angle);
 				return false;
 			}
 		}
@@ -241,9 +207,7 @@ public class ObjectPlacing : MonoBehaviour
 			}
 		}
 
-        // New object is on allowed angle and not too close to anything
+		// New object is on allowed angle and not too close to anything
 		return true;
 	}
-
-
 }

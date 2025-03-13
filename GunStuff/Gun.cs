@@ -201,7 +201,7 @@ public class Gun : Weapon
 		base.Update();
 
 		// Player can't shoot when selecting grenades or objects
-		if (!equipped || GrenadeThrow.instance.selectingGrenade || ObjectPlacing.instance.isPlacing || ObjectPlacing.instance.isChoosingObject) goto selectionsSkip;
+		if (!equipped || ObjectPlacing.instance.isPlacing || SelectionCanvas.instance.isChoosingObject) goto selectionsSkip;
 		HandleShooting();
 		HandleAiming();
 	selectionsSkip:

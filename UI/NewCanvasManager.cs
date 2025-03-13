@@ -1,13 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class NewCanvasManager : MonoBehaviour
 {
-	[Header("Keybinds")]
-	public KeyCode shopKey;
-	public KeyCode pauseKey;
-
 	[Header("References")]
 	// The main canvases
 	public GameObject shopCanvas;
@@ -29,8 +23,8 @@ public class NewCanvasManager : MonoBehaviour
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(shopKey)) ToggleMenu(MenuType.Shop);
-		if (Input.GetKeyDown(pauseKey)) ToggleMenu(MenuType.Pause);
+		if (Input.GetKeyDown(KeybindManager.Instance.shopKey)) ToggleMenu(MenuType.Shop);
+		if (Input.GetKeyDown(KeybindManager.Instance.pauseKey)) ToggleMenu(MenuType.Pause);
 	}
 
 	private void ToggleMenu(MenuType menuType)

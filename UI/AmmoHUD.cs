@@ -28,6 +28,12 @@ public class AmmoHUD : MonoBehaviour
 		}
 	}
 
+	private void Start()
+	{
+		// No ammohud at start
+		AmmoHUD.Instance.DisableHUD();
+	}
+
 	public void UpdateAmmoHUD(int currentAmmo, int maxAmmoCount)
 	{
 		// E.g. switching from melee weapon to gun
