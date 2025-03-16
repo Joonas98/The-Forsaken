@@ -7,7 +7,6 @@ using UnityEngine.AI;
 public class Enemy : MonoBehaviour
 {
 	[Header("Basic variables")]
-	public bool isSpecial; // Non-zombie enemies are special
 	public int moneyReward;
 
 	[Header("Health variables")]
@@ -27,9 +26,9 @@ public class Enemy : MonoBehaviour
 	public int damage = 20;
 	public float slowAmount = 0.5f; // Hitting the player slows them down
 	public float slowDuration = 0.5f;
+	public bool isAttacking = false;
 
 	private bool canAttack = true;
-	private bool isAttacking = false;
 
 	[Header("References")]
 	public LimbManager limbManager;
@@ -40,10 +39,11 @@ public class Enemy : MonoBehaviour
 	public GameObject modelRoot; // Hips
 	public Rigidbody[] rigidbodies;
 	public Rigidbody bodyRB; // Rigidbody in waist or something (used for ragdoll magnitude checks etc.)
-	public Animator animator;
 	public Transform torsoTransform; // Used e.g. turret targeting
 	public DebuffManager debuffManager;
 
+	[SerializeField] private Animator animator; // In this script to update the velocity parameter
+	[SerializeField] private EnemyStateMachine stateMachine;
 	private GameObject player;
 
 	[Header("Debuff variables")]
@@ -110,7 +110,7 @@ public class Enemy : MonoBehaviour
 		rigidbodies = GetComponentsInChildren<Rigidbody>();
 
 		SetRagdollParts();
-		if (!isSpecial) RandomizeSkins();
+		RandomizeSkins();
 		SetLimbHealth();
 
 		float randomScaling = Random.Range(1.0f, 1.2f); // Default scale is 1.1
@@ -137,8 +137,8 @@ public class Enemy : MonoBehaviour
 		CalculateSlows();
 		HandleSwinging();
 
-		if (isSpecial && animator != null) animator.SetFloat("Locomotion", navAgent.velocity.magnitude / navAgent.speed);
-		if (!isSpecial && animator != null) animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
+		//if (animator != null) animator.SetFloat("Locomotion", navAgent.velocity.magnitude / navAgent.speed);
+		if (animator != null) animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
 	}
 
 	private void FixedUpdate()
@@ -307,11 +307,8 @@ public class Enemy : MonoBehaviour
 		healthPercentage = Mathf.Clamp((100 * currentHealth) / maxHealth, 0, 100);
 
 		// Visual updates according to damage
-		if (!isSpecial)
-		{
-			newMaterial.SetFloat("_BloodAmount", 1f); // Blood on the skinned mesh renderer
-			UpdateEyeColor(); // Enemy health can be seen from eyes
-		}
+		newMaterial.SetFloat("_BloodAmount", 1f); // Blood on the skinned mesh renderer
+		UpdateEyeColor(); // Enemy health can be seen from eyes
 
 		// Sometimes make noise when damaged
 		if (!isDead && Random.Range(0, 3) == 1)
@@ -657,7 +654,6 @@ public class Enemy : MonoBehaviour
 
 	public void StartCrawling()
 	{
-		if (isSpecial) return;
 		// When any of part of the leg is destroyed, the zombie becomes a crawler
 		isCrawling = true;
 		animator.Play("Start Crawling");
@@ -730,7 +726,6 @@ public class Enemy : MonoBehaviour
 
 	public void UpdateEyeColor()
 	{
-		if (isSpecial) return;
 		Color eyeColor;
 
 		// Adjust eye color according to possible debuffs
