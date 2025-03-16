@@ -1,20 +1,17 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static DebuffManager;
 
 public class DebuffManager : MonoBehaviour
 {
-    // Create a dictionary to store active debuffs and their durations
-    private Dictionary<Debuffs, float> activeDebuffs = new Dictionary<Debuffs, float>();
+	// Create a dictionary to store active debuffs and their durations
+	private Dictionary<Debuffs, float> activeDebuffs = new Dictionary<Debuffs, float>();
 
-    // Reference to the effects game objects (FX)
-    public GameObject[] effectList;
-    public Color shockedEyeColor;
+	// Reference to the effects game objects (FX)
+	public GameObject[] effectList;
+	public Color shockedEyeColor;
 
 	// Reference to the enemy script
-    public Enemy enemyScript;
+	public Enemy enemyScript;
 
 	#region DoT System
 	[System.Serializable]
@@ -33,14 +30,14 @@ public class DebuffManager : MonoBehaviour
 
 	// Enum to represent debuff types
 	public enum Debuffs
-    {
-        Arcane, Crimson, Dark, Fairy, Fire, Frost, Holy, Light, Mist, Nature, ShockBlue, ShockYellow,
-        Universe, Void, Water, Wind
-    }
+	{
+		Arcane, Crimson, Dark, Fairy, Fire, Frost, Holy, Light, Mist, Nature, ShockBlue, ShockYellow,
+		Universe, Void, Water, Wind
+	}
 
 	private void Update()
 	{
-        UpdateDebuffDurations();
+		UpdateDebuffDurations();
 		UpdateDots();
 		// Iterate through the active debuffs and print them
 		//foreach (var debuff in activeDebuffs)
@@ -121,20 +118,20 @@ public class DebuffManager : MonoBehaviour
 		DebuffExtraFunctionalities(debuffenum, duration);
 	}
 
-    // Remove a debuff
-    public void RemoveDebuff(Debuffs debuffenum)
-    {
+	// Remove a debuff
+	public void RemoveDebuff(Debuffs debuffenum)
+	{
 		//Debug.Log("Disabling debuff: " + debuffenum);
 		if (debuffenum == Debuffs.Crimson) enemyScript.ResetCrimsonDamage();
 
 		// Deactivate the FX for the debuff
 		if (debuffenum == Debuffs.Fire)
-		{ 
-		ParticleSystem debuffParticleSystem = effectList[(int)debuffenum].GetComponent<ParticleSystem>();
-		var emission = debuffParticleSystem.emission;
-		emission.enabled = false;
-		Invoke(nameof(DisableFire), 3f); // Disable the fire particle system after all particles have faded away
-		} 
+		{
+			ParticleSystem debuffParticleSystem = effectList[(int)debuffenum].GetComponent<ParticleSystem>();
+			var emission = debuffParticleSystem.emission;
+			emission.enabled = false;
+			Invoke(nameof(DisableFire), 3f); // Disable the fire particle system after all particles have faded away
+		}
 		else
 		{
 			effectList[(int)debuffenum].SetActive(false);
@@ -144,34 +141,35 @@ public class DebuffManager : MonoBehaviour
 		activeDebuffs.Remove(debuffenum);
 
 		// Update enemy eye color
-        enemyScript.UpdateEyeColor();
-    }
+		enemyScript.UpdateEyeColor();
+	}
 
 	private void DisableFire()
 	{
 		// If the effect to be disabled is not reactived in between disabling emission and gameobject, we disable the gameobject
-		if(!IsDebuffActive(Debuffs.Fire)) effectList[(int)Debuffs.Fire].SetActive(false);
+		if (!IsDebuffActive(Debuffs.Fire)) effectList[(int)Debuffs.Fire].SetActive(false);
 	}
 
 	// Check if a specific debuff is active
 	public bool IsDebuffActive(Debuffs debuffenum)
-    {
-        return activeDebuffs.ContainsKey(debuffenum);
-    }
+	{
+		return activeDebuffs.ContainsKey(debuffenum);
+	}
 
-    // Get the remaining duration of a specific debuff
-    public float GetDebuffDuration(Debuffs debuffenum)
-    {
-        if (activeDebuffs.TryGetValue(debuffenum, out float remainingDuration))
-        {
-            return remainingDuration;
-        }
-        return 0f; // Debuff not found or expired
-    }
+	// Get the remaining duration of a specific debuff
+	public float GetDebuffDuration(Debuffs debuffenum)
+	{
+		if (activeDebuffs.TryGetValue(debuffenum, out float remainingDuration))
+		{
+			return remainingDuration;
+		}
+		return 0f; // Debuff not found or expired
+	}
 
 	private void DebuffExtraFunctionalities(Debuffs debuffenum, float duration)
 	{
-		if (debuffenum == Debuffs.ShockBlue) enemyScript.Stun(duration);
+		// 16.3.2025 Adjust to use new state machine script
+		//if (debuffenum == Debuffs.ShockBlue) enemyScript.Stun(duration);
 	}
 
 }

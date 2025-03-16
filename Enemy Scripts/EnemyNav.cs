@@ -4,6 +4,7 @@ using UnityEngine.AI;
 public class EnemyNav : MonoBehaviour
 {
 	[SerializeField] private float onMeshThreshold;
+	[SerializeField] EnemyStateMachine stateMachine;
 	private NavMeshAgent navAgent;
 	// private EnemyBase enemyBase;
 	private Enemy enemy;
@@ -28,14 +29,14 @@ public class EnemyNav : MonoBehaviour
 		targetLocation = player.transform;
 
 		// Root motion
-		animator.applyRootMotion = true;
+		//animator.applyRootMotion = true;
 		navAgent.updatePosition = false;
 		navAgent.updateRotation = true;
 	}
 
 	private void Start()
 	{
-		if (!IsAgentOnNavMesh(gameObject))
+		if (!IsAgentOnNavMesh())
 		{
 			MoveToNavMesh();
 			Debug.Log("Enemy moved to navmesh");
@@ -44,9 +45,26 @@ public class EnemyNav : MonoBehaviour
 
 	private void FixedUpdate()
 	{
-		if (!navAgent.isActiveAndEnabled || !IsAgentOnNavMesh(gameObject)) return; // Avoid errors when agent is disabled
-		navAgent.SetDestination(targetLocation.position);
+		if (!navAgent.isActiveAndEnabled)
+			return;
+
+		// Only update destination if not ragdolling and not in Standup state.
+		if (!enemy.ragdolling && stateMachine.currentState != EnemyState.Standup)
+		{
+			// Only set destination if the agent is on the NavMesh.
+			if (IsAgentOnNavMesh())
+			{
+				navAgent.SetDestination(targetLocation.position);
+			}
+			else
+			{
+				// Log a warning but don't reposition here.
+				MoveToNavMesh();
+				Debug.LogWarning("Enemy is off NavMesh, but repositioning is handled only at spawn or after ragdoll.");
+			}
+		}
 	}
+
 
 	private void Update()
 	{
@@ -54,9 +72,9 @@ public class EnemyNav : MonoBehaviour
 		// Debug.Log("Enemy speed: " + navAgent.speed.ToString());
 	}
 
-	public bool IsAgentOnNavMesh(GameObject agentObject)
+	public bool IsAgentOnNavMesh()
 	{
-		Vector3 agentPosition = agentObject.transform.position;
+		Vector3 agentPosition = transform.position;
 
 		// Check for nearest point on navmesh to agent, within onMeshThreshold
 		if (NavMesh.SamplePosition(agentPosition, out NavMeshHit hit, onMeshThreshold, NavMesh.AllAreas))
@@ -74,6 +92,7 @@ public class EnemyNav : MonoBehaviour
 
 	public void MoveToNavMesh()
 	{
+		Debug.Log("Moved enemy to navmesh");
 		NavMeshHit hit;
 		if (NavMesh.SamplePosition(transform.position, out hit, 2.0f, NavMesh.AllAreas))
 		{
@@ -86,18 +105,9 @@ public class EnemyNav : MonoBehaviour
 		}
 	}
 
-	// Root motion stuff
-	//private void OnAnimatorMove()
-	//{
-	//	Vector3 rootPosition = animator.rootPosition;
-	//	rootPosition.y = navAgent.nextPosition.y;
-	//	transform.position = rootPosition;
-	//	navAgent.nextPosition = rootPosition;
-	//}
-
 	private void SynchronizeAnimatorAndAgent()
 	{
-		if (enemy.ragdolling) return;
+		if (stateMachine.currentState == EnemyState.Ragdoll) return;
 
 		Vector3 worldDeltaPosition = navAgent.nextPosition - transform.position;
 		worldDeltaPosition.y = 0;
@@ -119,12 +129,6 @@ public class EnemyNav : MonoBehaviour
 			);
 		}
 
-		//bool shouldMove = velocity.magnitude > 0.5f
-		//	&& navAgent.remainingDistance > navAgent.stoppingDistance;
-
-		//animator.SetBool("move", shouldMove);
-		//animator.SetFloat("Locomotion", velocity.magnitude);
-
 		float deltaMagnitude = worldDeltaPosition.magnitude;
 		if (deltaMagnitude > navAgent.radius / 2f)
 		{
@@ -135,5 +139,4 @@ public class EnemyNav : MonoBehaviour
 			);
 		}
 	}
-
 }

@@ -2,7 +2,6 @@ using DamageNumbersPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AI;
 
 public class Enemy : MonoBehaviour
 {
@@ -42,7 +41,6 @@ public class Enemy : MonoBehaviour
 	public Transform torsoTransform; // Used e.g. turret targeting
 	public DebuffManager debuffManager;
 
-	[SerializeField] private Animator animator; // In this script to update the velocity parameter
 	[SerializeField] private EnemyStateMachine stateMachine;
 	private GameObject player;
 
@@ -53,7 +51,7 @@ public class Enemy : MonoBehaviour
 
 	[Header("Navigation and movement")]
 	public EnemyNav enemyNavScript;
-	public NavMeshAgent navAgent;
+	public UnityEngine.AI.NavMeshAgent navAgent;
 	public float standUpMagnitude, standUpDelay;
 	public float movementSpeed;
 	public bool isCrawling = false;
@@ -123,7 +121,7 @@ public class Enemy : MonoBehaviour
 		UpdateEyeColor(); // Make sure that the eyes are correct at the start
 
 		// Make sure that the enemy is spawned on navmesh
-		if (enemyNavScript.IsAgentOnNavMesh(gameObject) == false) enemyNavScript.MoveToNavMesh();
+		if (enemyNavScript.IsAgentOnNavMesh() == false) enemyNavScript.MoveToNavMesh();
 	}
 
 	private void Start()
@@ -136,9 +134,6 @@ public class Enemy : MonoBehaviour
 		distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
 		CalculateSlows();
 		HandleSwinging();
-
-		//if (animator != null) animator.SetFloat("Locomotion", navAgent.velocity.magnitude / navAgent.speed);
-		if (animator != null) animator.SetFloat("Velocity", navAgent.velocity.magnitude / navAgent.speed);
 	}
 
 	private void FixedUpdate()
@@ -163,23 +158,31 @@ public class Enemy : MonoBehaviour
 		}
 	}
 
+	private float ragdollSettleStartTime = -1f;
+
 	private void CheckRagdollMagnitude()
 	{
-		if (!ragdolling || isDead) return;
-		// When magnitude has been low enough for certain time, stand up
-		if (bodyRB.linearVelocity.magnitude < standUpMagnitude && ragdolling && !standCountdownActive)
-		{
-			countdown = Time.time;
-			standCountdownActive = true;
-		}
-		else if (bodyRB.linearVelocity.magnitude > standUpMagnitude && ragdolling)
-		{
-			standCountdownActive = false;
-		}
+		if (!ragdolling || isDead)
+			return;
 
-		if (Time.time > countdown + standUpDelay && bodyRB.linearVelocity.magnitude < standUpMagnitude)
+		float currentSpeed = bodyRB.linearVelocity.magnitude;
+
+		// If velocity is below threshold, start (or continue) the settle timer.
+		if (currentSpeed < standUpMagnitude)
 		{
-			TurnOffRagdoll();
+			if (ragdollSettleStartTime < 0f)
+				ragdollSettleStartTime = Time.time;
+			else if (Time.time - ragdollSettleStartTime >= standUpDelay)
+			{
+				// Enough time has passed below the threshold; exit ragdoll.
+				TurnOffRagdoll();
+				ragdollSettleStartTime = -1f; // reset timer
+			}
+		}
+		else
+		{
+			// Velocity above threshold; reset the timer.
+			ragdollSettleStartTime = -1f;
 		}
 	}
 
@@ -216,20 +219,20 @@ public class Enemy : MonoBehaviour
 		Destroy(gameObject, 0f);
 	}
 
-	public void Stun(float duration)
-	{
-		if (ragdolling || isDead) return;
-		navAgent.isStopped = true;
-		animator.enabled = false;
-		Invoke(nameof(Unstun), duration);
-	}
-
-	public void Unstun()
-	{
-		if (ragdolling || isDead) return;
-		navAgent.isStopped = false;
-		animator.enabled = true;
-	}
+	//public void Stun(float duration)
+	//{
+	//	if (ragdolling || isDead) return;
+	//	navAgent.isStopped = true;
+	//	animator.enabled = false;
+	//	Invoke(nameof(Unstun), duration);
+	//}
+	//
+	//public void Unstun()
+	//{
+	//	if (ragdolling || isDead) return;
+	//	navAgent.isStopped = false;
+	//	animator.enabled = true;
+	//}
 
 	public void HandlePopup(int number, DamageType type = DamageType.Normal)
 	{
@@ -491,7 +494,6 @@ public class Enemy : MonoBehaviour
 				c.isTrigger = true;
 				ragdollParts.Add(c);
 			}
-
 		}
 	}
 
@@ -499,6 +501,7 @@ public class Enemy : MonoBehaviour
 	{
 		if (ragdolling) return;
 		ragdolling = true;
+		Debug.Log("Turning on ragdoll");
 
 		foreach (Rigidbody rb in rigidbodies)
 		{
@@ -517,8 +520,7 @@ public class Enemy : MonoBehaviour
 			navAgent.enabled = false;
 		}
 
-		standCountdownActive = false;
-		animator.enabled = false;
+		stateMachine.ChangeState(EnemyState.Ragdoll);
 	}
 
 	public void TurnOffRagdoll()
@@ -526,36 +528,42 @@ public class Enemy : MonoBehaviour
 		if (isDead || !ragdolling) return;
 		ragdolling = false;
 
+		Debug.Log("Turning off ragdoll");
+
+		isAttacking = false;
+
+		// Set all ragdoll rigidbodies to kinematic.
 		foreach (Rigidbody rb in rigidbodies)
 		{
 			rb.isKinematic = true;
 		}
-
+		// Set all ragdoll parts’ colliders to triggers.
 		foreach (Collider c in ragdollParts)
 		{
 			c.isTrigger = true;
 		}
 
-		transform.position = modelRoot.transform.position; //Enemy GO does not move with ragdoll, so do that when stop ragdoll
-		animator.enabled = true;
+		// Optionally, sync the enemy's transform to a reference (if needed)
+		// transform.position = modelRoot.transform.position;
 
-		// Re-enable and start the NavMesh agent
+		// Reposition onto the NavMesh.
+		if (enemyNavScript != null)
+		{
+			enemyNavScript.MoveToNavMesh();
+		}
+
+		// Re-enable the NavMeshAgent but keep it stopped.
 		if (navAgent != null)
 		{
 			navAgent.enabled = true;
 			navAgent.isStopped = true;
-			if (!isCrawling)
-			{
-				animator.Play("Stand up");
-				Invoke(nameof(ContinueAfterRagdoll), 2f);
-			}
-			else
-			{
-				animator.Play("Base Blend Tree Crawl");
-				Invoke(nameof(ContinueAfterRagdoll), 1f);
-			}
 		}
+
+		// Tell the state machine to start the standup process.
+		stateMachine.ChangeState(EnemyState.Standup);
 	}
+
+
 
 	private void ContinueAfterRagdoll()
 	{
@@ -593,28 +601,28 @@ public class Enemy : MonoBehaviour
 
 		// Choose the correct animation
 		// E.g., different anim if crawling or mirrored
-		if (!isCrawling)
-		{
-			if (Random.value < 0.5f)
-			{
-				animator.Play("Attack");
-			}
-			else
-			{
-				animator.Play("Attack Mirrored");
-			}
-		}
-		else
-		{
-			if (Random.value < 0.5f)
-			{
-				animator.Play("Attack Crawl");
-			}
-			else
-			{
-				animator.Play("Attack Crawl Mirrored");
-			}
-		}
+		//if (!isCrawling)
+		//{
+		//	if (Random.value < 0.5f)
+		//	{
+		//		animator.Play("Attack");
+		//	}
+		//	else
+		//	{
+		//		animator.Play("Attack Mirrored");
+		//	}
+		//}
+		//else
+		//{
+		//	if (Random.value < 0.5f)
+		//	{
+		//		animator.Play("Attack Crawl");
+		//	}
+		//	else
+		//	{
+		//		animator.Play("Attack Crawl Mirrored");
+		//	}
+		//}
 
 		// Wait until the "hit moment" in the animation
 		yield return new WaitForSeconds(attackHitTime);
@@ -656,7 +664,7 @@ public class Enemy : MonoBehaviour
 	{
 		// When any of part of the leg is destroyed, the zombie becomes a crawler
 		isCrawling = true;
-		animator.Play("Start Crawling");
+		//animator.Play("Start Crawling");
 
 		// Crawlers never can restore legs, so the ogMovementSpeed can be adjusted to avoid problems
 		ogMovementSpeed *= crawlingSpeedMultiplier;

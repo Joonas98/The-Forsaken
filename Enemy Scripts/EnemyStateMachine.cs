@@ -1,4 +1,6 @@
+using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 
 public enum EnemyState
 {
@@ -15,15 +17,19 @@ public enum EnemyState
 public class EnemyStateMachine : MonoBehaviour
 {
 	public EnemyState currentState;
-	private Animator animator;
-
-	// Reference to your base Enemy script which handles things like health, limb status, etc.
 	public Enemy enemyBase;
+	public NavMeshAgent navAgent;
+	public EnemyNav enemyNavScript;
+
+	private Animator animator;
+	private bool spawnAnimationStarted = false;
 
 	void Awake()
 	{
 		animator = GetComponent<Animator>();
-		enemyBase = GetComponent<Enemy>();  // Assumes both scripts are on the same GameObject.
+		enemyBase = GetComponent<Enemy>();
+		if (navAgent == null)
+			navAgent = GetComponent<NavMeshAgent>();
 	}
 
 	void Start()
@@ -33,6 +39,11 @@ public class EnemyStateMachine : MonoBehaviour
 
 	void Update()
 	{
+		// Update the Velocity parameter if you use it in your Animator.
+		if (animator != null && navAgent != null)
+			animator.SetFloat("Velocity", navAgent.velocity.magnitude / (navAgent.speed > 0 ? navAgent.speed : 1));
+
+		// Execute state-specific logic.
 		switch (currentState)
 		{
 			case EnemyState.Spawn:
@@ -62,27 +73,42 @@ public class EnemyStateMachine : MonoBehaviour
 		}
 	}
 
-	void ChangeState(EnemyState newState)
+	public void ChangeState(EnemyState newState)
 	{
 		currentState = newState;
-		// Optionally reset timers or trigger transition-specific logic here.
+		if (newState == EnemyState.Spawn)
+		{
+			spawnAnimationStarted = false;
+		}
 	}
 
 	void HandleSpawn()
 	{
-		// Choose appropriate spawn animation based on crawling status
-		animator.Play("Spawn");
-		// Once spawn animation is finished, transition to Idle.
+		// Stop movement during spawn.
+		navAgent.isStopped = true;
+		navAgent.ResetPath();
+
+		if (!spawnAnimationStarted)
+		{
+			animator.Play("Spawn");
+			spawnAnimationStarted = true;
+		}
+
+		// Once the spawn animation finishes, re-enable movement and transition.
 		if (AnimationFinished("Spawn"))
 		{
+			navAgent.isStopped = false;
 			ChangeState(EnemyState.Chase);
 		}
 	}
 
 	void HandleChase()
 	{
-		animator.Play(enemyBase.isCrawling ? "Chase_Crawl" : "Chase");
-		if (enemyBase.isAttacking = true)
+		// Play the appropriate chase animation.
+		animator.Play(enemyBase.isCrawling ? "Base Blend Tree Crawl" : "Blend Tree Flailing Arms");
+
+		// Transition to Attack if the base script sets isAttacking.
+		if (enemyBase.isAttacking)
 		{
 			ChangeState(EnemyState.Attack);
 		}
@@ -117,74 +143,111 @@ public class EnemyStateMachine : MonoBehaviour
 
 	void HandleRagdoll()
 	{
-		// Ragdoll state might use physics-based simulation.
-		if (RagdollFinished())
-		{
-			ChangeState(EnemyState.Standup);
-		}
+		// Disable the animator so physics control the ragdoll.
+		if (animator.enabled)
+			animator.enabled = false;
+		// No further action here—your Enemy.cs ragdoll detection (via TurnOffRagdoll)
+		// will call ChangeState(EnemyState.Standup) once the ragdoll is settled.
 	}
+
+	private bool standupInitiated = false;
+
+	private bool standupNavRepositioned = false;
 
 	void HandleStandup()
 	{
-		// Crawling enemies can't stand up, so they skip this state.
+		// If the enemy is crawling, skip standup.
 		if (enemyBase.isCrawling)
 		{
+			standupInitiated = false;
+			standupNavRepositioned = false;
 			ChangeState(EnemyState.Chase);
 			return;
 		}
 
-		animator.Play("Stand up");
+		// Only call MoveToNavMesh once.
+		if (!standupNavRepositioned && !enemyBase.enemyNavScript.IsAgentOnNavMesh())
+		{
+			enemyBase.enemyNavScript.MoveToNavMesh();
+			standupNavRepositioned = true;
+		}
+
+		// Ensure the animator is enabled.
+		if (!animator.enabled)
+		{
+			animator.enabled = true;
+		}
+
+		// Only trigger the standup animation once.
+		if (!standupInitiated)
+		{
+			animator.CrossFade("Stand up", 0.2f);
+			standupInitiated = true;
+			Debug.Log("Standup initiated.");
+		}
+		else
+		{
+			//Debug.Log("Standup in progress.");
+		}
+
+		// Check if the standup animation has finished.
 		if (StandupFinished())
 		{
+			animator.Play("Idle");
+			navAgent.isStopped = false;
 			ChangeState(EnemyState.Chase);
+			standupInitiated = false;
+			standupNavRepositioned = false;
+			enemyNavScript.MoveToNavMesh();
+			Debug.Log("Standup finished; transitioning to Chase.");
 		}
 	}
 
+
 	void HandleDead()
 	{
-		// Actions done in the enemy base class
+		// Optionally play a death animation or freeze the state.
 	}
 
+	// Returns true if the specified non-looping animation has finished.
 	bool AnimationFinished(string animationName)
 	{
-		// Remember, the parameter specifies the animator layer here
 		AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-
-		// Check if the current state's name matches and its normalized time is 1 or greater.
-		// Note: normalizedTime is a float where 1.0 means the animation has finished one full play-through.
-		// For looping animations, this value can exceed 1, so ensure your animations are non-looping if using this method.
 		return stateInfo.IsName(animationName) && stateInfo.normalizedTime >= 1f;
 	}
 
-	bool InAttackRange()
+	public IEnumerator BlendToStandup()
 	{
-		// Implement your logic for determining attack range.
-		return false; // Placeholder
+		// Disable NavMeshAgent movement while blending.
+		navAgent.isStopped = true;
+
+		// Crossfade from current pose to "Stand up" animation over a short duration.
+		animator.CrossFade("Stand up", 0.2f);
+
+		// Wait for a bit longer than the blend duration.
+		yield return new WaitForSeconds(0.3f);
+
+		// Now wait until the "Stand up" animation has finished.
+		while (!StandupFinished())
+		{
+			yield return null;
+		}
+
+		// Transition to Idle (or Chase) after standup.
+		animator.Play("Idle");
+		navAgent.isStopped = false;
+		ChangeState(EnemyState.Chase);
 	}
 
-	bool AttackFinished()
-	{
-		// Check if the attack animation or process is finished.
-		return true; // Placeholder
-	}
-
-	bool KnockbackFinished()
-	{
-		return true; // Placeholder
-	}
-
-	bool ElectrocutionFinished()
-	{
-		return true; // Placeholder
-	}
-
-	bool RagdollFinished()
-	{
-		return true; // Placeholder
-	}
-
+	// Placeholder methods—you need to implement these based on your game's logic.
+	bool AttackFinished() { return true; }
+	bool KnockbackFinished() { return true; }
+	bool ElectrocutionFinished() { return true; }
 	bool StandupFinished()
 	{
-		return true; // Placeholder
+		AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+		// Ensure "Stand up" is non-looping; normalizedTime >= 1 means it finished one play-through.
+		return stateInfo.IsName("Stand up") && stateInfo.normalizedTime >= 1f;
 	}
+
 }
