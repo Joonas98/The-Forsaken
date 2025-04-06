@@ -39,7 +39,6 @@ public class EnemyNav : MonoBehaviour
 		if (!IsAgentOnNavMesh())
 		{
 			MoveToNavMesh();
-			Debug.Log("Enemy moved to navmesh");
 		}
 	}
 
@@ -48,27 +47,32 @@ public class EnemyNav : MonoBehaviour
 		if (!navAgent.isActiveAndEnabled)
 			return;
 
-		// Only update destination if not ragdolling and not in Standup state.
-		if (!enemy.ragdolling && stateMachine.currentState != EnemyState.Standup)
+		if (!enemy.ragdolling && stateMachine.currentState == EnemyState.Chase)
 		{
-			// Only set destination if the agent is on the NavMesh.
-			if (IsAgentOnNavMesh())
-			{
-				navAgent.SetDestination(targetLocation.position);
-			}
-			else
-			{
-				// Log a warning but don't reposition here.
-				MoveToNavMesh();
-				Debug.LogWarning("Enemy is off NavMesh, but repositioning is handled only at spawn or after ragdoll.");
-			}
+			navAgent.SetDestination(targetLocation.position);
 		}
-	}
 
+		// 5.4.2025 - This is valid code, but for some reason causes enemies to be super janky
+		// Only update destination if not ragdolling and not in Standup state.
+		//	if (!enemy.ragdolling && stateMachine.currentState != EnemyState.Standup)
+		//	{
+		//		// Only set destination if the agent is on the NavMesh.
+		//		if (IsAgentOnNavMesh())
+		//		{
+		//			navAgent.SetDestination(targetLocation.position);
+		//		}
+		//		else
+		//		{
+		//			// Log a warning but don't reposition here.
+		//			MoveToNavMesh();
+		//			Debug.LogWarning("Enemy is off NavMesh, but repositioning is handled only at spawn or after ragdoll.");
+		//		}
+		//	}
+	}
 
 	private void Update()
 	{
-		SynchronizeAnimatorAndAgent();
+		if (!enemy.ragdolling && stateMachine.currentState != EnemyState.Ragdoll) SynchronizeAnimatorAndAgent();
 		// Debug.Log("Enemy speed: " + navAgent.speed.ToString());
 	}
 
@@ -92,7 +96,6 @@ public class EnemyNav : MonoBehaviour
 
 	public void MoveToNavMesh()
 	{
-		Debug.Log("Moved enemy to navmesh");
 		NavMeshHit hit;
 		if (NavMesh.SamplePosition(transform.position, out hit, 2.0f, NavMesh.AllAreas))
 		{
@@ -107,7 +110,7 @@ public class EnemyNav : MonoBehaviour
 
 	private void SynchronizeAnimatorAndAgent()
 	{
-		if (stateMachine.currentState == EnemyState.Ragdoll) return;
+		if (stateMachine.currentState == EnemyState.Ragdoll || enemy.ragdolling) return;
 
 		Vector3 worldDeltaPosition = navAgent.nextPosition - transform.position;
 		worldDeltaPosition.y = 0;

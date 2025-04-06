@@ -30,7 +30,7 @@ public class NewCanvasManager : MonoBehaviour
 	private void ToggleMenu(MenuType menuType)
 	{
 		// Prevent menu changing when purchase confirmation window is open
-		if (confirmPurchaseModalWindow.GetComponent<CanvasGroup>().alpha > 0) return;
+		if (confirmPurchaseModalWindow.GetComponent<CanvasGroup>().alpha > 0.05) return;
 
 		if (currentMenu == menuType)
 		{
@@ -76,7 +76,7 @@ public class NewCanvasManager : MonoBehaviour
 		currentMenu = MenuType.None;
 	}
 
-	private void CloseAllMenus()
+	public void CloseAllMenus()
 	{
 		shopCanvas.SetActive(false);
 		pauseCanvas.SetActive(false);
@@ -107,6 +107,9 @@ public class NewCanvasManager : MonoBehaviour
 
 	public void ResumeButton()
 	{
+		// Prevent bugs
+		if (confirmPurchaseModalWindow.GetComponent<CanvasGroup>().alpha > 0.05) return;
+
 		CloseMenu();
 		PauseGame(false);
 	}

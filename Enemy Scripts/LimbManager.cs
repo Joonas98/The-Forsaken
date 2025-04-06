@@ -38,7 +38,7 @@ public class LimbManager : MonoBehaviour
 
 	[Header("Audio")]
 	public AudioSource audioSource;
-	public AudioClip decapitationSound;
+	public AudioClip[] decapitationSounds;
 	public AudioClip[] dismembermentSounds;
 
 	public void RemoveLimb(Limb limb)
@@ -64,7 +64,7 @@ public class LimbManager : MonoBehaviour
 					headCollider.enabled = false;
 				}
 
-				audioSource.PlayOneShot(decapitationSound, 10f);
+				audioSource.PlayOneShot(decapitationSounds[Random.Range(0, decapitationSounds.Length)], 10f);
 				isHead = true;
 				break;
 

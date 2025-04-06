@@ -45,7 +45,7 @@ public class WaveSpawner : MonoBehaviour
 			RaycastHit hit;
 
 			// Perform the raycast
-			if (Physics.Raycast(ray, out hit))
+			if (Physics.Raycast(ray, out hit, 10000f, groundLayer))
 			{
 				// Check if the ray hit something
 				if (hit.collider != null)

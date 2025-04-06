@@ -146,13 +146,13 @@ public class EnemyStateMachine : MonoBehaviour
 		// Disable the animator so physics control the ragdoll.
 		if (animator.enabled)
 			animator.enabled = false;
+
+		//navAgent.isStopped = true;
 		// No further action here—your Enemy.cs ragdoll detection (via TurnOffRagdoll)
 		// will call ChangeState(EnemyState.Standup) once the ragdoll is settled.
 	}
 
 	private bool standupInitiated = false;
-
-	private bool standupNavRepositioned = false;
 
 	void HandleStandup()
 	{
@@ -160,16 +160,8 @@ public class EnemyStateMachine : MonoBehaviour
 		if (enemyBase.isCrawling)
 		{
 			standupInitiated = false;
-			standupNavRepositioned = false;
 			ChangeState(EnemyState.Chase);
 			return;
-		}
-
-		// Only call MoveToNavMesh once.
-		if (!standupNavRepositioned && !enemyBase.enemyNavScript.IsAgentOnNavMesh())
-		{
-			enemyBase.enemyNavScript.MoveToNavMesh();
-			standupNavRepositioned = true;
 		}
 
 		// Ensure the animator is enabled.
@@ -183,7 +175,6 @@ public class EnemyStateMachine : MonoBehaviour
 		{
 			animator.CrossFade("Stand up", 0.2f);
 			standupInitiated = true;
-			Debug.Log("Standup initiated.");
 		}
 		else
 		{
@@ -193,13 +184,11 @@ public class EnemyStateMachine : MonoBehaviour
 		// Check if the standup animation has finished.
 		if (StandupFinished())
 		{
-			animator.Play("Idle");
+			animator.Play("Blend Tree Flailing Arms");
+			enemyNavScript.MoveToNavMesh();
 			navAgent.isStopped = false;
 			ChangeState(EnemyState.Chase);
 			standupInitiated = false;
-			standupNavRepositioned = false;
-			enemyNavScript.MoveToNavMesh();
-			Debug.Log("Standup finished; transitioning to Chase.");
 		}
 	}
 

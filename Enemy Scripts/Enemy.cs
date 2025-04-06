@@ -131,6 +131,7 @@ public class Enemy : MonoBehaviour
 
 	private void Update()
 	{
+		//Debug.Log("Navagent isStopped: " + navAgent.isStopped);
 		distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
 		CalculateSlows();
 		HandleSwinging();
@@ -501,7 +502,6 @@ public class Enemy : MonoBehaviour
 	{
 		if (ragdolling) return;
 		ragdolling = true;
-		Debug.Log("Turning on ragdoll");
 
 		foreach (Rigidbody rb in rigidbodies)
 		{
@@ -528,8 +528,6 @@ public class Enemy : MonoBehaviour
 		if (isDead || !ragdolling) return;
 		ragdolling = false;
 
-		Debug.Log("Turning off ragdoll");
-
 		isAttacking = false;
 
 		// Set all ragdoll rigidbodies to kinematic.
@@ -543,16 +541,9 @@ public class Enemy : MonoBehaviour
 			c.isTrigger = true;
 		}
 
-		// Optionally, sync the enemy's transform to a reference (if needed)
-		// transform.position = modelRoot.transform.position;
+		// CRITICAL !!! We need to set the actual game object to the ragdolling body
+		transform.position = modelRoot.transform.position;
 
-		// Reposition onto the NavMesh.
-		if (enemyNavScript != null)
-		{
-			enemyNavScript.MoveToNavMesh();
-		}
-
-		// Re-enable the NavMeshAgent but keep it stopped.
 		if (navAgent != null)
 		{
 			navAgent.enabled = true;
@@ -577,88 +568,76 @@ public class Enemy : MonoBehaviour
 
 	private void HandleSwinging()
 	{
-		if (distanceToPlayer < attackDistance && canAttack && !isAttacking)
+		if (isDead) return;
+
+		if (distanceToPlayer < attackDistance)
 		{
-			// Start the attack
-			StartCoroutine(AttackRoutine());
+			// Start the attack if allowed.
+			if (canAttack && !isAttacking)
+				StartCoroutine(AttackRoutine());
+
+			// Rotate the enemy towards the player.
+			Vector3 directionToPlayer = (player.transform.position - transform.position).normalized;
+			// Ignore vertical difference:
+			directionToPlayer.y = 0f;
+			if (directionToPlayer != Vector3.zero)
+			{
+				Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
+
+				// Slerp towards the target rotation over time.
+				// HARD CODED ROTATION SPEED
+				transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+			}
 		}
 	}
 
 	private IEnumerator AttackRoutine()
 	{
-		if (isDead || ragdolling)
+		if (isDead || stateMachine.currentState == EnemyState.Ragdoll || stateMachine.currentState == EnemyState.Standup || stateMachine.currentState == EnemyState.Spawn)
 			yield break;
 
-		isAttacking = true;   // We are in the middle of an attack
-		canAttack = false;    // Disallow immediate re-attack
+		isAttacking = true;
+		canAttack = false;
 
-		// Optionally play random attack sound (only sometimes)
-		if (!isDead && !ragdolling && Random.Range(0, 3) == 1)
+		try
 		{
-			int raIndex = Random.Range(0, attackSounds.Length);
-			audioSource.PlayOneShot(attackSounds[raIndex]);
+			// Optionally play attack sound, etc.
+			if (!isDead && stateMachine.currentState != EnemyState.Ragdoll && Random.Range(0, 3) == 1)
+			{
+				int raIndex = Random.Range(0, attackSounds.Length);
+				audioSource.PlayOneShot(attackSounds[raIndex]);
+			}
+
+			// Wait until the "hit moment" in the animation.
+			yield return new WaitForSeconds(attackHitTime);
+
+			// If we go ragdoll in the meantime, abort.
+			if (isDead || stateMachine.currentState == EnemyState.Ragdoll)
+				yield break;
+
+			// Check distance and apply damage.
+			distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
+			if (distanceToPlayer < attackDistance && !isDead && !ragdolling)
+			{
+				GameManager.GM.playerScript.TakeDamage(damage);
+				PlayerMovement playerMovement = GameManager.GM.playerScript.GetComponent<PlayerMovement>();
+				playerMovement.ApplySpeedEffect(0.50f, 0.5f);
+			}
+
+			// Wait for the rest of the animation.
+			yield return new WaitForSeconds(attackAnimationTime - attackHitTime);
+
+			if (isDead || stateMachine.currentState == EnemyState.Ragdoll)
+				yield break;
 		}
-
-		// Choose the correct animation
-		// E.g., different anim if crawling or mirrored
-		//if (!isCrawling)
-		//{
-		//	if (Random.value < 0.5f)
-		//	{
-		//		animator.Play("Attack");
-		//	}
-		//	else
-		//	{
-		//		animator.Play("Attack Mirrored");
-		//	}
-		//}
-		//else
-		//{
-		//	if (Random.value < 0.5f)
-		//	{
-		//		animator.Play("Attack Crawl");
-		//	}
-		//	else
-		//	{
-		//		animator.Play("Attack Crawl Mirrored");
-		//	}
-		//}
-
-		// Wait until the "hit moment" in the animation
-		yield return new WaitForSeconds(attackHitTime);
-
-		// Check again if still alive and not ragdolling
-		if (isDead || ragdolling)
+		finally
 		{
+			// Always reset these flags no matter how we exit.
 			isAttacking = false;
-			yield break;
+			canAttack = true;
 		}
-
-		// Check distance again, in case the player moved
-		distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
-		if (distanceToPlayer < attackDistance && !isDead && !ragdolling)
-		{
-			// Apply damage
-			GameManager.GM.playerScript.TakeDamage(damage);
-
-			// Optionally slow player down or apply some effect
-			PlayerMovement playerMovement = GameManager.GM.playerScript.GetComponent<PlayerMovement>();
-			playerMovement.ApplySpeedEffect(0.50f, 0.5f);
-		}
-
-		// Now wait for the rest of the animation to finish
-		yield return new WaitForSeconds(attackAnimationTime - attackHitTime);
-
-		// Final check
-		if (isDead || ragdolling)
-		{
-			yield break;
-		}
-
-		// Attack is done, allow next attack
-		isAttacking = false;
-		canAttack = true;
 	}
+
 
 	public void StartCrawling()
 	{
