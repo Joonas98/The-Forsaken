@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class VisualRecoil : MonoBehaviour
 {
-	private bool aiming;
 	private Vector3 currentRotation, targetRotation, targetPosition, currentPosition, gunPositionOG;
 
 	private void Start()
@@ -14,7 +13,6 @@ public class VisualRecoil : MonoBehaviour
 	{
 		// Note, this is only for guns, not melee weapons
 		if (GameManager.GM.currentGun == null) return;
-		aiming = GameManager.GM.currentGunAiming;
 		targetRotation = Vector3.Lerp(targetRotation, Vector3.zero, Time.deltaTime * GameManager.GM.currentGun.vireReturn);
 		currentRotation = Vector3.Slerp(currentRotation, targetRotation, Time.fixedDeltaTime * GameManager.GM.currentGun.vireSnap);
 		transform.localRotation = Quaternion.Euler(currentRotation);
@@ -23,7 +21,7 @@ public class VisualRecoil : MonoBehaviour
 
 	public void Recoil()
 	{
-		if (aiming)
+		if (GameManager.GM.CurrentGunAiming())
 		{
 			targetPosition -= new Vector3(0, 0, GameManager.GM.currentGun.vireKick * 0.2f);
 			targetRotation += new Vector3(Random.Range(-GameManager.GM.currentGun.vire.x * 0.35f, GameManager.GM.currentGun.vire.x * 0.35f),
@@ -41,7 +39,7 @@ public class VisualRecoil : MonoBehaviour
 
 	void Back()
 	{
-		if (aiming)
+		if (GameManager.GM.CurrentGunAiming())
 		{
 			targetPosition = Vector3.Lerp(targetPosition, gunPositionOG, Time.deltaTime * GameManager.GM.currentGun.vireReturn * 4);
 			currentPosition = Vector3.Lerp(currentPosition, targetPosition, Time.fixedDeltaTime * GameManager.GM.currentGun.vireSnap * 2);

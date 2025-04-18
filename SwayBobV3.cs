@@ -125,7 +125,7 @@ public class SwayBobV3 : MonoBehaviour
 	private void CombineEffects()
 	{
 		// When aiming, there should be no sway and bob 
-		if (GameManager.GM.currentGunAiming)
+		if (GameManager.GM.CurrentGunAiming())
 		{
 			finalOffset = Vector3.zero;
 			tiltOffset = Vector3.zero;

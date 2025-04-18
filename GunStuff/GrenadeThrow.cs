@@ -85,7 +85,7 @@ public class GrenadeThrow : MonoBehaviour
 		}
 
 		Rigidbody rb = newGrenade.GetComponent<Rigidbody>();
-		rb.AddForce(transform.forward * throwForce);
+		rb.AddForce(newGrenade.transform.forward * throwForce);
 
 		PlayerInventory.instance.HandleGrenades(selectedGrenade, -1);
 	}

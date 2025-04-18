@@ -204,6 +204,10 @@ public class Enemy : MonoBehaviour
 			rb.linearVelocity = new Vector3(0, 0, 0);
 		}
 
+		// Extra effects for making kills more satisfying
+		FovController.Instance.PulseFov(-45, 0.05f, 0.2f);
+		PostProcessingController.TriggerKillEffect();
+
 		GameManager.GM.enemyCount--;
 		GameManager.GM.UpdateEnemyCount();
 		GameManager.GM.AdjustMoney(moneyReward);
@@ -498,6 +502,34 @@ public class Enemy : MonoBehaviour
 		}
 	}
 
+	// 13.4.2025: Stagger once -> knockback animation. 
+	// Stagger on an enemy already in knockback -> ragdoll.
+	public void ApplyStagger(bool ragdollDirectly = false)
+	{
+		// If we want to bypass knockback, go directly to ragdoll.
+		if (ragdollDirectly)
+		{
+			TurnOnRagdoll();
+			return;
+		}
+
+		// If the enemy is already in Knockback, escalate to ragdoll.
+		if (stateMachine.currentState == EnemyState.Knockback)
+		{
+			TurnOnRagdoll();
+			return;
+		}
+
+		// Cancel any ongoing attack coroutine.
+		StopCoroutine("AttackRoutine");
+
+		// Also, clear the attacking flag.
+		isAttacking = false;
+
+		// Change state to Knockback.
+		stateMachine.ChangeState(EnemyState.Knockback);
+	}
+
 	public void TurnOnRagdoll()
 	{
 		if (ragdolling) return;
@@ -568,7 +600,8 @@ public class Enemy : MonoBehaviour
 
 	private void HandleSwinging()
 	{
-		if (isDead) return;
+		if (isDead || ragdolling) return;
+		if (stateMachine.currentState != EnemyState.Chase && stateMachine.currentState != EnemyState.Attack) return;
 
 		if (distanceToPlayer < attackDistance)
 		{
@@ -593,29 +626,43 @@ public class Enemy : MonoBehaviour
 
 	private IEnumerator AttackRoutine()
 	{
-		if (isDead || stateMachine.currentState == EnemyState.Ragdoll || stateMachine.currentState == EnemyState.Standup || stateMachine.currentState == EnemyState.Spawn)
+		// Abort if the enemy is dead or if its state is not allowed for attacking.
+		if (isDead ||
+			stateMachine.currentState == EnemyState.Ragdoll ||
+			stateMachine.currentState == EnemyState.Standup ||
+			stateMachine.currentState == EnemyState.Spawn ||
+			stateMachine.currentState == EnemyState.Knockback)
+		{
 			yield break;
+		}
 
 		isAttacking = true;
 		canAttack = false;
 
 		try
 		{
-			// Optionally play attack sound, etc.
-			if (!isDead && stateMachine.currentState != EnemyState.Ragdoll && Random.Range(0, 3) == 1)
+			// Optionally play an attack sound, as long as we're not in a disallowed state.
+			if (!isDead &&
+				stateMachine.currentState != EnemyState.Ragdoll &&
+				stateMachine.currentState != EnemyState.Knockback &&
+				Random.Range(0, 3) == 1)
 			{
 				int raIndex = Random.Range(0, attackSounds.Length);
 				audioSource.PlayOneShot(attackSounds[raIndex]);
 			}
 
-			// Wait until the "hit moment" in the animation.
+			// Wait until the "hit moment" in the attack animation.
 			yield return new WaitForSeconds(attackHitTime);
 
-			// If we go ragdoll in the meantime, abort.
-			if (isDead || stateMachine.currentState == EnemyState.Ragdoll)
+			// Abort if the state has transitioned to a disallowed state.
+			if (isDead ||
+				stateMachine.currentState == EnemyState.Ragdoll ||
+				stateMachine.currentState == EnemyState.Knockback)
+			{
 				yield break;
+			}
 
-			// Check distance and apply damage.
+			// Check if the player is within range and apply damage.
 			distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
 			if (distanceToPlayer < attackDistance && !isDead && !ragdolling)
 			{
@@ -624,15 +671,20 @@ public class Enemy : MonoBehaviour
 				playerMovement.ApplySpeedEffect(0.50f, 0.5f);
 			}
 
-			// Wait for the rest of the animation.
+			// Wait for the remainder of the attack animation.
 			yield return new WaitForSeconds(attackAnimationTime - attackHitTime);
 
-			if (isDead || stateMachine.currentState == EnemyState.Ragdoll)
+			// Final check before finishing.
+			if (isDead ||
+				stateMachine.currentState == EnemyState.Ragdoll ||
+				stateMachine.currentState == EnemyState.Knockback)
+			{
 				yield break;
+			}
 		}
 		finally
 		{
-			// Always reset these flags no matter how we exit.
+			// Always reset these flags regardless of how we exit the coroutine.
 			isAttacking = false;
 			canAttack = true;
 		}

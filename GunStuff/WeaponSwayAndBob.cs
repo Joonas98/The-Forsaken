@@ -160,7 +160,7 @@ public class WeaponSwayAndBob : MonoBehaviour
 
 	void CompositePositionRotation()
 	{
-		if (disableSwayBob || (GameManager.GM.currentGun != null && GameManager.GM.currentGunAiming))
+		if (disableSwayBob || (GameManager.GM.currentGun != null && GameManager.GM.CurrentGunAiming()))
 		{
 			// Lerp towards zero
 			transform.SetLocalPositionAndRotation(Vector3.Lerp(transform.localPosition, Vector3.zero, Time.deltaTime * smooth),

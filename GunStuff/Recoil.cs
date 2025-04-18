@@ -60,19 +60,19 @@ public class Recoil : MonoBehaviour
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec1;
 		}
-		else if (movementScript.isGrounded && !movementScript.isStationary && !GameManager.GM.currentGunAiming) // Grounded, moving, not aiming
+		else if (movementScript.isGrounded && !movementScript.isStationary && !GameManager.GM.CurrentGunAiming()) // Grounded, moving, not aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec2;
 		}
-		else if (movementScript.isGrounded && !movementScript.isStationary && GameManager.GM.currentGunAiming) // Grounded, moving, aiming
+		else if (movementScript.isGrounded && !movementScript.isStationary && GameManager.GM.CurrentGunAiming()) // Grounded, moving, aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec3;
 		}
-		else if (movementScript.isGrounded && movementScript.isStationary && !GameManager.GM.currentGunAiming) // Grounded, not moving, not aiming
+		else if (movementScript.isGrounded && movementScript.isStationary && !GameManager.GM.CurrentGunAiming()) // Grounded, not moving, not aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec4;
 		}
-		else if (movementScript.isGrounded && movementScript.isStationary && GameManager.GM.currentGunAiming)  // Grounded, not moving, aiming
+		else if (movementScript.isGrounded && movementScript.isStationary && GameManager.GM.CurrentGunAiming())  // Grounded, not moving, aiming
 		{
 			recoilMultiplier = GameManager.GM.currentGun.rec5;
 		}

@@ -36,7 +36,7 @@ public class Explosive : MonoBehaviour
 					enemy.TakeDamage(roundedDamage);
 					damagedEnemies.Add(enemy);
 
-					if (activateRagdoll) enemy.TurnOnRagdoll();
+					if (activateRagdoll) enemy.ApplyStagger();
 
 					// if (canDismember)
 					// {

@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -97,10 +96,8 @@ public class Grenade : MonoBehaviour
 					enemy.TakeDamage(roundedDamage);
 					damagedEnemies.Add(enemy);
 
-					//  if (activateRagdoll) enemy.TurnOnRagdoll();
-					// New ragdoll script
-					//if (activateRagdoll) enemy.GetComponent<RagdollManager>().TurnOnRagdoll();
-					if (enemy != null) enemy.TurnOnRagdoll();
+					//if (enemy != null) enemy.TurnOnRagdoll();
+					if (enemy != null) enemy.ApplyStagger();
 
 					// Damage limbs
 					LimbManager limbScript = enemy.GetComponent<LimbManager>();

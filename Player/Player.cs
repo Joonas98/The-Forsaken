@@ -145,7 +145,7 @@ public class Player : MonoBehaviour
 
 			if (enemy != null && !enemy.isDead && !damagedEnemies.Contains(enemy))
 			{
-				enemy.TurnOnRagdoll();
+				enemy.ApplyStagger();
 				enemy.TakeDamage(kickDamage);
 				damagedEnemies.Add(enemy);
 			}
@@ -178,6 +178,7 @@ public class Player : MonoBehaviour
 
 		regenSymbol.SetActive(false);
 		Recoil.Instance.DamageFlinch(flinchMultiplier);
+		PostProcessingController.TriggerDamageFlash();
 	}
 
 	// This method applies instant healing (e.g. from a health pickup)

@@ -485,7 +485,8 @@ public class Gun : Weapon
 				if (UnityEngine.Random.value < 0.25f) // 25% chance
 				{
 					if (enemy.isDead) return;
-					enemy.TurnOnRagdoll();
+					//enemy.TurnOnRagdoll();
+					enemy.ApplyStagger();
 					// TODO FIX DUE TO ABILITY REWORK 7.12.2024
 					//audioSource.PlayOneShot(AbilityMaster.instance.abilitiesList[6].activateSFX);
 				}
@@ -648,7 +649,7 @@ public class Gun : Weapon
 
 	IEnumerator WaitActionAnimation(float r)
 	{
-		yield return new WaitForSeconds(r + 0.05f);
+		yield return new WaitForSeconds(r + 0.01f);
 		playingAction = false;
 	}
 

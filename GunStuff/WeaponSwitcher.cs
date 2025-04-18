@@ -32,9 +32,9 @@ public class WeaponSwitcher : MonoBehaviour
 
 	void Update()
 	{
-		int previousSelectedWeapon = selectedWeapon;
-
 		if (!canSwitchWeapon) return;
+
+		int previousSelectedWeapon = selectedWeapon;
 
 		#region Wheel Selection
 		if (Input.GetAxis("Mouse ScrollWheel") > 0f)
@@ -161,7 +161,10 @@ public class WeaponSwitcher : MonoBehaviour
 
 		// Update the ammo hud
 		if (currentGun != null)
+		{
 			AmmoHUD.Instance.UpdateAmmoHUD(currentGun.currentMagazine, currentGun.magazineSize);
+			currentGun.isReloading = false; // Bug prevention
+		}
 	}
 
 	public static void CanSwitch(bool boolean)

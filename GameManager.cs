@@ -69,7 +69,6 @@ public class GameManager : MonoBehaviour
 	{
 		HandleKeybinds();
 		HandleAbilities();
-		if (currentGun != null) currentGunAiming = currentGun.isAiming;
 	}
 
 	public void HandleKeybinds()
@@ -100,9 +99,16 @@ public class GameManager : MonoBehaviour
 		}
 	}
 
+	public bool CurrentGunAiming()
+	{
+		if (currentGun == null) return false;
+		if (!currentGun.isAiming) return false;
+		return true;
+	}
+
 	public void HandleAbilities()
 	{
-		if (GetCurrentGun() != null && currentGunAiming)
+		if (GetCurrentGun() != null && CurrentGunAiming())
 		{
 			aimingSymbol.SetActive(true);
 		}

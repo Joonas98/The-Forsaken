@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -49,7 +48,7 @@ public class HitmarkAndCrosshair : MonoBehaviour
 
 	public void UpdateCrosshair()
 	{
-		if (GameManager.GM.currentGunAiming) crosshairImageGO.SetActive(false);
+		if (GameManager.GM.CurrentGunAiming()) crosshairImageGO.SetActive(false);
 		else crosshairImageGO.SetActive(true);
 	}
 

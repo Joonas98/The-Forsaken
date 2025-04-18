@@ -75,10 +75,22 @@ public class EnemyStateMachine : MonoBehaviour
 
 	public void ChangeState(EnemyState newState)
 	{
+		// If we are leaving Knockback, restore the upper body layer weight.
+		if (currentState == EnemyState.Knockback && newState != EnemyState.Knockback)
+		{
+			animator.SetLayerWeight(attackLayerIndex, 1f);
+			knockbackInitiated = false;  // also reset the knockback flag
+		}
+
 		currentState = newState;
 		if (newState == EnemyState.Spawn)
 		{
 			spawnAnimationStarted = false;
+		}
+
+		if (newState == EnemyState.Chase)
+		{
+			if (!navAgent.isActiveAndEnabled) navAgent.enabled = true;
 		}
 	}
 
@@ -123,14 +135,41 @@ public class EnemyStateMachine : MonoBehaviour
 		}
 	}
 
+	[SerializeField] private int attackLayerIndex = 1;
+	private bool knockbackInitiated = false;
+
 	void HandleKnockback()
 	{
-		animator.Play(enemyBase.isCrawling ? "Knockback_Crawl" : "Knockback");
+		// Ensure the enemy does not move during knockback.
+		if (navAgent != null)
+			navAgent.isStopped = true;
+
+		// Cancel any ongoing attack.
+		enemyBase.isAttacking = false;
+
+		// Disable the attack layer by setting its weight to zero.
+		animator.SetLayerWeight(attackLayerIndex, 0f);
+
+		// Trigger the knockback animation only once.
+		if (!knockbackInitiated)
+		{
+			string animName = enemyBase.isCrawling ? "Knockback_Crawl" : "Knockback";
+			animator.Play(animName, 0, 0f);
+			knockbackInitiated = true;
+		}
+
+		// Check if the knockback animation has finished.
 		if (KnockbackFinished())
 		{
+			if (navAgent != null)
+				navAgent.isStopped = false;
+			// Restore the upper body attack layer weight so that future attacks work.
+			animator.SetLayerWeight(attackLayerIndex, 1f);
 			ChangeState(EnemyState.Chase);
+			knockbackInitiated = false;
 		}
 	}
+
 
 	void HandleElectrocuted()
 	{
@@ -143,7 +182,9 @@ public class EnemyStateMachine : MonoBehaviour
 
 	void HandleRagdoll()
 	{
-		// Disable the animator so physics control the ragdoll.
+		// Set to standup animation to have the correct pose when re-enabling animator
+		if (!animator.enabled) animator.Play("Stand up");
+
 		if (animator.enabled)
 			animator.enabled = false;
 
@@ -164,27 +205,31 @@ public class EnemyStateMachine : MonoBehaviour
 			return;
 		}
 
+		// Ensure that the enemy is on the NavMesh.
+		if (!enemyBase.enemyNavScript.IsAgentOnNavMesh())
+		{
+			enemyBase.enemyNavScript.MoveToNavMesh();
+		}
+
 		// Ensure the animator is enabled.
 		if (!animator.enabled)
 		{
 			animator.enabled = true;
+			animator.Play("Stand up", 0, 0f);
 		}
 
 		// Only trigger the standup animation once.
 		if (!standupInitiated)
 		{
-			animator.CrossFade("Stand up", 0.2f);
+			// Double calling stand up animation for avoiding a bug
+			animator.Play("Stand up", 0, 0f);
 			standupInitiated = true;
-		}
-		else
-		{
-			//Debug.Log("Standup in progress.");
 		}
 
 		// Check if the standup animation has finished.
 		if (StandupFinished())
 		{
-			animator.Play("Blend Tree Flailing Arms");
+			animator.CrossFade("Blend Tree Flailing Arms", 0.1f);
 			enemyNavScript.MoveToNavMesh();
 			navAgent.isStopped = false;
 			ChangeState(EnemyState.Chase);
@@ -230,7 +275,12 @@ public class EnemyStateMachine : MonoBehaviour
 
 	// Placeholder methods—you need to implement these based on your game's logic.
 	bool AttackFinished() { return true; }
-	bool KnockbackFinished() { return true; }
+	bool KnockbackFinished()
+	{
+		AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+		string animName = enemyBase.isCrawling ? "Knockback_Crawl" : "Knockback";
+		return stateInfo.IsName(animName) && stateInfo.normalizedTime >= 1f;
+	}
 	bool ElectrocutionFinished() { return true; }
 	bool StandupFinished()
 	{
