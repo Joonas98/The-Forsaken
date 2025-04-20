@@ -101,7 +101,6 @@ public class Enemy : MonoBehaviour
 
 	private void Awake()
 	{
-		//GameManager.GM.enemiesAlive.Add(this);
 		GameManager.GM.enemiesAliveGos.Add(gameObject);
 
 		player = GameObject.Find("Player");
@@ -131,7 +130,6 @@ public class Enemy : MonoBehaviour
 
 	private void Update()
 	{
-		//Debug.Log("Navagent isStopped: " + navAgent.isStopped);
 		distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
 		CalculateSlows();
 		HandleSwinging();
@@ -223,21 +221,6 @@ public class Enemy : MonoBehaviour
 
 		Destroy(gameObject, 0f);
 	}
-
-	//public void Stun(float duration)
-	//{
-	//	if (ragdolling || isDead) return;
-	//	navAgent.isStopped = true;
-	//	animator.enabled = false;
-	//	Invoke(nameof(Unstun), duration);
-	//}
-	//
-	//public void Unstun()
-	//{
-	//	if (ragdolling || isDead) return;
-	//	navAgent.isStopped = false;
-	//	animator.enabled = true;
-	//}
 
 	public void HandlePopup(int number, DamageType type = DamageType.Normal)
 	{
@@ -334,6 +317,8 @@ public class Enemy : MonoBehaviour
 
 	public void Heal(int amount)
 	{
+		if (isDead) return;
+
 		HandlePopup(amount, DamageType.Healing);
 		currentHealth += amount;
 		if (currentHealth > maxHealth) currentHealth = maxHealth;
@@ -506,6 +491,9 @@ public class Enemy : MonoBehaviour
 	// Stagger on an enemy already in knockback -> ragdoll.
 	public void ApplyStagger(bool ragdollDirectly = false)
 	{
+		// Death check obvious. Ragdolling means stagger is not useful, as physics keep the enemy ragdolling
+		if (isDead || ragdolling) return;
+
 		// If we want to bypass knockback, go directly to ragdoll.
 		if (ragdollDirectly)
 		{
@@ -579,14 +567,16 @@ public class Enemy : MonoBehaviour
 		if (navAgent != null)
 		{
 			navAgent.enabled = true;
+
+			// Avoid "Stop can't be called on nav agent that is not on nav mesh."
+			if (!enemyNavScript.IsAgentOnNavMesh()) enemyNavScript.MoveToNavMesh();
+
 			navAgent.isStopped = true;
 		}
 
 		// Tell the state machine to start the standup process.
 		stateMachine.ChangeState(EnemyState.Standup);
 	}
-
-
 
 	private void ContinueAfterRagdoll()
 	{

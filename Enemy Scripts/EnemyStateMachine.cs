@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -75,6 +75,8 @@ public class EnemyStateMachine : MonoBehaviour
 
 	public void ChangeState(EnemyState newState)
 	{
+		//Debug.Log($"ChangeState: {currentState} → {newState}");
+
 		// If we are leaving Knockback, restore the upper body layer weight.
 		if (currentState == EnemyState.Knockback && newState != EnemyState.Knockback)
 		{
@@ -141,6 +143,7 @@ public class EnemyStateMachine : MonoBehaviour
 	void HandleKnockback()
 	{
 		// Ensure the enemy does not move during knockback.
+
 		if (navAgent != null)
 			navAgent.isStopped = true;
 
@@ -189,7 +192,7 @@ public class EnemyStateMachine : MonoBehaviour
 			animator.enabled = false;
 
 		//navAgent.isStopped = true;
-		// No further action here�your Enemy.cs ragdoll detection (via TurnOffRagdoll)
+		// No further action here—your Enemy.cs ragdoll detection (via TurnOffRagdoll)
 		// will call ChangeState(EnemyState.Standup) once the ragdoll is settled.
 	}
 
@@ -273,7 +276,7 @@ public class EnemyStateMachine : MonoBehaviour
 		ChangeState(EnemyState.Chase);
 	}
 
-	// Placeholder methods�you need to implement these based on your game's logic.
+	// Placeholder methods—you need to implement these based on your game's logic.
 	bool AttackFinished() { return true; }
 	bool KnockbackFinished()
 	{
