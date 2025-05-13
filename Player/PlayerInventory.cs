@@ -1,15 +1,14 @@
-using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class PlayerInventory : MonoBehaviour
 {
 	public static PlayerInventory instance;
+
 	// Define an enum for ammo types
 	public enum AmmoType
 	{
-		// Note that these categories are not 100% accurate, there are expections
 		// Pistol and SMG ammo
 		LR22,
 		MM9,
@@ -26,10 +25,19 @@ public class PlayerInventory : MonoBehaviour
 		BMG50
 	}
 
-	// These are given to gun to be ejected from the casingspot
+	// Define an enum for grenade types
+	public enum GrenadeType
+	{
+		Normal = 0,
+		Impact = 1,
+		Incendiary = 2,
+		Stun = 3
+	}
+
+	// These are given to guns to be ejected from the casing spot
 	public GameObject[] casingPrefabs;
 
-	// Define dictionaries to store ammo counts and max ammo counts
+	// Ammo counts and capacities
 	private Dictionary<AmmoType, int> ammoCounts = new()
 	{
 		{ AmmoType.LR22, 0 },
@@ -40,7 +48,7 @@ public class PlayerInventory : MonoBehaviour
 		{ AmmoType.Gauge12, 0 },
 		{ AmmoType.NATO556, 0 },
 		{ AmmoType.NATO762, 0 },
-		{ AmmoType.BMG50, 0 },
+		{ AmmoType.BMG50, 0 }
 	};
 
 	private Dictionary<AmmoType, int> maxAmmoCounts = new()
@@ -53,69 +61,84 @@ public class PlayerInventory : MonoBehaviour
 		{ AmmoType.Gauge12, 90 },
 		{ AmmoType.NATO556, 210 },
 		{ AmmoType.NATO762, 180 },
-		{ AmmoType.BMG50, 60 },
+		{ AmmoType.BMG50, 60 }
 	};
 
-	// Grenade counts
-	// TODO: use enums and dictionaries like with ammo types
-	public int normalGrenadeCount, maxNormalGrenade;
-	public int impactGrenadeCount, maxImpactGrenade;
-	public int incendiaryGrenadeCount, maxIncendiaryGrenade;
-	public int stunGrenadeCount, maxStunGrenade;
+	// Grenade counts and capacities
+	private Dictionary<GrenadeType, int> grenadeCounts = new()
+	{
+		{ GrenadeType.Normal, 0 },
+		{ GrenadeType.Impact, 0 },
+		{ GrenadeType.Incendiary, 0 },
+		{ GrenadeType.Stun, 0 }
+	};
+
+	private Dictionary<GrenadeType, int> maxGrenadeCounts = new()
+	{
+		{ GrenadeType.Normal, 15 },
+		{ GrenadeType.Impact, 15 },
+		{ GrenadeType.Incendiary, 15 },
+		{ GrenadeType.Stun, 15 }
+	};
 
 	[SerializeField] private TextMeshProUGUI totalAmmoText;
 	private string totalAmmoString;
 
+	// Grenade UI texts will be handled in this class
+	// Example: throw incendiary grenade -> HUD and selection UI updates accordingly
+	[SerializeField] private TextMeshProUGUI[] grenadeCountTexts;
+	[SerializeField] private TextMeshProUGUI grenadeCountHUDText;
+
 	private void Awake()
 	{
+		// Singleton setup
 		if (instance == null)
-		{
 			instance = this;
+		else if (instance != this)
+		{
+			Destroy(gameObject);
+			return;
 		}
 
-		// Add each ammo
-		foreach (AmmoType ammoType in (AmmoType[])System.Enum.GetValues(typeof(AmmoType)))
+		// Initialize default ammo
+		foreach (AmmoType ammo in System.Enum.GetValues(typeof(AmmoType)))
 		{
-			HandleAmmo(ammoType, 5000);
+			HandleAmmo(ammo, 5000);
+		}
+
+
+		foreach (GrenadeType nade in System.Enum.GetValues(typeof(GrenadeType)))
+		{
+			grenadeCounts[nade] = maxGrenadeCounts[nade];
 		}
 	}
 
+	#region Ammo Methods
+
 	// Add or reduce ammo
-	public void HandleAmmo(AmmoType ammoType, int ammoDelta)
+	public void HandleAmmo(AmmoType ammoType, int delta)
 	{
-		if (ammoCounts.ContainsKey(ammoType))
-		{
-			ammoCounts[ammoType] += ammoDelta;
-			UpdateTotalAmmoText(ammoType);
-		}
+		if (!ammoCounts.ContainsKey(ammoType)) return;
+		ammoCounts[ammoType] = Mathf.Clamp(ammoCounts[ammoType] + delta, 0, maxAmmoCounts[ammoType]);
+		UpdateTotalAmmoText(ammoType);
 	}
 
 	// Add or reduce max ammo capacity
-	public void HandleMaxAmmo(AmmoType ammoType, int ammoDelta)
+	public void HandleMaxAmmo(AmmoType ammoType, int delta)
 	{
-		if (maxAmmoCounts.ContainsKey(ammoType))
-		{
-			maxAmmoCounts[ammoType] += ammoDelta;
-			UpdateTotalAmmoText(ammoType);
-		}
+		if (!maxAmmoCounts.ContainsKey(ammoType)) return;
+		maxAmmoCounts[ammoType] = Mathf.Max(0, maxAmmoCounts[ammoType] + delta);
+		UpdateTotalAmmoText(ammoType);
 	}
 
 	public int GetAmmoCount(AmmoType ammoType)
 	{
-		if (ammoCounts.ContainsKey(ammoType))
-		{
-			return ammoCounts[ammoType];
-		}
-		return 0;
+		return ammoCounts.TryGetValue(ammoType, out int count) ? count : 0;
 	}
 
 	public int GetMaxAmmoCount(AmmoType ammoType)
 	{
-		if (maxAmmoCounts.ContainsKey(ammoType))
-		{
-			return maxAmmoCounts[ammoType];
-		}
-		return 0;
+		return maxAmmoCounts.TryGetValue(ammoType, out int maxCount) ? maxCount : 0;
 	}
 
 	public string GetAmmoString(AmmoType ammoType)
@@ -123,51 +146,12 @@ public class PlayerInventory : MonoBehaviour
 		return ammoType.ToString();
 	}
 
-	public void HandleGrenades(int grenadeIndex, int grenadeDelta)
+	public GameObject GetCasingPrefab(AmmoType ammoType)
 	{
-		switch (grenadeIndex)
-		{
-			case 0:
-				normalGrenadeCount += grenadeDelta;
-				break;
-
-			case 1:
-				impactGrenadeCount += grenadeDelta;
-				break;
-
-			case 2:
-				incendiaryGrenadeCount += grenadeDelta;
-				break;
-
-			case 3:
-				stunGrenadeCount += grenadeDelta;
-				break;
-		}
-
-	}
-
-	public int GetGrenadeCount(int grenadeTypeIndex)
-	{
-		switch (grenadeTypeIndex)
-		{
-			case 0: return normalGrenadeCount;
-			case 1: return impactGrenadeCount;
-			case 2: return incendiaryGrenadeCount;
-			case 3: return stunGrenadeCount;
-			default: return 0;
-		}
-	}
-
-	public int GetMaxGrenadeCount(int grenadeTypeIndex)
-	{
-		switch (grenadeTypeIndex)
-		{
-			case 0: return maxNormalGrenade;
-			case 1: return maxImpactGrenade;
-			case 2: return maxIncendiaryGrenade;
-			case 3: return maxStunGrenade;
-			default: return 0;
-		}
+		int index = (int)ammoType;
+		if (index < 0 || index >= casingPrefabs.Length)
+			return null;
+		return casingPrefabs[index];
 	}
 
 	public void UpdateTotalAmmoText(AmmoType ammoType)
@@ -179,15 +163,33 @@ public class PlayerInventory : MonoBehaviour
 		}
 	}
 
-	// Guns get their casings automatically from here
-	public GameObject GetCasingPrefab(AmmoType ammoType)
-	{
-		int index = (int)ammoType;
-		if (index < 0 || index >= casingPrefabs.Length)
-		{
-			return null; // Invalid enum value or out of array bounds
-		}
+	#endregion
 
-		return casingPrefabs[index];
+	#region Grenade Methods
+
+	public void HandleGrenades(GrenadeType type, int delta)
+	{
+		if (!grenadeCounts.ContainsKey(type)) return;
+		grenadeCounts[type] = Mathf.Clamp(grenadeCounts[type] + delta, 0, maxGrenadeCounts[type]);
+		UpdateGrenadeUI(type);
 	}
+
+	public int GetGrenadeCount(GrenadeType type)
+		=> grenadeCounts.TryGetValue(type, out int c) ? c : 0;
+
+	public int GetMaxGrenadeCount(GrenadeType type)
+		=> maxGrenadeCounts.TryGetValue(type, out int m) ? m : 0;
+
+	public void UpdateGrenadeUI(GrenadeType type)
+	{
+		int idx = (int)type;
+		int cur = GetGrenadeCount(type);
+		int max = GetMaxGrenadeCount(type);
+		if (idx >= 0 && idx < grenadeCountTexts.Length)
+			grenadeCountTexts[idx].text = $"{cur} / {max}";
+
+		grenadeCountHUDText.text = cur.ToString();
+	}
+
+	#endregion
 }

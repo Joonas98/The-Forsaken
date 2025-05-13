@@ -72,8 +72,36 @@ public class EnemyNav : MonoBehaviour
 
 	private void Update()
 	{
-		if (!enemy.ragdolling && stateMachine.currentState != EnemyState.Ragdoll) SynchronizeAnimatorAndAgent();
-		// Debug.Log("Enemy speed: " + navAgent.speed.ToString());
+		if (!enemy.ragdolling && stateMachine.currentState == EnemyState.Chase)
+		{
+			SynchronizeAnimatorAndAgent();
+		}
+	}
+
+	// Unified place for stopping navigation
+	public void StopNavigation()
+	{
+		if (navAgent == null || !navAgent.isActiveAndEnabled)
+			return;
+
+		if (IsAgentOnNavMesh())
+			navAgent.isStopped = true;
+
+		// Another failsafe, so enemies won't slide to their current target
+		navAgent.ResetPath();
+	}
+
+	// Unified place for resuming navigation
+	public void ResumeNavigation()
+	{
+		if (navAgent == null || !navAgent.isActiveAndEnabled)
+			return;
+
+		// If we’re off the mesh, snap back first
+		if (!IsAgentOnNavMesh())
+			MoveToNavMesh();
+
+		navAgent.isStopped = false;
 	}
 
 	public bool IsAgentOnNavMesh()

@@ -21,6 +21,11 @@ public class EnemyStateMachine : MonoBehaviour
 	public NavMeshAgent navAgent;
 	public EnemyNav enemyNavScript;
 
+	// Needed for electrocution handling
+	[HideInInspector] public float electroStartTime;
+	[HideInInspector] public float electroDuration;
+	private bool electroInit = false;
+
 	private Animator animator;
 	private bool spawnAnimationStarted = false;
 
@@ -81,25 +86,38 @@ public class EnemyStateMachine : MonoBehaviour
 		if (currentState == EnemyState.Knockback && newState != EnemyState.Knockback)
 		{
 			animator.SetLayerWeight(attackLayerIndex, 1f);
-			knockbackInitiated = false;  // also reset the knockback flag
+			knockbackInitiated = false;
+		}
+
+		// Entering Electrocuted → freeze everything
+		if (newState == EnemyState.Electrocuted)
+		{
+			if (navAgent != null) enemyNavScript.StopNavigation();
+			enemyBase.isAttacking = false;
+			animator.speed = 0f;        // halt the Animator on the current frame
+			electroInit = false;        // reset our one-time flag
+		}
+
+		// Exiting Electrocuted → unfreeze (but only restart nav if we’re not ragdolled)
+		else if (currentState == EnemyState.Electrocuted && newState != EnemyState.Electrocuted)
+		{
+			animator.speed = 1f;
+			if (!enemyBase.ragdolling && navAgent != null)
+				enemyNavScript.ResumeNavigation();
 		}
 
 		currentState = newState;
-		if (newState == EnemyState.Spawn)
-		{
-			spawnAnimationStarted = false;
-		}
 
-		if (newState == EnemyState.Chase)
-		{
-			if (!navAgent.isActiveAndEnabled) navAgent.enabled = true;
-		}
+		if (newState == EnemyState.Spawn)
+			spawnAnimationStarted = false;
+		if (newState == EnemyState.Chase && !navAgent.isActiveAndEnabled)
+			navAgent.enabled = true;
 	}
 
 	void HandleSpawn()
 	{
 		// Stop movement during spawn.
-		navAgent.isStopped = true;
+		enemyNavScript.StopNavigation();
 		navAgent.ResetPath();
 
 		if (!spawnAnimationStarted)
@@ -111,7 +129,7 @@ public class EnemyStateMachine : MonoBehaviour
 		// Once the spawn animation finishes, re-enable movement and transition.
 		if (AnimationFinished("Spawn"))
 		{
-			navAgent.isStopped = false;
+			enemyNavScript.ResumeNavigation();
 			ChangeState(EnemyState.Chase);
 		}
 	}
@@ -145,7 +163,7 @@ public class EnemyStateMachine : MonoBehaviour
 		// Ensure the enemy does not move during knockback.
 
 		if (navAgent != null)
-			navAgent.isStopped = true;
+			enemyNavScript.StopNavigation();
 
 		// Cancel any ongoing attack.
 		enemyBase.isAttacking = false;
@@ -165,7 +183,7 @@ public class EnemyStateMachine : MonoBehaviour
 		if (KnockbackFinished())
 		{
 			if (navAgent != null)
-				navAgent.isStopped = false;
+				enemyNavScript.ResumeNavigation();
 			// Restore the upper body attack layer weight so that future attacks work.
 			animator.SetLayerWeight(attackLayerIndex, 1f);
 			ChangeState(EnemyState.Chase);
@@ -173,13 +191,24 @@ public class EnemyStateMachine : MonoBehaviour
 		}
 	}
 
-
 	void HandleElectrocuted()
 	{
-		animator.Play(enemyBase.isCrawling ? "Electrocuted_Crawl" : "Electrocuted");
-		if (ElectrocutionFinished())
+		// (no dedicated clip → we just stay frozen)
+		if (!electroInit)
 		{
-			ChangeState(EnemyState.Chase);
+			// optionally play a zap SFX or VFX once here
+			electroInit = true;
+		}
+
+		// once our timer runs out, pick the correct next state:
+		if (Time.time - electroStartTime >= electroDuration)
+		{
+			if (enemyBase.isDead)
+				ChangeState(EnemyState.Dead);
+			else if (enemyBase.ragdolling)
+				ChangeState(EnemyState.Ragdoll);
+			else
+				ChangeState(EnemyState.Chase);
 		}
 	}
 
@@ -234,7 +263,7 @@ public class EnemyStateMachine : MonoBehaviour
 		{
 			animator.CrossFade("Blend Tree Flailing Arms", 0.1f);
 			enemyNavScript.MoveToNavMesh();
-			navAgent.isStopped = false;
+			enemyNavScript.ResumeNavigation();
 			ChangeState(EnemyState.Chase);
 			standupInitiated = false;
 		}
@@ -256,7 +285,7 @@ public class EnemyStateMachine : MonoBehaviour
 	public IEnumerator BlendToStandup()
 	{
 		// Disable NavMeshAgent movement while blending.
-		navAgent.isStopped = true;
+		enemyNavScript.StopNavigation();
 
 		// Crossfade from current pose to "Stand up" animation over a short duration.
 		animator.CrossFade("Stand up", 0.2f);
@@ -272,7 +301,7 @@ public class EnemyStateMachine : MonoBehaviour
 
 		// Transition to Idle (or Chase) after standup.
 		animator.Play("Idle");
-		navAgent.isStopped = false;
+		enemyNavScript.ResumeNavigation();
 		ChangeState(EnemyState.Chase);
 	}
 

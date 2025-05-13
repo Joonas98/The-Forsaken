@@ -155,9 +155,9 @@ public class WeaponSwitcher : MonoBehaviour
 		GameManager.GM.currentWeaponIndex = selectedWeapon;
 
 		// Handle highlight for HUD
-		if (handledPanel != null) handledPanel.highlightObject.SetActive(false);
+		if (handledPanel != null) handledPanel.SetSelected(false);
 		handledPanel = hudParent.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();
-		handledPanel.highlightObject.SetActive(true);
+		handledPanel.SetSelected(true);
 
 		// Update the ammo hud
 		if (currentGun != null)

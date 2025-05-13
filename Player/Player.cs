@@ -55,12 +55,11 @@ public class Player : MonoBehaviour
 
 	[Header("Kick values")]
 	public Transform kickTransform;
-	public int kickDamage;
+	public int kickDamage, maxKickTargets;
 	public float kickPlayerSlow, kickPlayerSlowDuration;
-	public float kickRadius, kickForce, kickCooldown;
+	public float kickRadius, kickForce, kickCooldown, kickHeight, kickDistance;
 	public Vector3 upVector;
 
-	private List<Enemy> damagedEnemies = new List<Enemy>();
 	private float kickTimeStamp; // Handles cooldown for kicking
 
 	private void Awake()
@@ -122,36 +121,93 @@ public class Player : MonoBehaviour
 		// Example: GUI.Label(new Rect(500, 500, 80, 20), targetFov.ToString());
 	}
 
+	// This visualizes the kick area in the editor
+#if UNITY_EDITOR
+	void OnDrawGizmosSelected()
+	{
+		if (kickTransform == null) return;
+
+		// 1) Compute the two end-points along your forward axis
+		Vector3 p1 = kickTransform.position;
+		Vector3 p2 = kickTransform.position + transform.forward * kickDistance;
+		float r = kickRadius;
+
+		// 2) Draw the end-caps
+		Gizmos.color = Color.cyan;
+		Gizmos.DrawWireSphere(p1, r);
+		Gizmos.DrawWireSphere(p2, r);
+
+		// 3) Draw the cylinder sides by connecting four lines around the capsule
+		Vector3 axis = (p2 - p1).normalized;
+
+		// pick any vector not parallel to axis
+		Vector3 ortho = Vector3.up;
+		if (Mathf.Abs(Vector3.Dot(axis, ortho)) > 0.99f)
+			ortho = Vector3.right;
+
+		Vector3 perp1 = Vector3.Cross(axis, ortho).normalized * r;
+		Vector3 perp2 = Vector3.Cross(axis, perp1).normalized * r;
+
+		Gizmos.DrawLine(p1 + perp1, p2 + perp1);
+		Gizmos.DrawLine(p1 - perp1, p2 - perp1);
+		Gizmos.DrawLine(p1 + perp2, p2 + perp2);
+		Gizmos.DrawLine(p1 - perp2, p2 - perp2);
+	}
+#endif
+
 	public void Kick()
 	{
 		// FX and SFX
 		animator.Play("Kick");
-		int kickSFXIndex = Random.Range(0, kickSounds.Length);
-		playerAS.PlayOneShot(kickSounds[kickSFXIndex]);
+		int sfx = Random.Range(0, kickSounds.Length);
+		playerAS.PlayOneShot(kickSounds[sfx]);
 		kickSymbol.SetActive(false);
 		Recoil.Instance.KickFlinch();
 
-		// Physics and functionality
-		Collider[] kickedColliders = Physics.OverlapSphere(kickTransform.position, kickRadius);
-		foreach (Collider target in kickedColliders)
+		// compute the two ends of our cylinder (as a capsule) in front of the player
+		Vector3 origin = kickTransform.position;
+		Vector3 forward = transform.forward;
+		Vector3 p1 = origin;
+		Vector3 p2 = origin + forward * kickDistance;
+		float radius = kickRadius;
+		Vector3 center = (p1 + p2) * 0.5f;
+
+		// collect each unique, valid Enemy in that volume
+		var enemies = new List<Enemy>();
+		var cols = Physics.OverlapCapsule(p1, p2, radius);
+		foreach (var col in cols)
 		{
-			Rigidbody rb = target.GetComponent<Rigidbody>();
-			if (rb != null)
-			{
-				rb.AddExplosionForce(kickForce, transform.position - upVector, kickRadius);
-			}
-
-			Enemy enemy = target.GetComponentInParent<Enemy>();
-
-			if (enemy != null && !enemy.isDead && !damagedEnemies.Contains(enemy))
-			{
-				enemy.ApplyStagger();
-				enemy.TakeDamage(kickDamage);
-				damagedEnemies.Add(enemy);
-			}
+			var enemy = col.GetComponentInParent<Enemy>();
+			if (enemy != null && !enemy.isDead && !enemies.Contains(enemy))
+				enemies.Add(enemy);
 		}
-		damagedEnemies.Clear();
+
+		// sort by distance from the player (p1) so we hit closest first
+		enemies.Sort((a, b) =>
+			Vector3.Distance(a.bodyRB.position, p1)
+			  .CompareTo(Vector3.Distance(b.bodyRB.position, p1))
+		);
+
+		// apply to up to maxKickTargets enemies
+		int hits = 0;
+		foreach (var enemy in enemies)
+		{
+			if (hits >= maxKickTargets)
+				break;
+
+			// apply physics impulse only on the main body rigidbody
+			if (enemy.bodyRB != null)
+			{
+				Vector3 explosionPos = center - upVector;
+				enemy.bodyRB.AddExplosionForce(kickForce, explosionPos, radius);
+			}
+
+			enemy.ApplyStagger();
+			enemy.TakeDamage(kickDamage);
+			hits++;
+		}
 	}
+
 
 	public void TakeDamage(int amount, float flinchMultiplier = 1f)
 	{
@@ -223,9 +279,9 @@ public class Player : MonoBehaviour
 	public void UpdateHealthUI()
 	{
 		currentHPPercentage = (currentHealth / maxHealth) * 100f;
-		float clampedValue = Mathf.Clamp(Mathf.Round(currentHPPercentage), 0f, 100f);
-		healthString = clampedValue.ToString() + "%";
-		healthText.text = healthString;
+		//float clampedValue = Mathf.Clamp(Mathf.Round(currentHPPercentage), 0f, 100f);
+		//healthString = clampedValue.ToString() + "%";
+		//healthText.text = healthString;
 
 		healthStringRaw = Mathf.FloorToInt(currentHealth).ToString() + " / " + maxHealth.ToString();
 		healthTextRaw.text = healthStringRaw;

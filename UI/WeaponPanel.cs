@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class WeaponPanel : MonoBehaviour
 {
@@ -12,7 +10,15 @@ public class WeaponPanel : MonoBehaviour
 	public Button downButton;
 	public Button sellButton;
 	public GameObject[] buttons;
-	public GameObject highlightObject;
+
+	[Header("Selection Indicator")]
+	[Tooltip("UI Image to indicate selection state")]
+	[SerializeField] private Image selectionIndicator;
+
+	[Header("Indicator Colors")]
+	[SerializeField] private Color inactiveColor;
+	[SerializeField] private Color selectedColor;
+
 	public TextMeshProUGUI indexText;
 
 	private int currentIndex;
@@ -25,9 +31,12 @@ public class WeaponPanel : MonoBehaviour
 
 	private void Start()
 	{
-		// Set the index in start because awake is called too early
+		// Set the index in start because Awake is called too early
 		// +1 because child indexing starts from 0 obviously
 		indexText.text = (FindCurrentObjectChildIndex() + 1).ToString();
+
+		// Initialize indicator color
+		SetSelected(false);
 	}
 
 	public void MoveWeaponUp()
@@ -53,7 +62,7 @@ public class WeaponPanel : MonoBehaviour
 		Destroy(handledWeapon);
 		Destroy(gameObject);
 
-		// If the weapon to be sold is currently equippped, equip knife
+		// If the weapon to be sold is currently equipped, equip knife
 		if (GameManager.GM.currentWeaponIndex == currentIndex)
 		{
 			WeaponSwitcher.instance.selectedWeapon = 0;
@@ -86,12 +95,22 @@ public class WeaponPanel : MonoBehaviour
 			{
 				if (transform.parent.GetChild(i).gameObject == gameObject)
 				{
-					return i; // Return the index of the current GameObject within its parent's children
+					return i;
 				}
 			}
 		}
-
-		// If the current object is not a child or doesn't have a parent, return -1.
 		return -1;
+	}
+
+	/// <summary>
+	/// Call this to update the selection indicator's color.
+	/// </summary>
+	/// <param name="isSelected">Whether this panel is selected.</param>
+	public void SetSelected(bool isSelected)
+	{
+		if (selectionIndicator != null)
+		{
+			selectionIndicator.color = isSelected ? selectedColor : inactiveColor;
+		}
 	}
 }

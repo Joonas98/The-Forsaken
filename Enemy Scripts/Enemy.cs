@@ -1,4 +1,4 @@
-using DamageNumbersPro;
+﻿using DamageNumbersPro;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -161,7 +161,8 @@ public class Enemy : MonoBehaviour
 
 	private void CheckRagdollMagnitude()
 	{
-		if (!ragdolling || isDead)
+		// Do not try to stand up when dead or electrocuted
+		if (!ragdolling || isDead || stateMachine.currentState == EnemyState.Electrocuted)
 			return;
 
 		float currentSpeed = bodyRB.linearVelocity.magnitude;
@@ -487,6 +488,21 @@ public class Enemy : MonoBehaviour
 		}
 	}
 
+	public void GetElectrocuted(int damageAmount, float duration)
+	{
+		if (isDead) return;
+
+		TakeDamage(damageAmount, 0, DamageType.Shock);
+		if (isDead) return;                  // bail out if that was a killing blow
+
+		debuffManager.ApplyDebuff(DebuffManager.Debuffs.ShockBlue, duration);
+
+		stateMachine.electroStartTime = Time.time;
+		stateMachine.electroDuration = duration;
+		stateMachine.ChangeState(EnemyState.Electrocuted);
+	}
+
+
 	// 13.4.2025: Stagger once -> knockback animation. 
 	// Stagger on an enemy already in knockback -> ragdoll.
 	public void ApplyStagger(bool ragdollDirectly = false)
@@ -536,7 +552,8 @@ public class Enemy : MonoBehaviour
 		// Stop and disable the NavMesh agent
 		if (navAgent != null)
 		{
-			navAgent.isStopped = true;
+			//navAgent.isStopped = true;
+			enemyNavScript.StopNavigation();
 			navAgent.enabled = false;
 		}
 
@@ -555,7 +572,7 @@ public class Enemy : MonoBehaviour
 		{
 			rb.isKinematic = true;
 		}
-		// Set all ragdoll parts� colliders to triggers.
+		// Set all ragdoll parts’ colliders to triggers.
 		foreach (Collider c in ragdollParts)
 		{
 			c.isTrigger = true;
@@ -571,7 +588,8 @@ public class Enemy : MonoBehaviour
 			// Avoid "Stop can't be called on nav agent that is not on nav mesh."
 			if (!enemyNavScript.IsAgentOnNavMesh()) enemyNavScript.MoveToNavMesh();
 
-			navAgent.isStopped = true;
+			//navAgent.isStopped = true;
+			enemyNavScript.StopNavigation();
 		}
 
 		// Tell the state machine to start the standup process.

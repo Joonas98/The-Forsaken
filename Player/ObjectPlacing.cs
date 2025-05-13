@@ -27,7 +27,7 @@ public class ObjectPlacing : MonoBehaviour
 	public Image[] objectPanels;
 	public Image selectedImageHUD;
 	public Sprite[] objectSprites;
-	public TextMeshProUGUI placeHotkeyTMP, changeHotkeyTMP;
+	public TextMeshProUGUI placeHotkeyTMP;
 
 	private RaycastHit hit;
 	private GameObject activeAimer;
@@ -45,9 +45,11 @@ public class ObjectPlacing : MonoBehaviour
 			Destroy(instance);
 		}
 		ChooseObject(0);
+	}
 
-		//placeHotkeyTMP.text = KeybindManager.Instance.placeObjectKey.ToString();
-		//changeHotkeyTMP.text = KeybindManager.Instance.selectionMenuKey.ToString();
+	private void Start()
+	{
+		placeHotkeyTMP.text = KeybindManager.Instance.placeObjectKey.ToString();
 	}
 
 	void Update()
