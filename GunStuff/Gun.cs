@@ -496,7 +496,9 @@ public class Gun : Weapon
 		else // Hit something like ground
 		{
 			GroundImpactFX(hit);
-			bulletHoleScript.AddBulletHole(hit);
+
+			// Unused for now at least
+			//bulletHoleScript.AddBulletHole(hit);
 		}
 	}
 

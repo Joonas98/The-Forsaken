@@ -197,50 +197,27 @@ public class MeleeWeapon : Weapon
 				enemyHits[enemy].Add(hit);
 			}
 
-			// Priority of detected colliders
-			// Makes melee hits feel more responsive on the intended target
-			Dictionary<string, int> hitPriority = new Dictionary<string, int>
-		{
-			{ "Head", 0 },       // highest priority
-			{ "ArmL", 1 },
-			{ "ArmR", 1 },
-			{ "LowerLegL", 1 },
-			{ "LowerLegR", 1 },
-			{ "ShoulderL", 2 },
-			{ "ShoulderR", 2 },
-			{ "UpperLegL", 2 },
-			{ "UpperLegR", 2 },
-			{ "Torso", 3 }       // lowest priority
-        };
-
 			foreach (var kvp in enemyHits)
 			{
 				Enemy enemy = kvp.Key;
 				List<RaycastHit> enemyCollisions = kvp.Value;
 
-				// Find the best hit based on priority
+				// Find the hit closest to the center of the camera using dot product
 				RaycastHit bestHit = enemyCollisions[0];
-				int bestPriority = int.MaxValue;
+				float bestDot = -1f;
 
 				foreach (RaycastHit h in enemyCollisions)
 				{
-					string tag = h.collider.tag;
-					if (!hitPriority.ContainsKey(tag))
+					Vector3 toHit = (h.point - cameraTransform.position).normalized;
+					float dot = Vector3.Dot(cameraTransform.forward, toHit);
+					if (dot > bestDot)
 					{
-						// If not found in priority dict, treat as low priority
-						continue;
-					}
-
-					int currentPriority = hitPriority[tag];
-					// If this hit has higher priority (lower number), choose it
-					if (currentPriority < bestPriority)
-					{
-						bestPriority = currentPriority;
+						bestDot = dot;
 						bestHit = h;
 					}
-					else if (currentPriority == bestPriority)
+					else if (Mathf.Approximately(dot, bestDot))
 					{
-						// If same priority, compare distances. Prefer the closer hit.
+						// If dot is the same, prefer the closer hit
 						if (h.distance < bestHit.distance)
 						{
 							bestHit = h;
