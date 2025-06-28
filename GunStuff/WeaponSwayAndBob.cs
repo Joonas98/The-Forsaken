@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// New universal sway and weapon bob system 8.5.2023
-// Meant to replace WeaponSway and IdleSway scripts / systems.
+// Depracted: This script is replaced by SwayBobV3.cs
 // Original base for this system from this video: https://www.youtube.com/watch?v=DR4fTllQnXg
 public class WeaponSwayAndBob : MonoBehaviour
 {

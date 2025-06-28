@@ -41,6 +41,7 @@ public class GameManager : MonoBehaviour
 	public int currentWeaponIndex = 0;
 	public Transform equipTrans, weaponSpot; // Optimization: weapon.cs Awake() gets these variables from here
 	public bool currentGunAiming = false; // 1.7.2023 far better to get aiming info from here to other scripts
+	public bool meleeEquipped = false;
 
 	private void Awake()
 	{

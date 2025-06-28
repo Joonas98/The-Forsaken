@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,9 +30,6 @@ public class CanvasManager : MonoBehaviour
 
 		if (playerScript == null) playerScript = GameObject.Find("Player").GetComponent<Player>();
 		if (lookScript == null) lookScript = GameObject.Find("Player").GetComponentInChildren<MouseLook>();
-
-		weaponSwitcherScript.SelectWeapon();
-		//inventoryCanvasScript.UpdateTexts();
 	}
 
 	void Update()
@@ -137,7 +133,6 @@ public class CanvasManager : MonoBehaviour
 			roundPopup.SetActive(false);
 			AudioListener.pause = true;
 			if (lookScript != null) lookScript.canRotate = false;
-			WeaponSwitcher.CanSwitch(false);
 			Cursor.lockState = CursorLockMode.None;
 			Time.timeScale = 0f;
 		}
@@ -150,7 +145,6 @@ public class CanvasManager : MonoBehaviour
 			AudioListener.pause = false;
 			// if (playerScript != null) playerScript.canRotate = true;
 			if (lookScript != null) lookScript.canRotate = true;
-			WeaponSwitcher.CanSwitch(true);
 			Cursor.lockState = CursorLockMode.Locked;
 			ShowTooltip(false);
 			crosshairCanvas.SetActive(true);

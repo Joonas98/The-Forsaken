@@ -20,8 +20,14 @@ public class SwayBobV3 : MonoBehaviour
 	[Header("Tilt Settings")]
 	public float tiltStrength = 2f; // Controls how much the weapon tilts
 	public float tiltSmoothing = 8f; // Controls how smoothly the tilt is applied
-	private Vector3 tiltOffset;
 
+	[Header("Melee Overrides")]
+	[Tooltip("Multiplier for how fast the weapon returns when melee is equipped")]
+	public float meleeReturnSpeedMultiplier = 2f;
+	[Tooltip("Scale for sway/bob/tilt amplitude when melee is equipped")]
+	public float meleeMovementMultiplier = 0.5f;
+
+	private Vector3 tiltOffset;
 	private Vector3 swayOffset;
 	private Vector3 bobOffset;
 	private Vector3 finalOffset;
@@ -29,9 +35,6 @@ public class SwayBobV3 : MonoBehaviour
 	private Quaternion previousRotation;
 	private Vector3 smoothedVelocity;
 	private Vector3 smoothedRotationDelta;
-
-
-
 	private float speedCurve; // Used for sinusoidal bob calculations
 
 	private void Start()
@@ -59,10 +62,8 @@ public class SwayBobV3 : MonoBehaviour
 	{
 		if (playerTransform == null) return;
 
-		// Calculate velocity
-		float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f); // Avoiding errors when deltatime is too small after pausing
+		float deltaTime = Mathf.Max(Time.deltaTime, 0.0001f);
 		Vector3 velocity = (playerTransform.position - previousPosition) / deltaTime;
-
 		smoothedVelocity = Vector3.Lerp(smoothedVelocity, velocity, Time.deltaTime * swaySmoothness);
 		previousPosition = playerTransform.position;
 	}
@@ -71,7 +72,6 @@ public class SwayBobV3 : MonoBehaviour
 	{
 		if (cameraTransform == null) return;
 
-		// Calculate rotation deltas
 		Quaternion currentRotation = cameraTransform.rotation;
 		Vector3 rotationDelta = new Vector3(
 			Mathf.DeltaAngle(previousRotation.eulerAngles.x, currentRotation.eulerAngles.x),
@@ -79,29 +79,26 @@ public class SwayBobV3 : MonoBehaviour
 			Mathf.DeltaAngle(previousRotation.eulerAngles.z, currentRotation.eulerAngles.z)
 		);
 
-		// Smooth rotation deltas
 		smoothedRotationDelta = Vector3.Lerp(smoothedRotationDelta, rotationDelta, Time.deltaTime * swaySmoothness);
 		previousRotation = currentRotation;
 	}
 
 	private void ApplySway()
 	{
-		// Sway from camera rotation and player velocity
+		// Sway from camera rotation and player vertical velocity
 		swayOffset = new Vector3(
-			-smoothedRotationDelta.y * swayStrength, // Horizontal rotation sway
-			-smoothedVelocity.y * swayStrength,     // Vertical movement sway
+			-smoothedRotationDelta.y * swayStrength,
+			-smoothedVelocity.y * swayStrength,
 			0
 		);
 	}
 
 	private void ApplyBob()
 	{
-		// Update speed curve for sinusoidal calculations
 		speedCurve += Time.deltaTime * bobFrequency * smoothedVelocity.magnitude;
 
-		// Calculate movement bob offsets
 		bobOffset.x = Mathf.Cos(speedCurve) * bobLimits.x - smoothedVelocity.x * travelLimits.x;
-		bobOffset.y = Mathf.Abs(Mathf.Sin(speedCurve)) * bobLimits.y; // Breathing-like motion
+		bobOffset.y = Mathf.Abs(Mathf.Sin(speedCurve)) * bobLimits.y;
 		bobOffset.z = -smoothedVelocity.z * travelLimits.z;
 	}
 
@@ -109,22 +106,21 @@ public class SwayBobV3 : MonoBehaviour
 	{
 		if (playerTransform == null) return;
 
-		// Convert smoothed velocity to local space relative to the player
 		Vector3 localVelocity = playerTransform.InverseTransformDirection(smoothedVelocity);
-
-		// Use the local X-axis velocity for lateral movement
 		float lateralVelocity = localVelocity.x;
-
-		// Calculate tilt amount based on lateral velocity
 		float tiltAmount = lateralVelocity * tiltStrength;
-
-		// Apply tilt around the Z-axis (roll)
 		tiltOffset = new Vector3(0, 0, -tiltAmount);
 	}
 
 	private void CombineEffects()
 	{
-		// When aiming, there should be no sway and bob 
+		// Check for melee override
+		bool isMelee = GameManager.GM.meleeEquipped;
+		float positionSmooth = bobSmoothing * (isMelee ? meleeReturnSpeedMultiplier : 1f);
+		float rotationSmooth = tiltSmoothing * (isMelee ? meleeReturnSpeedMultiplier : 1f);
+		float movementScale = isMelee ? meleeMovementMultiplier : 1f;
+
+		// Aiming still zeroes out all sway/bob
 		if (GameManager.GM.CurrentGunAiming())
 		{
 			finalOffset = Vector3.zero;
@@ -132,18 +128,20 @@ public class SwayBobV3 : MonoBehaviour
 		}
 		else
 		{
-			// Combine sway and bob offsets into a final offset
-			finalOffset = swayOffset + bobOffset;
+			finalOffset = (swayOffset + bobOffset) * movementScale;
+			tiltOffset *= movementScale;
 		}
 
-		// Smoothly apply the final offset to the weapon's local position
-		transform.localPosition = Vector3.Lerp(transform.localPosition, finalOffset, Time.deltaTime * bobSmoothing);
-
-		// Smoothly apply the tilt to the weapon's local rotation
+		// Apply with potentially faster smoothing when melee is equipped
+		transform.localPosition = Vector3.Lerp(
+			transform.localPosition,
+			finalOffset,
+			Time.deltaTime * positionSmooth
+		);
 		transform.localRotation = Quaternion.Lerp(
 			transform.localRotation,
 			Quaternion.Euler(tiltOffset),
-			Time.deltaTime * tiltSmoothing
+			Time.deltaTime * rotationSmooth
 		);
 	}
 }
