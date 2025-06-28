@@ -90,7 +90,6 @@ public class NewCanvasManager : MonoBehaviour
 			// Disable hud pieces
 			AudioListener.pause = true;
 			MouseLook.instance.canRotate = false;
-			WeaponSwitcher.CanSwitch(false);
 			Cursor.lockState = CursorLockMode.None;
 			Time.timeScale = 0f;
 		}
@@ -99,7 +98,6 @@ public class NewCanvasManager : MonoBehaviour
 			// Activate hud pieces
 			AudioListener.pause = false;
 			MouseLook.instance.canRotate = true;
-			WeaponSwitcher.CanSwitch(true);
 			Cursor.lockState = CursorLockMode.Locked;
 			Time.timeScale = 1f;
 		}

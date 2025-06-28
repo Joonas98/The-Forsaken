@@ -1,14 +1,18 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\",
+  "WorkspaceRootPath": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\Abilities\\AbilityMaster.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Abilities\\AbilityMaster.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\Weapon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:GunStuff\\Weapon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\Abilities\\AbilityHolder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Abilities\\AbilityHolder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\MeleeWeapon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:GunStuff\\MeleeWeapon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\Gun.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:GunStuff\\Gun.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,32 +22,49 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{e1b7d1f8-9b3c-49b1-8f4f-bfc63a88835d}"
+            },
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "AbilityMaster.cs",
-              "DocumentMoniker": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\Abilities\\AbilityMaster.cs",
-              "RelativeDocumentMoniker": "Abilities\\AbilityMaster.cs",
-              "ToolTip": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\Abilities\\AbilityMaster.cs",
-              "RelativeToolTip": "Abilities\\AbilityMaster.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAwA4AAAAJAAAAAAAAAA==",
+              "Title": "Weapon.cs",
+              "DocumentMoniker": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\Weapon.cs",
+              "RelativeDocumentMoniker": "GunStuff\\Weapon.cs",
+              "ToolTip": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\Weapon.cs",
+              "RelativeToolTip": "GunStuff\\Weapon.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-08T19:57:45.872Z",
+              "WhenOpened": "2025-06-28T17:35:37.685Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "AbilityHolder.cs",
-              "DocumentMoniker": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\Abilities\\AbilityHolder.cs",
-              "RelativeDocumentMoniker": "Abilities\\AbilityHolder.cs",
-              "ToolTip": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\SCRIPTS\\Abilities\\AbilityHolder.cs",
-              "RelativeToolTip": "Abilities\\AbilityHolder.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAA==",
+              "Title": "MeleeWeapon.cs",
+              "DocumentMoniker": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\MeleeWeapon.cs",
+              "RelativeDocumentMoniker": "GunStuff\\MeleeWeapon.cs",
+              "ToolTip": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\MeleeWeapon.cs",
+              "RelativeToolTip": "GunStuff\\MeleeWeapon.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2024-10-08T19:57:43.926Z",
+              "WhenOpened": "2025-06-28T17:35:34.117Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Gun.cs",
+              "DocumentMoniker": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\Gun.cs",
+              "RelativeDocumentMoniker": "GunStuff\\Gun.cs",
+              "ToolTip": "D:\\UNITY\\Unity Projektit\\The Forsaken\\Assets\\Scripts\\GunStuff\\Gun.cs",
+              "RelativeToolTip": "GunStuff\\Gun.cs",
+              "ViewState": "AgIAALkAAAAAAAAAAAAawLsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T17:33:50.965Z",
               "EditorCaption": ""
             }
           ]

@@ -1,8 +1,8 @@
 {
   "ExpandedNodes": [
     "",
-    "\\Abilities"
+    "\\GunStuff"
   ],
-  "SelectedNode": "\\Abilities\\AbilityMaster.cs",
+  "SelectedNode": "\\GunStuff\\Weapon.cs",
   "PreviewInSolutionExplorer": false
 }

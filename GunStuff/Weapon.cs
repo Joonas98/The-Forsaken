@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 
 public class Weapon : MonoBehaviour
@@ -9,19 +9,18 @@ public class Weapon : MonoBehaviour
 	public string weaponName;
 	public int weaponPrice;
 	public Sprite weaponSprite; // Image of the weapon
-	public float equipTime, unequipTime; // Time to take the weapon out and put it away
-	[HideInInspector] public bool equipped, unequipping;
+	public float equipTime;     // Time to take the weapon out
+	[HideInInspector] public bool equipped;
 
 	[Header("Weapon class audio")]
 	[HideInInspector] public AudioSource audioSource;
-	public AudioClip equipSound, unequipSound;
-
-	// Private and protected
-	private float equipLerp, unequipLerp;
-	private float equipRotX, equipRotY, equipRotZ;
+	public AudioClip equipSound;
 
 	protected Transform equipTrans;
 	protected Transform weaponSpot;
+
+	// track the active equip coroutine so we can cancel it
+	private Coroutine _equipRoutine;
 
 	protected virtual void OnValidate()
 	{
@@ -34,78 +33,48 @@ public class Weapon : MonoBehaviour
 		weaponSpot = GameManager.GM.weaponSpot;
 	}
 
-	protected virtual void Update()
-	{
-		HandleSwitchingLerps();
-	}
-
-	protected virtual void OnEnable()
-	{
-		// Random rotation when pulling out weapon
-		equipRotX = Random.Range(0, 360);
-		equipRotY = Random.Range(0, 360);
-		equipRotZ = Random.Range(0, 360);
-	}
-
+	/// <summary>
+	/// Starts (or restarts) the equip process, cancelling any in-flight equip first.
+	/// </summary>
 	public virtual void EquipWeapon()
 	{
-		StartCoroutine(WaitEquipTime(true));
-	}
-
-	public virtual void UnequipWeapon()
-	{
-		StartCoroutine(WaitEquipTime(false));
-	}
-
-	// Handle lerps for switching weapons
-	public void HandleSwitchingLerps()
-	{
-		// Take gun out
-		if (!unequipping && equipLerp <= equipTime)
+		// cancel any pending equip
+		if (_equipRoutine != null)
 		{
-			equipLerp += Time.deltaTime;
-			transform.SetPositionAndRotation(Vector3.Lerp(equipTrans.position, weaponSpot.transform.position, equipLerp / equipTime), Quaternion.Lerp(Quaternion.Euler(equipRotX, equipRotY, equipRotZ), weaponSpot.transform.rotation, equipLerp / equipTime));
+			StopCoroutine(_equipRoutine);
+			_equipRoutine = null;
 		}
 
-		// Put gun away
-		if (unequipping && unequipLerp <= unequipTime)
-		{
-			unequipLerp += Time.deltaTime;
-			transform.SetPositionAndRotation(Vector3.Lerp(weaponSpot.transform.position, equipTrans.position, unequipLerp / unequipTime), Quaternion.Lerp(weaponSpot.transform.rotation, Quaternion.Euler(equipRotX, equipRotY, equipRotZ), unequipLerp / unequipTime));
-		}
+		// kick off a new equip coroutine
+		_equipRoutine = StartCoroutine(EquipRoutine());
 	}
 
-	// Delay when switching weapons, true = equip, false = unequip
-	IEnumerator WaitEquipTime(bool equip)
+	/// <summary>
+	/// Immediately aborts any equip in progress and marks as not equipped.
+	/// </summary>
+	public void CancelEquip()
 	{
-		if (equip) // Equip weapon
+		if (_equipRoutine != null)
 		{
-			equipLerp = 0f;
-			// unequipLerp = 0f;
-			WeaponSwitcher.CanSwitch(false);
-			equipped = false;
-			unequipping = false;
+			StopCoroutine(_equipRoutine);
+			_equipRoutine = null;
+		}
+		equipped = false;
+	}
+
+	private IEnumerator EquipRoutine()
+	{
+		equipped = false;
+
+		if (equipSound != null)
 			audioSource.PlayOneShot(equipSound);
 
-			yield return new WaitForSeconds(equipTime);
+		yield return new WaitForSeconds(equipTime);
 
-			equipped = true;
-			WeaponSwitcher.CanSwitch(true);
-		}
-		else // Unequip weapon
-		{
-			// equipLerp = 0f;
-			unequipLerp = 0f;
-			WeaponSwitcher.CanSwitch(false);
-			equipped = false;
-			unequipping = true;
-			audioSource.PlayOneShot(unequipSound);
+		equipped = true;
+		WeaponSwitcher.canSwitchWeapon = true;
 
-			yield return new WaitForSeconds(unequipTime);
-
-			equipped = false;
-			unequipping = false;
-			WeaponSwitcher.CanSwitch(true);
-		}
+		// done
+		_equipRoutine = null;
 	}
 }

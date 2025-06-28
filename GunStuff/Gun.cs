@@ -176,10 +176,8 @@ public class Gun : Weapon
 		}
 	}
 
-	protected override void OnEnable()
+	protected void OnEnable()
 	{
-		base.OnEnable();
-
 		// Handle ammo UI 
 		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
 		inventoryScript.UpdateTotalAmmoText(gunAmmoType);
@@ -192,13 +190,11 @@ public class Gun : Weapon
 		EquipWeapon(); // Animations etc. when equipping weapon
 	}
 
-	protected override void Update()
+	protected void Update()
 	{
 		if (Time.timeScale <= 0) return; // Game paused
 
 		shotCounter -= Time.deltaTime;
-
-		base.Update();
 
 		// Player can't shoot when selecting grenades or objects
 		if (!equipped || ObjectPlacing.instance.isPlacing || SelectionCanvas.instance.isChoosingObject) goto selectionsSkip;
@@ -207,7 +203,6 @@ public class Gun : Weapon
 	selectionsSkip:
 		HandleReloading();
 		HandleScopeZoom();
-		HandleSwitchingLerps();
 		HandleSprinting();
 		HandleSpread();
 		// Debug.Log(unsprintLerp * sprintLerpMultiplier * aimSpeed);
@@ -241,8 +236,6 @@ public class Gun : Weapon
 		{
 			isAiming = true;
 			playedUnaimSound = false;
-			//	crosshairContents.SetActive(false);
-			WeaponSwitcher.CanSwitch(false);
 
 			transform.position = Vector3.Lerp(transform.position, transform.parent.transform.position + (transform.position - aimingSpot.transform.position), aimSpeed * Time.deltaTime);
 			transform.localRotation = Quaternion.Slerp(transform.localRotation, Quaternion.Euler(0, 180, 0), aimSpeed * Time.deltaTime);
@@ -257,11 +250,8 @@ public class Gun : Weapon
 			}
 			playedAimSound = false;
 
-			if (equipped && !unequipping && !playingAction)
+			if (equipped && !playingAction)
 				transform.position = Vector3.Slerp(transform.position, weaponSpot.transform.position, aimSpeed * Time.deltaTime);
-
-			if (equipped && !isReloading)
-				WeaponSwitcher.CanSwitch(true);
 		}
 	}
 
@@ -282,7 +272,6 @@ public class Gun : Weapon
 				audioMixer.SetFloat("WeaponsPitch", reloadAnimation.length / reloadTime);
 			}
 
-			WeaponSwitcher.CanSwitch(false);
 			shotCounter = reloadTime;
 			audioSource.PlayOneShot(reloadSound);
 
@@ -401,7 +390,7 @@ public class Gun : Weapon
 		// No rotating if reloading or we have Bullet Ballet ability
 		if (isReloading || AbilityMaster.instance.HasAbility("Centaur")) return;
 
-		if (playingAction || !equipped || unequipping) return;
+		if (playingAction || !equipped) return;
 
 		if (!playerMovementScript.isRunning)
 		{
@@ -626,12 +615,6 @@ public class Gun : Weapon
 		Destroy(InstantiatedLaser.gameObject, laserTime);
 	}
 
-	public override void UnequipWeapon()
-	{
-		base.UnequipWeapon();
-		// animator.Play("Entry");
-	}
-
 	public void UpdateFirerate()
 	{
 		fireRate = (RPM / 60);
@@ -644,7 +627,6 @@ public class Gun : Weapon
 		yield return new WaitForSeconds(r + 0.05f); // Wait the reload time + small extra to avoid bugs
 		currentMagazine = ammoAmount;
 		AmmoHUD.Instance.UpdateAmmoHUD(currentMagazine, magazineSize);
-		WeaponSwitcher.CanSwitch(true);
 		audioMixer.SetFloat("WeaponsPitch", 1f); // Reset weapon pitch (it might be changed to match reload speed)
 		isReloading = false;
 	}

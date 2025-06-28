@@ -70,12 +70,24 @@ public class NewWeaponShop : MonoBehaviour
 		GameManager.GM.AdjustMoney(-purchasedWeapon.GetComponent<Weapon>().weaponPrice);
 
 		// Instantiate and set parent to the purchased weapon
-		GameObject newWeapon = Instantiate(purchasedWeapon, equipTrans.position, equipTrans.transform.rotation); // Set the correct position and rotation
-		newWeapon.transform.parent = WeaponSwitcher.instance.transform; // Set the correct parent
+		GameObject newWeapon = Instantiate(
+			purchasedWeapon,
+			equipTrans.position,
+			equipTrans.rotation
+		);
+		newWeapon.transform.SetParent(WeaponSwitcher.instance.transform, false);
 
 		// Add UI elements of the new weapon
 		AddWeaponToPanel(newWeapon.GetComponent<Weapon>());
 		NewAttachmentShop.instance.AddOwnedWeaponButton(newWeapon);
+
+		// If this is the very first weapon added, equip it immediately
+		var switcher = WeaponSwitcher.instance;
+		if (switcher.currentWeapon == null || switcher.transform.childCount == 1)
+		{
+			int newIndex = newWeapon.transform.GetSiblingIndex();
+			switcher.SwitchTo(newIndex);
+		}
 	}
 
 	// Add weapon panel to top right corner of HUD

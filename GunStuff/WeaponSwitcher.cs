@@ -1,4 +1,4 @@
-using System.Collections;
+// WeaponSwitcher.cs
 using UnityEngine;
 
 public class WeaponSwitcher : MonoBehaviour
@@ -7,11 +7,9 @@ public class WeaponSwitcher : MonoBehaviour
 	public static bool canSwitchWeapon = true;
 	public Weapon currentWeapon;
 
-	// Parents for UI weapon panels
-	// Remember that the actual objects are under this class' GO
 	public Transform storeParent, hudParent;
 
-	public static WeaponSwitcher instance; // Singleton reference
+	public static WeaponSwitcher instance;
 
 	private WeaponPanel handledPanel;
 	private float unequipTime;
@@ -19,191 +17,96 @@ public class WeaponSwitcher : MonoBehaviour
 
 	private void Awake()
 	{
-		// Singleton
-		if (instance == null)
-		{
-			instance = this;
-		}
-		else if (instance != this)
-		{
-			Destroy(gameObject);
-		}
+		if (instance == null) instance = this;
+		else Destroy(gameObject);
 	}
 
-	void Update()
+	private void Start()
 	{
-		if (!canSwitchWeapon) return;
+		// Equip the first weapon on start (if any)
+		if (transform.childCount > 0)
+			ActivateAndEquip(selectedWeapon);
+	}
 
-		int previousSelectedWeapon = selectedWeapon;
+	private void Update()
+	{
+		if (transform.childCount == 0) return;
 
+		int prev = selectedWeapon;
 		#region Wheel Selection
 		if (Input.GetAxis("Mouse ScrollWheel") > 0f)
-		{
-			if (selectedWeapon >= transform.childCount - 1)
-			{
-				selectedWeapon = 0;
-			}
-			else
-			{
-				selectedWeapon++;
-			}
-		}
-
-		if (Input.GetAxis("Mouse ScrollWheel") < 0f)
-		{
-			if (selectedWeapon <= 0)
-			{
-				selectedWeapon = transform.childCount - 1;
-			}
-			else
-			{
-				selectedWeapon--;
-			}
-		}
+			selectedWeapon = (selectedWeapon + 1) % transform.childCount;
+		else if (Input.GetAxis("Mouse ScrollWheel") < 0f)
+			selectedWeapon = (selectedWeapon - 1 + transform.childCount) % transform.childCount;
 		#endregion
 
-		#region Numbers Selection
-		if (Input.GetKeyDown(KeyCode.Alpha1) && transform.childCount >= 1)
-		{
-			selectedWeapon = 0;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha2) && transform.childCount >= 2)
-		{
-			selectedWeapon = 1;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha3) && transform.childCount >= 3)
-		{
-			selectedWeapon = 2;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha4) && transform.childCount >= 4)
-		{
-			selectedWeapon = 3;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha5) && transform.childCount >= 5)
-		{
-			selectedWeapon = 4;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha6) && transform.childCount >= 6)
-		{
-			selectedWeapon = 5;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha7) && transform.childCount >= 7)
-		{
-			selectedWeapon = 6;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha8) && transform.childCount >= 8)
-		{
-			selectedWeapon = 7;
-		}
-
-		if (Input.GetKeyDown(KeyCode.Alpha9) && transform.childCount >= 9)
-		{
-			selectedWeapon = 8;
-		}
+		#region Number Keys
+		int max = Mathf.Min(transform.childCount, 9);
+		for (int i = 0; i < max; i++)
+			if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+				selectedWeapon = i;
 		#endregion
 
-		if (previousSelectedWeapon != selectedWeapon)
-		{
-			if (currentWeapon != null)
-			{
-				StartCoroutine(UnequipTimer());
-			}
-			else
-			{
-				SelectWeapon();
-			}
-		}
+		if (prev != selectedWeapon)
+			SwitchTo(selectedWeapon);
 	}
 
-	public void SelectWeapon()
+	/// <summary>
+	/// Stop any current equip, deactivate old, then equip the new.
+	/// </summary>
+	public void SwitchTo(int index)
 	{
-		int i = 0;
-		foreach (Transform weapon in transform)
-		{
-			if (i == selectedWeapon)
-				weapon.gameObject.SetActive(true);
-			else
-				weapon.gameObject.SetActive(false);
-			i++;
-		}
+		if (index < 0 || index >= transform.childCount) return;
 
-		currentWeapon = gameObject.GetComponentInChildren<Weapon>();
-		currentGun = gameObject.GetComponentInChildren<Gun>();
-
+		// 1) Cancel any in-progress equip on the old weapon
 		if (currentWeapon != null)
-		{
-			unequipTime = currentWeapon.unequipTime;
-			GameManager.GM.currentWeapon = currentWeapon;
-		}
+			currentWeapon.CancelEquip();
 
+		// 2) Instantly deactivate the old
+		if (currentWeapon != null)
+			currentWeapon.gameObject.SetActive(false);
+
+		// 3) Activate & equip the new
+		ActivateAndEquip(index);
+	}
+
+	private void ActivateAndEquip(int index)
+	{
+		canSwitchWeapon = false;
+
+		// Turn on only that weapon
+		for (int i = 0; i < transform.childCount; i++)
+			transform.GetChild(i).gameObject.SetActive(i == index);
+
+		// Cache it
+		currentWeapon = transform.GetChild(index).GetComponent<Weapon>();
+
+		// Update GameManager / HUD
+		GameManager.GM.currentWeapon = currentWeapon;
+		GameManager.GM.currentWeaponIndex = index;
+
+		currentGun = currentWeapon as Gun;
 		if (currentGun != null)
 		{
 			GameManager.GM.currentGun = currentGun;
+			GameManager.GM.meleeEquipped = false;
+			AmmoHUD.Instance.UpdateAmmoHUD(currentGun.currentMagazine, currentGun.magazineSize);
 		}
 		else
 		{
 			GameManager.GM.currentGun = null;
+			GameManager.GM.meleeEquipped = true;
 		}
 
-		GameManager.GM.currentWeaponIndex = selectedWeapon;
-
-		// Handle highlight for HUD
+		// Highlight HUD
 		if (handledPanel != null) handledPanel.SetSelected(false);
-		handledPanel = hudParent.transform.GetChild(selectedWeapon).GetComponent<WeaponPanel>();
-		handledPanel.SetSelected(true);
-
-		// Update the ammo hud
-		if (currentGun != null)
+		if (hudParent != null && index < hudParent.childCount)
 		{
-			AmmoHUD.Instance.UpdateAmmoHUD(currentGun.currentMagazine, currentGun.magazineSize);
-			currentGun.isReloading = false; // Bug prevention
+			handledPanel = hudParent.GetChild(index).GetComponent<WeaponPanel>();
+			if (handledPanel != null) handledPanel.SetSelected(true);
 		}
-	}
 
-	public static void CanSwitch(bool boolean)
-	{
-		canSwitchWeapon = boolean;
-	}
-
-	public void MoveWeaponLeft(GameObject weapon)
-	{
-		int currentIndex = weapon.transform.GetSiblingIndex();
-		if (currentIndex > 0)
-		{
-			// Move it left in the Weapon Switcher
-			weapon.transform.SetSiblingIndex(currentIndex - 1);
-
-			// Also move the corresponding weapon in the Store UI and HUD UI
-			storeParent.GetChild(currentIndex).SetSiblingIndex(currentIndex - 1);
-			hudParent.GetChild(currentIndex).SetSiblingIndex(currentIndex - 1);
-		}
-	}
-
-	public void MoveWeaponRight(GameObject weapon)
-	{
-		int currentIndex = weapon.transform.GetSiblingIndex();
-		int maxIndex = transform.childCount - 1;
-		if (currentIndex < maxIndex)
-		{
-			weapon.transform.SetSiblingIndex(currentIndex + 1);
-
-			storeParent.GetChild(currentIndex).SetSiblingIndex(currentIndex + 1);
-			hudParent.GetChild(currentIndex).SetSiblingIndex(currentIndex + 1);
-		}
-	}
-
-	IEnumerator UnequipTimer()
-	{
-		currentWeapon.UnequipWeapon();
-		yield return new WaitForSeconds(unequipTime + 0.01f);
-		SelectWeapon();
-		canSwitchWeapon = true;
+		// 4) Start equip on the new
+		currentWeapon.EquipWeapon();
 	}
 }
