@@ -19,6 +19,8 @@ public class WeaponSwitcher : MonoBehaviour
 	{
 		if (instance == null) instance = this;
 		else Destroy(gameObject);
+
+		selectedWeapon = -1;
 	}
 
 	private void Start()
@@ -30,7 +32,11 @@ public class WeaponSwitcher : MonoBehaviour
 
 	private void Update()
 	{
-		if (transform.childCount == 0) return;
+		// Pause check
+		if (Time.timeScale == 0) return;
+
+		// No switching while aiming
+		if (GameManager.GM.currentGun != null && GameManager.GM.currentGun.isAiming) return;
 
 		int prev = selectedWeapon;
 		#region Wheel Selection
