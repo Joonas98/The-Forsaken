@@ -45,6 +45,7 @@ public class MeleeWeapon : Weapon
 		base.Awake();
 		animator = GetComponent<Animator>();
 		cameraTransform = Camera.main.transform;
+		transform.SetPositionAndRotation(weaponSpot.position, weaponSpot.rotation);
 	}
 
 	protected void OnEnable()

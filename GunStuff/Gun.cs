@@ -185,7 +185,7 @@ public class Gun : Weapon
 		// Update desired aiming fov to FovController
 		FovController.Instance.fovAim = zoomAmount * FovController.Instance.fovDefault;
 
-
+		isReloading = false; // Fix for randomly getting stuck when switching weapons
 		RefreshGun();
 		EquipWeapon(); // Animations etc. when equipping weapon
 	}
@@ -232,7 +232,7 @@ public class Gun : Weapon
 		}
 
 		// Actual aiming
-		if (Input.GetButton("Fire2") && canAim && equipped && !isReloading)
+		if (Input.GetButton("Fire2") && canAim && !isReloading)
 		{
 			isAiming = true;
 			playedUnaimSound = false;
@@ -250,7 +250,7 @@ public class Gun : Weapon
 			}
 			playedAimSound = false;
 
-			if (equipped && !playingAction)
+			if (!playingAction)
 				transform.position = Vector3.Slerp(transform.position, weaponSpot.transform.position, aimSpeed * Time.deltaTime);
 		}
 	}
@@ -390,7 +390,7 @@ public class Gun : Weapon
 		// No rotating if reloading or we have Bullet Ballet ability
 		if (isReloading || AbilityMaster.instance.HasAbility("Centaur")) return;
 
-		if (playingAction || !equipped) return;
+		if (playingAction) return;
 
 		if (!playerMovementScript.isRunning)
 		{
@@ -727,11 +727,33 @@ public class Gun : Weapon
 		transform.localRotation = Quaternion.Euler(0, 180, 0);
 	}
 
+	public void ResetPosition()
+	{
+		transform.position = weaponSpot.position;
+	}
+
+	public void ResetTransform()
+	{
+		ResetRotation();
+		ResetPosition();
+	}
+
 	public void ResetReloadtime()
 	{
 		reloadTime = ogReloadTime;
 	}
 
 	#endregion
+
+	public void ResetForSwitching()
+	{
+		isReloading = false;
+		isAiming = false;
+		ResetTransform();
+
+		animator.Rebind(); // resets all animated properties to their default
+		animator.Update(0f); // force an immediate update
+		animator.Play("Idle", 0, 0f);
+	}
 
 }

@@ -29,6 +29,10 @@ public class Enemy : MonoBehaviour
 
 	private bool canAttack = true;
 
+	[Header("Detection Settings")]
+	[SerializeField] private float playerDetectionDistance = 40f;
+	public bool HasDetectedPlayer { get; private set; }
+
 	[Header("References")]
 	public LimbManager limbManager;
 	public List<Collider> ragdollParts = new List<Collider>();
@@ -104,6 +108,9 @@ public class Enemy : MonoBehaviour
 		GameManager.GM.enemiesAliveGos.Add(gameObject);
 
 		player = GameObject.Find("Player");
+		if (stateMachine == null) stateMachine = GetComponent<EnemyStateMachine>();
+		if (enemyNavScript == null) enemyNavScript = GetComponent<EnemyNav>();
+		if (navAgent == null) navAgent = GetComponent<UnityEngine.AI.NavMeshAgent>();
 		rigidbodies = GetComponentsInChildren<Rigidbody>();
 
 		SetRagdollParts();
@@ -132,7 +139,31 @@ public class Enemy : MonoBehaviour
 	{
 		distanceToPlayer = Vector3.Distance(player.transform.position, transform.position);
 		CalculateSlows();
+		HandleDetection();
 		HandleSwinging();
+	}
+
+	private void HandleDetection()
+	{
+		if (HasDetectedPlayer || isDead || ragdolling)
+			return;
+
+		if (distanceToPlayer <= playerDetectionDistance)
+			DetectPlayer();
+	}
+
+	public void DetectPlayer()
+	{
+		if (HasDetectedPlayer || isDead)
+			return;
+
+		HasDetectedPlayer = true;
+
+		if (stateMachine.currentState == EnemyState.Idle)
+		{
+			enemyNavScript.ResumeNavigation();
+			stateMachine.ChangeState(EnemyState.Chase);
+		}
 	}
 
 	private void FixedUpdate()
@@ -215,10 +246,17 @@ public class Enemy : MonoBehaviour
 		GameManager.GM.enemiesAliveGos.Remove(gameObject);
 	}
 
-	public void Despawn() // Not in use
+	public void Despawn()
 	{
-		GameManager.GM.enemyCount--;
-		GameManager.GM.UpdateEnemyCount();
+		if (isDead) return;
+		isDead = true;
+
+		if (GameManager.GM != null)
+		{
+			GameManager.GM.enemyCount = Mathf.Max(0, GameManager.GM.enemyCount - 1);
+			GameManager.GM.enemiesAliveGos.Remove(gameObject);
+			GameManager.GM.UpdateEnemyCount();
+		}
 
 		Destroy(gameObject, 0f);
 	}
@@ -275,6 +313,8 @@ public class Enemy : MonoBehaviour
 	// The actual damage processing, should be always called via TakeDamage() functions
 	public void TakeDamage(int damage, int percentageAmount = 0, DamageType type = DamageType.Normal)
 	{
+		DetectPlayer();
+
 		if (debuffManager.IsDebuffActive(DebuffManager.Debuffs.Crimson) && type != DamageType.Crimson)
 		{
 			// Debug.Log("Dealing crimson damage");
@@ -510,6 +550,8 @@ public class Enemy : MonoBehaviour
 		// Death check obvious. Ragdolling means stagger is not useful, as physics keep the enemy ragdolling
 		if (isDead || ragdolling) return;
 
+		DetectPlayer();
+
 		// If we want to bypass knockback, go directly to ragdoll.
 		if (ragdollDirectly)
 		{
@@ -676,7 +718,7 @@ public class Enemy : MonoBehaviour
 			{
 				GameManager.GM.playerScript.TakeDamage(damage);
 				PlayerMovement playerMovement = GameManager.GM.playerScript.GetComponent<PlayerMovement>();
-				playerMovement.ApplySpeedEffect(0.50f, 0.5f);
+				playerMovement.ApplySpeedEffect(slowAmount, slowDuration);
 			}
 
 			// Wait for the remainder of the attack animation.

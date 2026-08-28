@@ -8,7 +8,7 @@ public class PlayerMovement : MonoBehaviour
 	public float walkingSpeed;
 	private float _currentSpeed; // Backing field
 	public float CurrentSpeed => _currentSpeed; // Read-only property
-	public float runningSpeed, slopeSpeed, gravity, jumpHeight;
+	public float runningSpeed, gravity, jumpHeight;
 	private float runThreshold = 5f; // If controller.velocity.magnitude is less than this, can't be running
 
 	[Header("Sisu Costs")]
@@ -59,38 +59,19 @@ public class PlayerMovement : MonoBehaviour
 	}
 	private MovementSpeedEffect[] movementSpeedEffects;
 
-	// For custom sliding system
-	private Vector3 hitPointNormal;
+	[Header("Steep Slope Sliding")]
+	[Tooltip("Time spent on a too-steep surface before sliding starts.")]
+	public float slideDelay = 0.15f;
+	[Tooltip("How quickly the player accelerates downhill while sliding.")]
+	[SerializeField] private float slideAcceleration = 18f;
+	[Tooltip("Maximum downhill speed caused by a steep slope.")]
+	[SerializeField] private float maxSlideSpeed = 12f;
+	[Tooltip("Extra distance used to find the ground normal below the controller.")]
+	[SerializeField] private float slideProbeDistance = 0.35f;
 
-	// Custom slide system
-	public float slideDelay; // Time on slope required to start sliding
-
-	private bool isSlideDelayOver => timeOnSlope >= slideDelay;
-
-	private bool isSliding
-	{
-		get
-		{
-			if (isGrounded && Physics.Raycast(transform.position, Vector3.down, out RaycastHit slopeHit, 2f, groundmask))
-			{
-				hitPointNormal = slopeHit.normal;
-				if (Vector3.Angle(hitPointNormal, Vector3.up) > controller.slopeLimit)
-				{
-					if (isSlideDelayOver)
-					{
-						return true;
-					}
-					else
-					{
-						timeOnSlope += Time.deltaTime;
-						return false;
-					}
-				}
-			}
-			timeOnSlope = 0f;
-			return false;
-		}
-	}
+	private Vector3 groundNormal = Vector3.up;
+	private Vector3 slideVelocity;
+	private bool isSliding;
 
 	private void Awake()
 	{
@@ -145,28 +126,81 @@ public class PlayerMovement : MonoBehaviour
 	{
 		float x = Input.GetAxis("Horizontal");
 		float z = Input.GetAxis("Vertical");
+		moveDirection = transform.right * x + transform.forward * z;
+		if (moveDirection.sqrMagnitude > 1f)
+			moveDirection.Normalize();
 
-		if (!isSliding)
+		UpdateSteepSlopeState();
+
+		float movementSpeed = isRunning ? runningSpeed : walkingSpeed;
+		Vector3 horizontalVelocity;
+
+		if (isSliding)
 		{
-			moveDirection = transform.right * x + transform.forward * z;
-			if (moveDirection.magnitude > 1f)
-				moveDirection = moveDirection.normalized;
+			// Gravity projected onto the surface is the actual downhill direction.
+			// This keeps the slide tangent to the slope and prevents sideways drift.
+			Vector3 downhill = Vector3.ProjectOnPlane(Vector3.down, groundNormal);
+			if (downhill.sqrMagnitude > 0.0001f)
+				downhill.Normalize();
+
+			slideVelocity = Vector3.MoveTowards(
+				slideVelocity,
+				downhill * maxSlideSpeed,
+				slideAcceleration * Time.deltaTime);
+
+			// Keep input responsive, but let the slope remain the dominant force.
+			Vector3 inputVelocity = Vector3.ProjectOnPlane(moveDirection, groundNormal) * movementSpeed;
+			horizontalVelocity = slideVelocity + inputVelocity;
 		}
 		else
 		{
-			moveDirection += new Vector3(hitPointNormal.x, -hitPointNormal.y, hitPointNormal.z) * slopeSpeed;
-			controller.Move(slopeSpeed * Time.deltaTime * moveDirection);
+			slideVelocity = Vector3.MoveTowards(slideVelocity, Vector3.zero, slideAcceleration * Time.deltaTime);
+			horizontalVelocity = moveDirection * movementSpeed;
+		}
+
+		controller.Move(horizontalVelocity * Time.deltaTime);
+	}
+
+	private void UpdateSteepSlopeState()
+	{
+		isSliding = false;
+
+		if (!isGrounded || controller == null)
+		{
+			timeOnSlope = 0f;
+			slideVelocity = Vector3.zero;
+			groundNormal = Vector3.up;
 			return;
 		}
 
-		if (!isRunning)
+		Vector3 probeOrigin = groundCheck != null
+			? groundCheck.position + Vector3.up * 0.05f
+			: transform.position + Vector3.up * 0.05f;
+		float probeRadius = Mathf.Max(0.05f, controller.radius * 0.8f);
+		float probeLength = Mathf.Max(0.1f, groundDistance + slideProbeDistance);
+
+		if (!Physics.SphereCast(probeOrigin, probeRadius, Vector3.down, out RaycastHit hit,
+			probeLength, groundmask, QueryTriggerInteraction.Ignore))
 		{
-			controller.Move(walkingSpeed * Time.deltaTime * moveDirection);
+			timeOnSlope = 0f;
+			slideVelocity = Vector3.zero;
+			groundNormal = Vector3.up;
+			return;
 		}
-		else
+
+		groundNormal = hit.normal.normalized;
+		float slopeAngle = Vector3.Angle(groundNormal, Vector3.up);
+		bool tooSteep = slopeAngle > controller.slopeLimit + 0.1f;
+
+		if (!tooSteep)
 		{
-			controller.Move(runningSpeed * Time.deltaTime * moveDirection);
+			timeOnSlope = 0f;
+			slideVelocity = Vector3.zero;
+			return;
 		}
+
+		timeOnSlope += Time.deltaTime;
+		isSliding = timeOnSlope >= Mathf.Max(0f, slideDelay);
 	}
 
 	private void HandleJump()
@@ -175,7 +209,7 @@ public class PlayerMovement : MonoBehaviour
 
 		if (isGrounded)
 		{
-			// Only jump if there’s enough Sisu available
+			// Only jump if thereï¿½s enough Sisu available
 			if (Input.GetButtonDown("Jump") && Player.instance.currentSisu >= sisuJumpCost)
 			{
 				// Drain Sisu for jumping

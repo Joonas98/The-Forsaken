@@ -35,6 +35,9 @@ public class WeaponSwitcher : MonoBehaviour
 		// Pause check
 		if (Time.timeScale == 0) return;
 
+		// Avoid "Divide by zero" error at startup
+		if (transform.childCount == 0) return;
+
 		// No switching while aiming
 		if (GameManager.GM.currentGun != null && GameManager.GM.currentGun.isAiming) return;
 
@@ -54,7 +57,10 @@ public class WeaponSwitcher : MonoBehaviour
 		#endregion
 
 		if (prev != selectedWeapon)
+		{
+			if (currentGun != null) currentGun.ResetForSwitching();
 			SwitchTo(selectedWeapon);
+		}
 	}
 
 	/// <summary>

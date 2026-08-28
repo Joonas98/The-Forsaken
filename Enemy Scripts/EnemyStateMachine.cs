@@ -4,14 +4,15 @@ using UnityEngine.AI;
 
 public enum EnemyState
 {
-	Spawn,
-	Chase,
-	Attack,
-	Knockback,
-	Electrocuted,
-	Ragdoll,
-	Standup,
-	Dead
+	Spawn = 0,
+	Idle = 8,
+	Chase = 1,
+	Attack = 2,
+	Knockback = 3,
+	Electrocuted = 4,
+	Ragdoll = 5,
+	Standup = 6,
+	Dead = 7
 }
 
 public class EnemyStateMachine : MonoBehaviour
@@ -20,6 +21,9 @@ public class EnemyStateMachine : MonoBehaviour
 	public Enemy enemyBase;
 	public NavMeshAgent navAgent;
 	public EnemyNav enemyNavScript;
+
+	[Header("Spawn")]
+	[SerializeField] private bool playSpawnAnimation = false;
 
 	// Needed for electrocution handling
 	[HideInInspector] public float electroStartTime;
@@ -35,11 +39,13 @@ public class EnemyStateMachine : MonoBehaviour
 		enemyBase = GetComponent<Enemy>();
 		if (navAgent == null)
 			navAgent = GetComponent<NavMeshAgent>();
+		if (enemyNavScript == null)
+			enemyNavScript = GetComponent<EnemyNav>();
 	}
 
 	void Start()
 	{
-		ChangeState(EnemyState.Spawn);
+		ChangeState(playSpawnAnimation ? EnemyState.Spawn : EnemyState.Idle);
 	}
 
 	void Update()
@@ -53,6 +59,9 @@ public class EnemyStateMachine : MonoBehaviour
 		{
 			case EnemyState.Spawn:
 				HandleSpawn();
+				break;
+			case EnemyState.Idle:
+				HandleIdle();
 				break;
 			case EnemyState.Chase:
 				HandleChase();
@@ -110,6 +119,12 @@ public class EnemyStateMachine : MonoBehaviour
 
 		if (newState == EnemyState.Spawn)
 			spawnAnimationStarted = false;
+		if (newState == EnemyState.Idle)
+		{
+			enemyBase.isAttacking = false;
+			if (navAgent != null && navAgent.isActiveAndEnabled)
+				enemyNavScript.StopNavigation();
+		}
 		if (newState == EnemyState.Chase && !navAgent.isActiveAndEnabled)
 			navAgent.enabled = true;
 	}
@@ -129,9 +144,22 @@ public class EnemyStateMachine : MonoBehaviour
 		// Once the spawn animation finishes, re-enable movement and transition.
 		if (AnimationFinished("Spawn"))
 		{
-			enemyNavScript.ResumeNavigation();
-			ChangeState(EnemyState.Chase);
+			if (enemyBase.HasDetectedPlayer)
+			{
+				enemyNavScript.ResumeNavigation();
+				ChangeState(EnemyState.Chase);
+			}
+			else
+			{
+				ChangeState(EnemyState.Idle);
+			}
 		}
+	}
+
+	void HandleIdle()
+	{
+		enemyNavScript.StopNavigation();
+		animator.Play("Idle");
 	}
 
 	void HandleChase()
