@@ -49,9 +49,7 @@ public class Player : MonoBehaviour
 	private PlayerMovement playerMovement;
 
 	[Header("Audio")]
-	public AudioSource playerAS;
-	public AudioClip[] damageGrunts, kickSounds;
-	public AudioClip regenSound;
+	private PlayerAudioManager playerAudio;
 
 	[Header("Kick values")]
 	public Transform kickTransform;
@@ -79,6 +77,7 @@ public class Player : MonoBehaviour
 
 		kickTimeStamp = Time.time + kickCooldown;
 		playerMovement = GetComponent<PlayerMovement>();
+		playerAudio = GetComponent<PlayerAudioManager>();
 
 		// (No coroutine is used for Sisu anymore.)
 	}
@@ -159,8 +158,7 @@ public class Player : MonoBehaviour
 	{
 		// FX and SFX
 		animator.Play("Kick");
-		int sfx = Random.Range(0, kickSounds.Length);
-		playerAS.PlayOneShot(kickSounds[sfx]);
+		if (playerAudio != null) playerAudio.PlayKick();
 		kickSymbol.SetActive(false);
 		Recoil.Instance.KickFlinch();
 
@@ -228,8 +226,7 @@ public class Player : MonoBehaviour
 
 		if (currentHealth > 0)
 		{
-			int rindex = Random.Range(0, damageGrunts.Length);
-			playerAS.PlayOneShot(damageGrunts[rindex]);
+			if (playerAudio != null) playerAudio.PlayDamage();
 		}
 
 		regenSymbol.SetActive(false);
@@ -255,6 +252,7 @@ public class Player : MonoBehaviour
 			{
 				regenerating = true;
 				regenSymbol.SetActive(true);
+				if (playerAudio != null) playerAudio.PlayRegen();
 			}
 
 			currentHealth += healPerSecond * Time.deltaTime;

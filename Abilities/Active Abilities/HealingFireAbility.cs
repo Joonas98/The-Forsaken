@@ -18,7 +18,6 @@ public class HealingFireAbility : Ability
         ballScript.healAmount = healingAmount;
         ballScript.healDuration = healingDuration;
         ballScript.healInterval = healingInterval;
-        if (audioSource != null && activateSFX != null) audioSource.PlayOneShot(activateSFX);
     }
 
     public override void BeginCooldown(GameObject parent)

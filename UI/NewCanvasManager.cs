@@ -91,6 +91,7 @@ public class NewCanvasManager : MonoBehaviour
 			AudioListener.pause = true;
 			MouseLook.instance.canRotate = false;
 			Cursor.lockState = CursorLockMode.None;
+			Cursor.visible = true;
 			Time.timeScale = 0f;
 		}
 		else
@@ -99,6 +100,7 @@ public class NewCanvasManager : MonoBehaviour
 			AudioListener.pause = false;
 			MouseLook.instance.canRotate = true;
 			Cursor.lockState = CursorLockMode.Locked;
+			Cursor.visible = false;
 			Time.timeScale = 1f;
 		}
 	}

@@ -193,6 +193,7 @@ public class Gun : Weapon
 	protected void Update()
 	{
 		if (Time.timeScale <= 0) return; // Game paused
+		if (DevConsole.IsOpen) return; // Dev console owns keyboard and mouse input
 
 		shotCounter -= Time.deltaTime;
 
@@ -753,7 +754,6 @@ public class Gun : Weapon
 
 		animator.Rebind(); // resets all animated properties to their default
 		animator.Update(0f); // force an immediate update
-		animator.Play("Idle", 0, 0f);
 	}
 
 }

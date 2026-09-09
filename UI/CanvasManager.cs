@@ -134,6 +134,7 @@ public class CanvasManager : MonoBehaviour
 			AudioListener.pause = true;
 			if (lookScript != null) lookScript.canRotate = false;
 			Cursor.lockState = CursorLockMode.None;
+			Cursor.visible = true;
 			Time.timeScale = 0f;
 		}
 		else
@@ -146,6 +147,7 @@ public class CanvasManager : MonoBehaviour
 			// if (playerScript != null) playerScript.canRotate = true;
 			if (lookScript != null) lookScript.canRotate = true;
 			Cursor.lockState = CursorLockMode.Locked;
+			Cursor.visible = false;
 			ShowTooltip(false);
 			crosshairCanvas.SetActive(true);
 			Time.timeScale = 1f;

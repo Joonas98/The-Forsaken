@@ -30,13 +30,21 @@ public class Ability : ScriptableObject
 
 	public virtual void Activate(GameObject parent) // Call base.Activate(parent) in all abilities
 	{
-		// First activation sets audioSource
-		if (audioSource == null && GameManager.GM.playerAS != null) audioSource = GameManager.GM.playerAS;
-		if (audioSource != null && activateSFX != null) audioSource.PlayOneShot(activateSFX);
+		PlayPlayerSound(activateSFX);
 	}
 
 	public virtual void BeginCooldown(GameObject parent)
 	{
-		if (audioSource != null && endSFX != null) audioSource.PlayOneShot(endSFX);
+		PlayPlayerSound(endSFX);
+	}
+
+	protected void PlayPlayerSound(AudioClip clip)
+	{
+		if (clip == null) return;
+
+		if (PlayerAudioManager.Instance != null)
+			PlayerAudioManager.Instance.PlayClip(clip);
+		else if (audioSource != null)
+			audioSource.PlayOneShot(clip);
 	}
 }

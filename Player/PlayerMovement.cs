@@ -18,8 +18,7 @@ public class PlayerMovement : MonoBehaviour
 	public int sisuJumpCost = 15;
 
 	[Header("Audio")]
-	public AudioSource audioSource;
-	public AudioClip[] jumpSounds;
+	private PlayerAudioManager playerAudio;
 
 	[Header("Headbob")]
 	[SerializeField] private AnimationCurve bobAmountCurve = AnimationCurve.Linear(0, 0, 1, 1); // Default linear
@@ -78,6 +77,7 @@ public class PlayerMovement : MonoBehaviour
 		instance = this;
 		ogSpeed = walkingSpeed;
 		ogRunningspeed = runningSpeed;
+		playerAudio = GetComponent<PlayerAudioManager>();
 		runningSymbol = GameObject.Find("RunningSymbol");
 		if (runningSymbol != null) runningSymbol.SetActive(false);
 		defaultYPos = mainCamera.transform.localPosition.y;
@@ -215,8 +215,7 @@ public class PlayerMovement : MonoBehaviour
 				// Drain Sisu for jumping
 				Player.instance.UpdateSisu(-sisuJumpCost);
 				velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-				int raIndex = Random.Range(0, jumpSounds.Length);
-				audioSource.PlayOneShot(jumpSounds[raIndex]);
+				if (playerAudio != null) playerAudio.PlayJump();
 			}
 			if (velocity.y < 0)
 			{

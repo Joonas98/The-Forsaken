@@ -87,11 +87,29 @@ public class Enemy : MonoBehaviour
 	public AudioClip[] takeDamageSounds;
 	public AudioClip[] attackSounds;
 	public AudioClip[] randomSounds;
+	public AudioClip[] footstepSounds;
+	[Tooltip("Random grunts are disabled beyond this distance.")]
+	[SerializeField] private float randomGruntDistance = 40f;
+	[SerializeField] private float randomGruntMinDelay = 5f;
+	[SerializeField] private float randomGruntMaxDelay = 15f;
+	[Tooltip("A grunt cannot play this soon after the zombie takes damage.")]
+	[SerializeField] private float randomGruntDamageCooldown = 3f;
+	[SerializeField] private float randomGruntVolume = 1f;
+	[Tooltip("Footsteps are disabled beyond this distance.")]
+	[SerializeField] private float footstepMaxDistance = 20f;
+	[Tooltip("Footsteps reach their full local volume at this distance or closer.")]
+	[SerializeField] private float footstepFullVolumeDistance = 4f;
+	[SerializeField, Range(0f, 1f)] private float footstepMinVolume = 0.05f;
+	[SerializeField, Range(0f, 1f)] private float footstepMaxVolume = 1f;
+	[SerializeField] private float footstepInterval = 0.55f;
 
 	// Various privates
 	private bool standCountdownActive = false;
 	private float countdown = 0f;
 	private float distanceToPlayer;
+	private float lastDamageTime = float.NegativeInfinity;
+	private float nextRandomGruntTime;
+	private float nextFootstepTime;
 
 	// System to handle slows
 	private struct SlowEffect
@@ -128,6 +146,10 @@ public class Enemy : MonoBehaviour
 
 		// Make sure that the enemy is spawned on navmesh
 		if (enemyNavScript.IsAgentOnNavMesh() == false) enemyNavScript.MoveToNavMesh();
+
+		if (audioSource == null) audioSource = GetComponent<AudioSource>();
+		nextRandomGruntTime = Time.time + Random.Range(randomGruntMinDelay, randomGruntMaxDelay);
+		nextFootstepTime = Time.time + Random.Range(0f, footstepInterval);
 	}
 
 	private void Start()
@@ -141,6 +163,47 @@ public class Enemy : MonoBehaviour
 		CalculateSlows();
 		HandleDetection();
 		HandleSwinging();
+		HandleAudio();
+	}
+
+	private void HandleAudio()
+	{
+		if (audioSource == null || isDead || ragdolling || player == null)
+			return;
+
+		if (Time.time >= nextRandomGruntTime)
+		{
+			if (distanceToPlayer <= randomGruntDistance &&
+				Time.time - lastDamageTime >= randomGruntDamageCooldown)
+			{
+				PlayRandomAudio(randomSounds, randomGruntVolume);
+			}
+
+			nextRandomGruntTime = Time.time + Random.Range(randomGruntMinDelay, randomGruntMaxDelay);
+		}
+
+		if (Time.time < nextFootstepTime || distanceToPlayer > footstepMaxDistance ||
+			footstepSounds == null || footstepSounds.Length == 0 || navAgent == null)
+			return;
+
+		if (navAgent.velocity.sqrMagnitude <= 0.05f)
+			return;
+
+		float closestDistance = Mathf.Min(footstepFullVolumeDistance, footstepMaxDistance);
+		float proximity = Mathf.InverseLerp(footstepMaxDistance, closestDistance, distanceToPlayer);
+		float volume = Mathf.Lerp(footstepMinVolume, footstepMaxVolume, proximity);
+		PlayRandomAudio(footstepSounds, volume);
+		nextFootstepTime = Time.time + Mathf.Max(0.05f, footstepInterval);
+	}
+
+	private void PlayRandomAudio(AudioClip[] clips, float volume = 1f)
+	{
+		if (audioSource == null || clips == null || clips.Length == 0)
+			return;
+
+		AudioClip clip = clips[Random.Range(0, clips.Length)];
+		if (clip != null)
+			audioSource.PlayOneShot(clip, volume);
 	}
 
 	private void HandleDetection()
@@ -313,6 +376,7 @@ public class Enemy : MonoBehaviour
 	// The actual damage processing, should be always called via TakeDamage() functions
 	public void TakeDamage(int damage, int percentageAmount = 0, DamageType type = DamageType.Normal)
 	{
+		lastDamageTime = Time.time;
 		DetectPlayer();
 
 		if (debuffManager.IsDebuffActive(DebuffManager.Debuffs.Crimson) && type != DamageType.Crimson)

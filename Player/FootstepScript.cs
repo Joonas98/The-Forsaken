@@ -6,10 +6,7 @@ public class FootstepScript : MonoBehaviour
 	public float stepThreshold;
 	public float walkVolume, runVolume;
 	public PlayerMovement movementScript;
-	public AudioSource audioSource;
-	public AudioClip[] grassSteps;
-	public AudioClip[] rockSteps;
-	public AudioClip[] sandSteps;
+	private PlayerAudioManager playerAudio;
 
 	private float distanceTravelled = 0;
 	private Vector3 lastPosition;
@@ -17,6 +14,7 @@ public class FootstepScript : MonoBehaviour
 	private void Start()
 	{
 		lastPosition = transform.position;
+		playerAudio = GetComponent<PlayerAudioManager>();
 	}
 
 	// Use update to figure when player has moved enough to play 
@@ -41,30 +39,11 @@ public class FootstepScript : MonoBehaviour
 		if (movementScript.isRunning) volume = runVolume;
 		else volume = walkVolume;
 
-		AudioClip clip = GetRandomSFX();
-		audioSource.PlayOneShot(clip, volume);
+		if (playerAudio != null)
+			playerAudio.PlayFootstep(DetectTerrainType(), volume);
 	}
 
 	// Get a random SFX from a list depending on the terrain player is moving on
-	private AudioClip GetRandomSFX()
-	{
-		int terrainTextureIndex = DetectTerrainType();
-
-		return terrainTextureIndex switch
-		{
-			// Grass
-			0 => grassSteps[UnityEngine.Random.Range(0, grassSteps.Length)],
-			// Rock
-			1 => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
-			// Rock2
-			2 => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
-			// Sand
-			3 => sandSteps[UnityEngine.Random.Range(0, sandSteps.Length)],
-			// Default
-			_ => rockSteps[UnityEngine.Random.Range(0, rockSteps.Length)],
-		};
-	}
-
 	// Return the dominant texture index at the player's current position on the terrain
 	private int DetectTerrainType()
 	{

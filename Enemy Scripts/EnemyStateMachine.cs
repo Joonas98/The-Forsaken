@@ -159,7 +159,7 @@ public class EnemyStateMachine : MonoBehaviour
 	void HandleIdle()
 	{
 		enemyNavScript.StopNavigation();
-		animator.Play("Idle");
+		//animator.Play("Idle");
 	}
 
 	void HandleChase()

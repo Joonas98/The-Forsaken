@@ -17,7 +17,7 @@ public class SelfExplosionAbility : Ability
         // Debug.Log("Explosion activated");
         base.Activate(parent);
 
-        if (audioSource != null && explosionSound != null) audioSource.PlayOneShot(explosionSound);
+        PlayPlayerSound(explosionSound);
         ParticleSystem xplosion = Instantiate(explosionEffect, new Vector3(parent.transform.position.x, parent.transform.position.y - 1, parent.transform.position.z), Quaternion.LookRotation(Vector3.down));
         Destroy(xplosion.gameObject, 3f);
 

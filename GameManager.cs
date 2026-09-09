@@ -74,6 +74,9 @@ public class GameManager : MonoBehaviour
 
 	public void HandleKeybinds()
 	{
+		if (DevConsole.IsOpen)
+			return;
+
 		if (Input.GetKey(KeyCode.N))
 		{
 			Time.timeScale = 0.1f;
@@ -160,7 +163,7 @@ public class GameManager : MonoBehaviour
 	public void AdjustMoney(int amount)
 	{
 		money += amount;
-		moneyText.text = money.ToString() + " €";
-		moneyTextShop.text = money.ToString() + " €";
+		moneyText.text = money.ToString() + " ï¿½";
+		moneyTextShop.text = money.ToString() + " ï¿½";
 	}
 }
